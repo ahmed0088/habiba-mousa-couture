@@ -137,7 +137,7 @@ function loadRequests() {
 
       tr.innerHTML = `
         <td>${escapeHtml(r.clientName)}</td>
-        <td>${escapeHtml(r.productName || "—")}</td>
+        <td>${escapeHtml(r.productName || "—")}${r.productCode ? ` <span style="color:var(--text-faint); font-size:12px;">(${escapeHtml(r.productCode)})</span>` : ""}</td>
         <td>${escapeHtml(r.clientPhone)}</td>
         <td style="max-width:180px;">${escapeHtml(r.clientAddress || "—")}</td>
         <td>${escapeHtml(MATERIAL_LABELS[r.material] || "—")}</td>
@@ -175,6 +175,7 @@ const productFormStatus = document.getElementById("productFormStatus");
 function resetProductForm() {
   productDocId.value = "";
   document.getElementById("pName").value = "";
+  document.getElementById("pCode").value = `HM-${Math.floor(1000 + Math.random() * 9000)}`;
   document.getElementById("pCategory").value = "";
   document.getElementById("pCollection").value = "";
   document.getElementById("pPrice").value = "";
@@ -206,6 +207,7 @@ saveProductBtn.addEventListener("click", async () => {
 
   const data = {
     name,
+    productCode: document.getElementById("pCode").value.trim(),
     category: document.getElementById("pCategory").value.trim(),
     collectionId: document.getElementById("pCollection").value || null,
     priceRange: document.getElementById("pPrice").value.trim(),
@@ -245,6 +247,7 @@ function loadProducts() {
       const p = doc.data();
       const tr = document.createElement("tr");
       tr.innerHTML = `
+        <td>${escapeHtml(p.productCode || "—")}</td>
         <td>${escapeHtml(p.name)}</td>
         <td>${escapeHtml(p.category || "—")}</td>
         <td>${p.salePrice ? `${escapeHtml(p.priceRange || "—")} → <strong>${escapeHtml(p.salePrice)}</strong> (Sale)` : escapeHtml(p.priceRange || "—")}</td>
@@ -263,6 +266,7 @@ function loadProducts() {
         const p = doc.data();
         productDocId.value = doc.id;
         document.getElementById("pName").value = p.name || "";
+        document.getElementById("pCode").value = p.productCode || "";
         document.getElementById("pCategory").value = p.category || "";
         document.getElementById("pCollection").value = p.collectionId || "";
         document.getElementById("pPrice").value = p.priceRange || "";

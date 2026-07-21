@@ -12,9 +12,8 @@ function getStoredTheme() {
 }
 
 function getPreferredTheme() {
-  return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches
-    ? "dark"
-    : "light";
+  // Dark is the site's default look; a visitor's own choice (once made) always wins via localStorage.
+  return "dark";
 }
 
 function applyTheme(theme) {

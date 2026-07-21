@@ -20,6 +20,7 @@ No build step. Plain HTML/CSS/JS + Firebase (same approach as your other Firebas
 In the Firebase Console:
 - **Firestore Database** → Create database → Start in production mode
 - **Authentication** → Sign-in method → enable **Email/Password**
+- **Authentication** → Sign-in method → enable **Google** (optional, for the "Continue with Google" button — without this the button shows a clear error instead of failing silently)
 
 ## 3. Deploy the security rules
 
@@ -77,7 +78,8 @@ You'll get a live URL like `habiba-mousa-couture.web.app` — that's what you li
 | field | type | notes |
 |---|---|---|
 | name | string | |
-| category | string | free-text tag, e.g. Evening Gown, Abaya, Bridal |
+| productCode | string | e.g. "HM-1024" — auto-suggested (editable) when creating a new piece, for identifying/tracking physical garments |
+| category | string | tag from a suggested list (Admin has an editable dropdown with common presets), but any custom value can be typed too |
 | collectionId | string \| null | references a `collections` doc — assigns the piece to a seasonal drop |
 | description | string | |
 | priceRange | string | free text, e.g. "1,800 – 2,600 EGP" |
@@ -100,11 +102,20 @@ You'll get a live URL like `habiba-mousa-couture.web.app` — that's what you li
 | clientPhone | string | |
 | clientAddress | string | optional; governorate/city/street in Egypt |
 | material | string | one of the fixed material keys (`silk`, `chiffon`, `satin`, `lace`, `cotton`, `crepe`, `tulle`, `organza`, `velvet`, `brocade`, `unspecified`) chosen from a dropdown — no free typing |
-| productId / productName | string | which piece they're asking about |
+| productId / productName / productCode | string | which piece they're asking about |
 | preferredDate | string | optional |
 | notes | string | |
 | status | string | `new` → `contacted` → `confirmed` → `in_progress` → `delivered` / `cancelled` |
 | clientUid | string \| null | set when submitted while signed in; lets that client read (only) this request back in "My Requests" |
+| createdAt | timestamp | server-set |
+
+**`clients`** (one doc per signed-up client)
+| field | type | notes |
+|---|---|---|
+| doc ID | — | must equal the client's Firebase Auth UID |
+| name | string | from sign-up form, or Google account display name |
+| email | string | |
+| phone | string | captured at sign-up; for Google sign-in, collected via a "Complete your profile" prompt shown once after first sign-in |
 | createdAt | timestamp | server-set |
 
 **`staff`**

@@ -40,6 +40,13 @@ service cloud.firestore {
       allow update, delete: if isStaff();
     }
 
+    // Client profiles (name/email/phone captured at signup) — a client manages only their own;
+    // staff can read them for reference (e.g. matching a request to a phone number).
+    match /clients/{uid} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+      allow read: if isStaff();
+    }
+
     // Staff roster — only admins can manage it, staff can read it
     match /staff/{staffUid} {
       allow read: if isStaff();

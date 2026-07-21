@@ -121,6 +121,10 @@
         <input type="text" id="signUpName" required />
       </div>
       <div class="field">
+        <label for="signUpPhone" data-i18n="account_phone">رقم الموبايل</label>
+        <input type="tel" id="signUpPhone" required />
+      </div>
+      <div class="field">
         <label for="signUpEmail" data-i18n="account_email">البريد الإلكتروني</label>
         <input type="email" id="signUpEmail" required />
       </div>
@@ -143,6 +147,25 @@
     <h3 data-i18n="my_requests_title">طلباتي</h3>
     <div id="myRequestsList"><!-- populated by account.js --></div>
     <div class="empty-state" id="myRequestsEmpty" style="display:none;" data-i18n="my_requests_empty"></div>
+  </div>
+</div>
+
+<!-- Complete Profile Modal (phone number, e.g. after Google sign-in) -->
+<div class="modal-backdrop" id="completeProfileBackdrop">
+  <div class="modal">
+    <button class="modal-close" id="completeProfileClose" aria-label="Close">&times;</button>
+    <h3 data-i18n="account_profile_title">أكملي بياناتك</h3>
+    <p class="page-intro" data-i18n="account_profile_intro">محتاجين رقم موبايلك عشان نقدر نكلمك بخصوص طلباتك.</p>
+    <form id="completeProfileForm">
+      <div class="field">
+        <label for="completeProfilePhone" data-i18n="account_phone">رقم الموبايل</label>
+        <input type="tel" id="completeProfilePhone" required />
+      </div>
+      <div class="submit-row">
+        <button type="submit" class="btn btn-solid" id="completeProfileBtn" data-i18n="account_profile_save">حفظ</button>
+      </div>
+      <div class="form-status" id="completeProfileStatus"></div>
+    </form>
   </div>
 </div>
 

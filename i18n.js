@@ -162,6 +162,12 @@ const I18N = {
     account_or_divider: "أو",
     account_google_signin: "الدخول بحساب جوجل",
     account_google_error: "معرفناش نسجل دخولك بجوجل. جربي تاني.",
+    account_phone: "رقم الموبايل",
+    account_profile_title: "أكملي بياناتك",
+    account_profile_intro: "محتاجين رقم موبايلك عشان نقدر نكلمك بخصوص طلباتك.",
+    account_profile_save: "حفظ",
+    account_profile_save_loading: "جاري الحفظ...",
+    account_profile_error: "معرفناش نحفظ بياناتك. جربي تاني.",
 
     // My Requests (client-side tracking)
     my_requests_title: "طلباتي",
@@ -403,6 +409,12 @@ const I18N = {
     account_or_divider: "or",
     account_google_signin: "Continue with Google",
     account_google_error: "Couldn't sign you in with Google. Please try again.",
+    account_phone: "Phone number",
+    account_profile_title: "Complete your profile",
+    account_profile_intro: "We need your phone number so we can reach you about your requests.",
+    account_profile_save: "Save",
+    account_profile_save_loading: "Saving...",
+    account_profile_error: "Couldn't save your details. Please try again.",
 
     // My Requests (client-side tracking)
     my_requests_title: "My Requests",

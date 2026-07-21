@@ -323,6 +323,7 @@ requestForm.addEventListener("submit", async (e) => {
   const payload = {
     productId: productIdField.value || null,
     productName: product ? product.name : null,
+    productCode: product ? (product.productCode || null) : null,
     clientName: document.getElementById("clientName").value.trim(),
     clientPhone: document.getElementById("clientPhone").value.trim(),
     clientAddress: document.getElementById("clientAddress").value.trim(),

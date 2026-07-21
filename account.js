@@ -26,6 +26,13 @@ const myRequestsClose = document.getElementById("myRequestsClose");
 const myRequestsList = document.getElementById("myRequestsList");
 const myRequestsEmpty = document.getElementById("myRequestsEmpty");
 
+const completeProfileBackdrop = document.getElementById("completeProfileBackdrop");
+const completeProfileForm = document.getElementById("completeProfileForm");
+const completeProfilePhone = document.getElementById("completeProfilePhone");
+const completeProfileStatus = document.getElementById("completeProfileStatus");
+const completeProfileBtn = document.getElementById("completeProfileBtn");
+const completeProfileClose = document.getElementById("completeProfileClose");
+
 let myRequestsUnsubscribe = null;
 
 // ---------- Mobile nav toggle ----------
@@ -120,12 +127,19 @@ signUpForm?.addEventListener("submit", async (e) => {
   signUpBtn.textContent = t("account_signup_btn_loading");
   signUpStatus.className = "form-status";
   const name = document.getElementById("signUpName").value.trim();
+  const phone = document.getElementById("signUpPhone").value.trim();
   try {
     const cred = await auth.createUserWithEmailAndPassword(
       document.getElementById("signUpEmail").value.trim(),
       document.getElementById("signUpPassword").value
     );
     if (name) await cred.user.updateProfile({ displayName: name });
+    await db.collection("clients").doc(cred.user.uid).set({
+      name,
+      email: cred.user.email,
+      phone,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
     signUpForm.reset();
     closeAccountModal();
   } catch (err) {
@@ -155,6 +169,49 @@ googleSignInBtn?.addEventListener("click", async () => {
 });
 
 accountSignOutBtn?.addEventListener("click", () => auth.signOut());
+
+// ---------- Complete profile (phone number) ----------
+// Shown after Google sign-in (which doesn't collect a phone number) or for any
+// account created before this feature existed — email/password signup already
+// captures phone directly, so this only fires when a client's "clients" doc is missing.
+
+function openCompleteProfile() {
+  completeProfileStatus.className = "form-status";
+  completeProfileStatus.textContent = "";
+  completeProfileBackdrop.classList.add("open");
+}
+
+function closeCompleteProfile() {
+  completeProfileBackdrop.classList.remove("open");
+}
+
+completeProfileClose?.addEventListener("click", closeCompleteProfile);
+
+completeProfileForm?.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const user = auth.currentUser;
+  if (!user) return;
+  completeProfileBtn.disabled = true;
+  completeProfileBtn.textContent = t("account_profile_save_loading");
+  completeProfileStatus.className = "form-status";
+  try {
+    await db.collection("clients").doc(user.uid).set({
+      name: user.displayName || "",
+      email: user.email || "",
+      phone: completeProfilePhone.value.trim(),
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+    completeProfileForm.reset();
+    closeCompleteProfile();
+  } catch (err) {
+    console.error("Failed to save profile:", err);
+    completeProfileStatus.className = "form-status error";
+    completeProfileStatus.textContent = t("account_profile_error");
+  } finally {
+    completeProfileBtn.disabled = false;
+    completeProfileBtn.textContent = t("account_profile_save");
+  }
+});
 
 // ---------- My Requests ----------
 
@@ -215,11 +272,17 @@ function loadMyRequests(uid) {
     );
 }
 
-auth.onAuthStateChanged((user) => {
+auth.onAuthStateChanged(async (user) => {
   if (user) {
     if (accountSignInBtn) accountSignInBtn.style.display = "none";
     if (accountSignedIn) accountSignedIn.style.display = "inline-flex";
     loadMyRequests(user.uid);
+    try {
+      const clientDoc = await db.collection("clients").doc(user.uid).get();
+      if (!clientDoc.exists) openCompleteProfile();
+    } catch (err) {
+      console.error("Client profile check failed:", err);
+    }
   } else {
     if (accountSignInBtn) accountSignInBtn.style.display = "inline-block";
     if (accountSignedIn) accountSignedIn.style.display = "none";
@@ -236,6 +299,7 @@ document.addEventListener("keydown", (e) => {
   if (e.key === "Escape") {
     closeAccountModal();
     closeMyRequests();
+    closeCompleteProfile();
   }
 });
 
