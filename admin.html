@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Admin — Habiba Mousa Couture</title>
+<title>Admin — Habiba Mousa</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=El+Messiri:wght@400;500;600;700&family=Jost:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css" />
@@ -14,7 +14,7 @@
 <div class="login-screen" id="loginScreen">
   <div class="login-card">
     <p class="eyebrow" data-i18n="admin_eyebrow">Staff Access</p>
-    <h2 data-i18n="admin_brand">Habiba Mousa Couture</h2>
+    <h2 data-i18n="admin_brand">Habiba Mousa</h2>
     <form id="loginForm">
       <div class="field">
         <label for="loginEmail" data-i18n="admin_email">Email</label>
@@ -26,6 +26,7 @@
       </div>
       <button type="submit" class="btn btn-solid btn-block" id="loginBtn" data-i18n="admin_signin">Sign In</button>
       <div class="form-status" id="loginStatus"></div>
+      <button type="button" class="btn-link" id="forgotPasswordBtn" style="display:block; margin:14px auto 0;" data-i18n="admin_forgot_password">Forgot password?</button>
     </form>
     <div class="lang-toggle" aria-label="Language / اللغة" style="margin-top:16px; justify-content:center; display:flex;">
       <button type="button" data-lang="ar">AR</button>
@@ -44,13 +45,14 @@
       <button data-view="collections" data-i18n="admin_nav_collections">Collections</button>
       <button data-view="settings" data-i18n="admin_nav_settings">Settings</button>
       <button data-view="staff" data-i18n="admin_nav_staff">Staff</button>
+      <button data-view="activity" data-i18n="admin_nav_activity">Activity</button>
     </nav>
     <div class="lang-toggle" aria-label="Language / اللغة" style="margin-top:32px;">
       <button type="button" data-lang="ar">AR</button>
       <button type="button" data-lang="en">EN</button>
     </div>
     <div style="margin-top:16px; display:flex; align-items:center; gap:10px;">
-      <button id="logoutBtn" class="btn" style="border-color:rgba(243,239,230,0.4); color:var(--ivory); font-size:13px; padding:8px 16px;" data-i18n="admin_signout">Sign Out →</button>
+      <button id="logoutBtn" class="btn" style="background:rgba(243,239,230,0.12); border-color:rgba(243,239,230,0.5); color:var(--ivory); font-size:13px; padding:8px 16px;" data-i18n="admin_signout">Sign Out →</button>
       <button type="button" class="theme-toggle" aria-label="Toggle theme">🌙</button>
     </div>
   </aside>
@@ -245,6 +247,14 @@
             <textarea id="setHeroTaglineEn"></textarea>
           </div>
           <div class="field">
+            <label>Turnaround time — Arabic</label>
+            <input type="text" id="setTurnaroundAr" dir="rtl" placeholder="غالبًا من أسبوع لأسبوعين" />
+          </div>
+          <div class="field">
+            <label>Turnaround time — English</label>
+            <input type="text" id="setTurnaroundEn" placeholder="Typically 1–2 weeks" />
+          </div>
+          <div class="field">
             <label>About intro — Arabic</label>
             <textarea id="setAboutIntroAr" dir="rtl"></textarea>
           </div>
@@ -330,7 +340,8 @@
         <div class="product-form-grid">
           <div class="field">
             <label data-i18n="admin_staff_email">Staff email (must match their Firebase Auth login)</label>
-            <input type="email" id="staffEmail" />
+            <input type="email" id="staffEmail" list="staffEmailOptions" />
+            <datalist id="staffEmailOptions"></datalist>
           </div>
           <div class="field">
             <label data-i18n="admin_staff_name">Name</label>
@@ -355,6 +366,20 @@
           <thead><tr><th data-i18n="admin_th_name">Name</th><th data-i18n="admin_th_email">Email</th><th data-i18n="admin_th_role">Role</th><th></th></tr></thead>
           <tbody id="staffTableBody"></tbody>
         </table>
+      </div>
+    </section>
+
+    <!-- Activity Log view -->
+    <section id="view-activity" style="display:none;">
+      <div class="admin-topbar">
+        <h1 data-i18n="admin_activity_title">Activity Log</h1>
+      </div>
+      <div class="admin-card" style="overflow-x:auto;">
+        <table>
+          <thead><tr><th data-i18n="admin_th_action">Action</th><th data-i18n="admin_th_target">Details</th><th data-i18n="admin_th_by">By</th><th data-i18n="admin_th_when">When</th></tr></thead>
+          <tbody id="activityTableBody"></tbody>
+        </table>
+        <p id="activityEmpty" style="display:none; color:#8a8a86; padding: 20px 0;" data-i18n="admin_activity_empty">No activity yet.</p>
       </div>
     </section>
 

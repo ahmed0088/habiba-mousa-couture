@@ -13,7 +13,7 @@ const I18N = {
     nav_collection: "الكولكشن",
     nav_how: "الطلب بيتم إزاي",
     nav_contact: "تواصلي معانا",
-    brand_suffix: "كوتور",
+    brand_suffix: "",
 
     // Hero
     hero_eyebrow: "تفصيل حسب الطلب — الإسكندرية",
@@ -23,7 +23,7 @@ const I18N = {
     spec_process_label: "الخطوات",
     spec_process_value: "الطلب ← الاستشارة ← القياس ← التسليم",
     spec_turnaround_label: "المدة",
-    spec_turnaround_value: "غالبًا من ٢ لـ ٤ أسابيع",
+    spec_turnaround_value: "غالبًا من أسبوع لأسبوعين",
     spec_reach_label: "كلمينا",
     spec_reach_value: "من نموذج الطلب أو واتساب",
 
@@ -35,7 +35,7 @@ const I18N = {
     search_placeholder: "دوّري على قطعة...",
     empty_state: "بنجهز قطع جديدة للأتيليه — تابعينا هيبقى فيه كل حاجة حلوة قريب.",
     empty_state_error: "معلش، حصلت مشكلة في تحميل الكولكشن دلوقتي. جربي تاني بعد شوية.",
-    piece_category_fallback: "كوتور",
+    piece_category_fallback: "قطعة",
 
     // How it works
     how_eyebrow: "الطلب بيتم إزاي",
@@ -50,7 +50,7 @@ const I18N = {
     step4_desc: "قطعتك جاهزة تستلميها أو تتشحن لك",
 
     // Footer
-    footer_tagline: "حبيبه موسي كوتور — قطع مفصلة خصيصي ليكِ، حسب الطلب.",
+    footer_tagline: "حبيبه موسي — قطع مفصلة خصيصي ليكِ، حسب الطلب.",
     footer_contact_prefix: "عايزة تكلمينا على طول؟",
     footer_whatsapp: "راسلينا على واتساب",
     footer_staff: "دخول الموظفين",
@@ -70,12 +70,16 @@ const I18N = {
 
     // Admin — login
     admin_eyebrow: "دخول الموظفين",
-    admin_brand: "حبيبه موسي كوتور",
+    admin_brand: "حبيبه موسي",
     admin_email: "الإيميل",
     admin_password: "الباسورد",
     admin_signin: "دخول",
     admin_signin_loading: "بيتم الدخول...",
     admin_signin_fail: "الدخول مش ظابط — راجعي الإيميل والباسورد.",
+    admin_forgot_password: "نسيتي الباسورد؟",
+    admin_forgot_password_need_email: "اكتبي إيميلك فوق الأول، وبعدين دوسي هنا.",
+    admin_forgot_password_sent: "بعتنالك رابط لتغيير الباسورد على إيميلك.",
+    admin_forgot_password_error: "معرفناش نبعت رابط تغيير الباسورد. جربي تاني.",
     admin_no_access: "الحساب ده لسه مش متفعّل على لوحة التحكم. اطلبي من الأدمن يضيفك في الموظفين.",
     admin_verify_fail: "معرفناش نتأكد من الصلاحية. جربي تاني.",
 
@@ -85,6 +89,13 @@ const I18N = {
     admin_nav_collections: "الكولكشنات",
     admin_nav_settings: "الإعدادات",
     admin_nav_staff: "الموظفين",
+    admin_nav_activity: "السجل",
+    admin_activity_title: "سجل النشاط",
+    admin_activity_empty: "لسه مفيش نشاط.",
+    admin_th_action: "الإجراء",
+    admin_th_target: "التفاصيل",
+    admin_th_by: "بواسطة",
+    admin_th_when: "الوقت",
     admin_signout: "تسجيل خروج ←",
     admin_requests_title: "الطلبات والاستفسارات",
     admin_th_client: "العميلة",
@@ -199,6 +210,10 @@ const I18N = {
 
     // Request form — address & material
     label_address: "العنوان (المحافظة، المدينة، الشارع)",
+    share_location_btn: "📍 شاركي موقعك",
+    share_location_loading: "بنجيب موقعك...",
+    share_location_success: "تم! هنبعت موقعك مع الطلب.",
+    share_location_error: "معرفناش نجيب موقعك. جربي تاني أو اكتبي العنوان يدوي.",
     label_material: "القماش المفضل",
     material_silk: "حرير",
     material_chiffon: "شيفون",
@@ -214,10 +229,10 @@ const I18N = {
 
     // About page
     about_eyebrow: "قصتنا",
-    about_title: "حبيبه موسي كوتور",
+    about_title: "حبيبه موسي",
     about_intro: "أتيليه صغير مؤمن إن كل قطعة لازم تتعمل لواحدة بس، مش لرف عرض. بنشتغل معاكِ خطوة خطوة — من الفكرة الأولانية لحد آخر غرزة — عشان نديكِ إطلالة بصمتها إنتِ بس.",
     about_story_title: "بدأنا إزاي",
-    about_story_body: "حبيبه موسي كوتور بدأت من شغف بالتفصيل والخياطة اليدوي، وكبرت لحد ما بقت وجهة لكل وحدة بتدور على قطعة مميزة لمناسبة تستاهل — من فستان السهرة لفستان الفرح.",
+    about_story_body: "حبيبه موسي بدأت من شغف بالتفصيل والخياطة اليدوي، وكبرت لحد ما بقت وجهة لكل وحدة بتدور على قطعة مميزة لمناسبة تستاهل — من فستان السهرة لفستان الفرح.",
     about_values_title: "بنتميز بإيه",
     about_value1_title: "شغل إيد",
     about_value1_body: "كل قطعة بتتفصل بإيد وبعناية، من اختيار القماش لحد آخر تفصيلة.",
@@ -232,7 +247,7 @@ const I18N = {
     faq_q1: "القطعة بكام؟",
     faq_a1: "السعر بيختلف حسب التصميم والقماش والتفاصيل. نطاق السعر التقريبي موجود جنب كل قطعة في الكولكشن، وبنأكد السعر النهائي بعد الاستشارة.",
     faq_q2: "التنفيذ بياخد قد إيه؟",
-    faq_a2: "غالبًا من ٢ لـ ٤ أسابيع من تأكيد الطلب، وممكن ياخد أكتر شوية حسب صعوبة التصميم أو الموسم.",
+    faq_a2: "غالبًا من أسبوع لأسبوعين من تأكيد الطلب، وممكن ياخد أكتر شوية حسب صعوبة التصميم أو الموسم.",
     faq_q3: "لازم عربون؟",
     faq_a3: "نموذج الطلب في الموقع مفيهوش أي دفع — ده مجرد استفسار أولي. بنتفق على تفاصيل الدفع معاكِ مباشرة وقت الاستشارة.",
     faq_q4: "ينفع نظبط المقاس بعد الطلب؟",
@@ -274,7 +289,7 @@ const I18N = {
     nav_collection: "Collection",
     nav_how: "How It Works",
     nav_contact: "Contact",
-    brand_suffix: "Couture",
+    brand_suffix: "",
 
     hero_eyebrow: "Made to order — Alexandria, Egypt",
     hero_title_html: "Every piece <em>begins</em><br/>with a request, not a rack.",
@@ -283,7 +298,7 @@ const I18N = {
     spec_process_label: "Process",
     spec_process_value: "Request → Consultation → Fitting → Delivery",
     spec_turnaround_label: "Turnaround",
-    spec_turnaround_value: "Typically 2–4 weeks",
+    spec_turnaround_value: "Typically 1–2 weeks",
     spec_reach_label: "Reach us",
     spec_reach_value: "By request form or WhatsApp",
 
@@ -294,7 +309,7 @@ const I18N = {
     search_placeholder: "Search for a piece...",
     empty_state: "New pieces are being added to the atelier — check back soon.",
     empty_state_error: "Unable to load the collection right now. Please check back shortly.",
-    piece_category_fallback: "Couture",
+    piece_category_fallback: "Piece",
 
     how_eyebrow: "How It Works",
     how_title: "From Request to Reveal",
@@ -307,7 +322,7 @@ const I18N = {
     step4_title: "4. Delivery",
     step4_desc: "Your piece, ready to collect or ship",
 
-    footer_tagline: "Habiba Mousa Couture — bespoke pieces, made to order.",
+    footer_tagline: "Habiba Mousa — bespoke pieces, made to order.",
     footer_contact_prefix: "Prefer to reach us directly?",
     footer_whatsapp: "Message on WhatsApp",
     footer_staff: "Staff Login",
@@ -325,12 +340,16 @@ const I18N = {
     submit_error: "Something went wrong sending your request. Please try again or reach us on WhatsApp.",
 
     admin_eyebrow: "Staff Access",
-    admin_brand: "Habiba Mousa Couture",
+    admin_brand: "Habiba Mousa",
     admin_email: "Email",
     admin_password: "Password",
     admin_signin: "Sign In",
     admin_signin_loading: "Signing in...",
     admin_signin_fail: "Sign in failed — check your email and password.",
+    admin_forgot_password: "Forgot password?",
+    admin_forgot_password_need_email: "Type your email above first, then click here.",
+    admin_forgot_password_sent: "We've sent a password reset link to your email.",
+    admin_forgot_password_error: "Couldn't send the reset link. Please try again.",
     admin_no_access: "This account isn't set up for dashboard access yet. Ask an admin to add you under Staff.",
     admin_verify_fail: "Couldn't verify access. Try again.",
 
@@ -339,6 +358,13 @@ const I18N = {
     admin_nav_collections: "Collections",
     admin_nav_settings: "Settings",
     admin_nav_staff: "Staff",
+    admin_nav_activity: "Activity",
+    admin_activity_title: "Activity Log",
+    admin_activity_empty: "No activity yet.",
+    admin_th_action: "Action",
+    admin_th_target: "Details",
+    admin_th_by: "By",
+    admin_th_when: "When",
     admin_signout: "Sign Out →",
     admin_requests_title: "Inquiries & Requests",
     admin_th_client: "Client",
@@ -453,6 +479,10 @@ const I18N = {
 
     // Request form — address & material
     label_address: "Address (Governorate, City, Street)",
+    share_location_btn: "📍 Share my location",
+    share_location_loading: "Getting your location...",
+    share_location_success: "Got it! Your location will be sent with the request.",
+    share_location_error: "Couldn't get your location. Try again or just type the address.",
     label_material: "Preferred Material",
     material_silk: "Silk",
     material_chiffon: "Chiffon",
@@ -468,10 +498,10 @@ const I18N = {
 
     // About page
     about_eyebrow: "Our Story",
-    about_title: "Habiba Mousa Couture",
+    about_title: "Habiba Mousa",
     about_intro: "A small atelier built on the belief that every piece should be made for one woman, not a rack. We work with you step by step — from the first idea to the last stitch — to give you a look that's entirely yours.",
     about_story_title: "How it started",
-    about_story_body: "Habiba Mousa Couture began as a passion for traditional Khaleeji tailoring and handcrafted detail, and grew into a destination for anyone seeking an exceptional piece for an occasion worth it — from evening gowns to bridal wear.",
+    about_story_body: "Habiba Mousa began as a passion for traditional Khaleeji tailoring and handcrafted detail, and grew into a destination for anyone seeking an exceptional piece for an occasion worth it — from evening gowns to bridal wear.",
     about_values_title: "What sets us apart",
     about_value1_title: "Handcrafted detail",
     about_value1_body: "Every piece is tailored by hand with care, from fabric selection to the final finish.",
@@ -486,7 +516,7 @@ const I18N = {
     faq_q1: "How much does a piece cost?",
     faq_a1: "Price depends on the design, fabric, and detail work. An approximate range is shown with each piece in the collection, and we confirm the final price after consultation.",
     faq_q2: "How long does it take?",
-    faq_a2: "Typically 2–4 weeks from confirming the request, sometimes longer depending on the design's complexity or the season.",
+    faq_a2: "Typically 1–2 weeks from confirming the request, sometimes longer depending on the design's complexity or the season.",
     faq_q3: "Is a deposit required?",
     faq_a3: "The request form on this site involves no payment — it's an initial inquiry only. Payment details are arranged directly with you during consultation.",
     faq_q4: "Can measurements be adjusted after the request?",

@@ -1,4 +1,4 @@
-# Habiba Mousa Couture — Reservation & Inquiry Site
+# Habiba Mousa — Reservation & Inquiry Site
 
 A two-part site:
 - **`index.html`** — public gallery, a product detail view (with image carousel), and a "Request This Design" form (writes to Firestore, no payment). Clients can optionally create an account to track the status of their own requests ("My Requests").
@@ -111,6 +111,7 @@ You'll get a live URL like `habiba-mousa-couture.web.app` — that's what you li
 | clientName | string | |
 | clientPhone | string | |
 | clientAddress | string | optional; governorate/city/street in Egypt |
+| clientLocationUrl | string \| null | optional Google Maps link (`?q=lat,lng`) from the client's own device via the "Share my location" button — no typing needed |
 | material | string | one of the fixed material keys (`silk`, `chiffon`, `satin`, `lace`, `cotton`, `crepe`, `tulle`, `organza`, `velvet`, `brocade`, `unspecified`) chosen from a dropdown — no free typing |
 | productId / productName / productCode | string | which piece they're asking about |
 | preferredDate | string | optional |
@@ -136,10 +137,19 @@ You'll get a live URL like `habiba-mousa-couture.web.app` — that's what you li
 | email | string | |
 | role | string | `admin` or `staff` |
 
+**`activityLog`** (append-only; any staff can add/read, nothing can be edited or deleted)
+| field | type | notes |
+|---|---|---|
+| action | string | e.g. "Deleted request", "Updated product", "Invited staff member" |
+| target | string | free text — whatever identifies what was acted on (name, status change, etc.) |
+| actor | string | the signed-in staff member's name or email at the time |
+| createdAt | timestamp | server-set |
+
 **`settings/site`** (singleton doc, edited from Admin → Settings)
 | field | type | notes |
 |---|---|---|
 | heroTagline_ar / heroTagline_en | string | overrides the homepage hero subtitle |
+| turnaround_ar / turnaround_en | string | overrides the "turnaround time" spec on the homepage |
 | aboutIntro_ar / aboutIntro_en | string | overrides the About page intro paragraph |
 | aboutStory_ar / aboutStory_en | string | overrides the About page story paragraph |
 | contactPhone | string | |

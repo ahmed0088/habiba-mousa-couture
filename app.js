@@ -7,7 +7,6 @@
 const galleryGrid = document.getElementById("galleryGrid");
 const emptyState = document.getElementById("emptyState");
 const filterRow = document.getElementById("filterRow");
-const collectionRow = document.getElementById("collectionRow");
 const productSearchInput = document.getElementById("productSearch");
 
 const modalBackdrop = document.getElementById("modalBackdrop");
@@ -17,6 +16,13 @@ const requestForm = document.getElementById("requestForm");
 const productIdField = document.getElementById("productId");
 const formStatus = document.getElementById("formStatus");
 const submitBtn = document.getElementById("submitBtn");
+
+// If a price was typed as bare digits (no currency letters), assume EGP so it's
+// never shown as an unexplained bare number like "800".
+function formatPrice(value) {
+  if (!value) return value;
+  return /^[\d,.\s–-]+$/.test(value) ? `${value} EGP` : value;
+}
 
 const detailView = document.getElementById("detailView");
 const requestView = document.getElementById("requestView");
@@ -129,9 +135,34 @@ function showRequestView() {
   productIdField.value = currentProduct.id;
   formStatus.className = "form-status";
   formStatus.textContent = "";
+  document.getElementById("clientLocationUrl").value = "";
+  document.getElementById("shareLocationStatus").textContent = "";
 }
 
 detailRequestBtn.addEventListener("click", showRequestView);
+
+document.getElementById("shareLocationBtn")?.addEventListener("click", () => {
+  const btn = document.getElementById("shareLocationBtn");
+  const status = document.getElementById("shareLocationStatus");
+  if (!navigator.geolocation) {
+    status.textContent = t("share_location_error");
+    return;
+  }
+  btn.disabled = true;
+  status.textContent = t("share_location_loading");
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      const { latitude, longitude } = pos.coords;
+      document.getElementById("clientLocationUrl").value = `https://maps.google.com/?q=${latitude},${longitude}`;
+      status.textContent = t("share_location_success");
+      btn.disabled = false;
+    },
+    () => {
+      status.textContent = t("share_location_error");
+      btn.disabled = false;
+    }
+  );
+});
 backToDetailBtn.addEventListener("click", showDetailView);
 
 function openModal(product) {
@@ -141,10 +172,10 @@ function openModal(product) {
   detailCategory.textContent = product.category || t("piece_category_fallback");
   detailName.textContent = product.name;
   if (product.salePrice) {
-    detailPrice.innerHTML = `<span class="piece-price-original">${escapeHtml(product.priceRange || "")}</span><span class="piece-price-sale">${escapeHtml(product.salePrice)}</span>`;
+    detailPrice.innerHTML = `<span class="piece-price-original">${escapeHtml(formatPrice(product.priceRange) || "")}</span><span class="piece-price-sale">${escapeHtml(formatPrice(product.salePrice))}</span>`;
     detailPrice.style.display = "block";
   } else {
-    detailPrice.textContent = product.priceRange || "";
+    detailPrice.textContent = formatPrice(product.priceRange) || "";
     detailPrice.style.display = product.priceRange ? "block" : "none";
   }
   detailDescription.textContent = product.description || "";
@@ -181,47 +212,47 @@ function getCollectionFilteredProducts() {
     : allProducts.filter(p => p.collectionId === activeCollection);
 }
 
-function renderCollectionFilters() {
-  if (allCollections.length === 0) {
-    collectionRow.style.display = "none";
-    return;
-  }
-  collectionRow.style.display = "flex";
-  collectionRow.innerHTML = "";
-  const items = [{ id: "all", name: null }, ...allCollections];
-  items.forEach((c) => {
+function refreshCollectionAndCategoryUI() {
+  const categories = [...new Set(getCollectionFilteredProducts().map(p => p.category).filter(Boolean))];
+  renderCombinedFilters(categories);
+  renderGallery();
+}
+
+// Collections and categories are two different taxonomies, but showing them as two
+// separate chip rows (each with its own "All") read as cluttered/confusing, so they're
+// combined into one row: a single "All" resets both, then collection chips, then category chips.
+function renderCombinedFilters(categories) {
+  filterRow.innerHTML = "";
+
+  const allBtn = document.createElement("button");
+  allBtn.className = "filter-chip" + (activeCollection === "all" && activeFilter === "all" ? " active" : "");
+  allBtn.textContent = t("filter_all");
+  allBtn.addEventListener("click", () => {
+    activeCollection = "all";
+    activeFilter = "all";
+    refreshCollectionAndCategoryUI();
+  });
+  filterRow.appendChild(allBtn);
+
+  allCollections.forEach((c) => {
     const btn = document.createElement("button");
     btn.className = "filter-chip" + (c.id === activeCollection ? " active" : "");
-    btn.textContent = c.id === "all" ? t("filter_all_collections") : c.name;
-    btn.dataset.collection = c.id;
+    btn.textContent = c.name;
     btn.addEventListener("click", () => {
       activeCollection = c.id;
       activeFilter = "all";
       refreshCollectionAndCategoryUI();
     });
-    collectionRow.appendChild(btn);
+    filterRow.appendChild(btn);
   });
-}
 
-function refreshCollectionAndCategoryUI() {
-  renderCollectionFilters();
-  const categories = [...new Set(getCollectionFilteredProducts().map(p => p.category).filter(Boolean))];
-  renderFilters(categories);
-  renderGallery();
-}
-
-function renderFilters(categories) {
-  filterRow.innerHTML = "";
-  const cats = ["all", ...categories];
-  cats.forEach((cat) => {
+  categories.forEach((cat) => {
     const btn = document.createElement("button");
     btn.className = "filter-chip" + (cat === activeFilter ? " active" : "");
-    btn.textContent = cat === "all" ? t("filter_all") : cat;
-    btn.dataset.filter = cat;
+    btn.textContent = cat;
     btn.addEventListener("click", () => {
       activeFilter = cat;
-      renderFilters(categories);
-      renderGallery();
+      refreshCollectionAndCategoryUI();
     });
     filterRow.appendChild(btn);
   });
@@ -260,8 +291,8 @@ function renderGallery() {
     card.className = "piece-card";
     const onSale = Boolean(product.salePrice);
     const priceHtml = onSale
-      ? `<p class="piece-price"><span class="piece-price-original">${escapeHtml(product.priceRange || "")}</span><span class="piece-price-sale">${escapeHtml(product.salePrice)}</span></p>`
-      : (product.priceRange ? `<p class="piece-price">${escapeHtml(product.priceRange)}</p>` : "");
+      ? `<p class="piece-price"><span class="piece-price-original">${escapeHtml(formatPrice(product.priceRange) || "")}</span><span class="piece-price-sale">${escapeHtml(formatPrice(product.salePrice))}</span></p>`
+      : (product.priceRange ? `<p class="piece-price">${escapeHtml(formatPrice(product.priceRange))}</p>` : "");
     card.innerHTML = `
       <div class="piece-media">
         ${onSale ? `<span class="sale-badge">${t("sale_badge")}</span>` : ""}
@@ -277,9 +308,25 @@ function renderGallery() {
       </div>
     `;
     card.addEventListener("click", () => openModal(product));
+    card.classList.add("reveal-hidden");
     galleryGrid.appendChild(card);
+    galleryRevealObserver.observe(card);
   });
 }
+
+// Cards fade/slide into place as they scroll into view rather than all appearing at once.
+const galleryRevealObserver = new IntersectionObserver(
+  (entries, observer) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) {
+        entry.target.classList.remove("reveal-hidden");
+        entry.target.classList.add("reveal-visible");
+        observer.unobserve(entry.target);
+      }
+    });
+  },
+  { threshold: 0.1 }
+);
 
 function escapeHtml(str) {
   const div = document.createElement("div");
@@ -338,6 +385,7 @@ requestForm.addEventListener("submit", async (e) => {
     clientName: document.getElementById("clientName").value.trim(),
     clientPhone: document.getElementById("clientPhone").value.trim(),
     clientAddress: document.getElementById("clientAddress").value.trim(),
+    clientLocationUrl: document.getElementById("clientLocationUrl").value || null,
     material: document.getElementById("clientMaterial").value,
     preferredDate: document.getElementById("preferredDate").value || null,
     notes: document.getElementById("clientNotes").value.trim(),

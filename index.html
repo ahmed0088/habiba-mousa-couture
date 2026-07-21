@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>حبيبه موسي كوتور — طلبات تصميم حسب الطلب</title>
-<meta name="description" content="قطع كوتور مصممة حسب الطلب. استعرضي المجموعة وأرسلي طلب تصميم." />
+<title>حبيبه موسي — طلبات تصميم حسب الطلب</title>
+<meta name="description" content="قطع مصممة حسب الطلب. استعرضي المجموعة وأرسلي طلب تصميم." />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=El+Messiri:wght@400;500;600;700&family=Jost:wght@400;500;600&family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css" />
@@ -13,7 +13,7 @@
 
 <header class="site-header">
   <div class="container">
-    <a href="index.html" class="brand">Habiba Mousa <em data-i18n="brand_suffix">كوتور</em></a>
+    <a href="index.html" class="brand">Habiba Mousa <em data-i18n="brand_suffix"></em></a>
     <button type="button" class="nav-toggle" id="navToggle" aria-label="Menu" data-i18n-aria-label="nav_menu_label" aria-expanded="false">
       <span></span><span></span><span></span>
     </button>
@@ -51,7 +51,7 @@
       <dt data-i18n="spec_process_label">المراحل</dt>
       <dd data-i18n="spec_process_value">الطلب ← الاستشارة ← القياس ← التسليم</dd>
       <dt data-i18n="spec_turnaround_label">المدة</dt>
-      <dd data-i18n="spec_turnaround_value">عادةً من ٢ إلى ٤ أسابيع</dd>
+      <dd id="turnaroundText" data-i18n="spec_turnaround_value">غالبًا من أسبوع لأسبوعين</dd>
       <dt data-i18n="spec_reach_label">تواصلي معنا</dt>
       <dd data-i18n="spec_reach_value">عبر نموذج الطلب أو واتساب</dd>
     </dl>
@@ -62,9 +62,6 @@
   <div class="container">
     <div class="field" style="max-width:320px; margin-bottom: var(--space-3);">
       <input type="text" id="productSearch" data-i18n-placeholder="search_placeholder" placeholder="دوّري على قطعة..." />
-    </div>
-    <div class="filter-row" id="collectionRow" style="display:none; margin-bottom: var(--space-2);">
-      <button class="filter-chip active" data-collection="all" data-i18n="filter_all_collections">كل الكولكشنات</button>
     </div>
     <div class="section-head">
       <div>
@@ -102,7 +99,7 @@
 
 <footer class="site-footer">
   <div class="container">
-    <p data-i18n="footer_tagline">حبيبه موسي كوتور — قطع مفصلة خصيصي ليكِ، حسب الطلب.</p>
+    <p data-i18n="footer_tagline">حبيبه موسي — قطع مفصلة خصيصي ليكِ، حسب الطلب.</p>
     <p><span data-i18n="footer_contact_prefix">تفضلين التواصل المباشر؟</span> <a href="https://wa.me/000000000000" target="_blank" rel="noopener" data-i18n="footer_whatsapp">راسلينا على واتساب</a></p>
     <nav class="footer-links">
       <a href="about.html" data-i18n="nav_about">قصتنا</a>
@@ -153,6 +150,9 @@
         <div class="field">
           <label for="clientAddress" data-i18n="label_address">العنوان (المحافظة، المدينة، الشارع)</label>
           <input type="text" id="clientAddress" />
+          <button type="button" class="btn-link" id="shareLocationBtn" data-i18n="share_location_btn">📍 شاركي موقعك</button>
+          <span class="form-note" id="shareLocationStatus"></span>
+          <input type="hidden" id="clientLocationUrl" />
         </div>
         <div class="field">
           <label for="clientMaterial" data-i18n="label_material">القماش المفضل</label>

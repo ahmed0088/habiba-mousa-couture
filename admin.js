@@ -39,6 +39,24 @@ loginForm.addEventListener("submit", async (e) => {
 
 logoutBtn.addEventListener("click", () => auth.signOut());
 
+document.getElementById("forgotPasswordBtn")?.addEventListener("click", async () => {
+  const email = document.getElementById("loginEmail").value.trim();
+  if (!email) {
+    loginStatus.className = "form-status error";
+    loginStatus.textContent = typeof t === "function" ? t("admin_forgot_password_need_email") : "Type your email above first, then click here.";
+    return;
+  }
+  try {
+    await auth.sendPasswordResetEmail(email);
+    loginStatus.className = "form-status success";
+    loginStatus.textContent = typeof t === "function" ? t("admin_forgot_password_sent") : "We've sent a password reset link to your email.";
+  } catch (err) {
+    console.error("Failed to send password reset email:", err);
+    loginStatus.className = "form-status error";
+    loginStatus.textContent = (typeof t === "function" ? t("admin_forgot_password_error") : "Couldn't send the reset link. Please try again.") + errSuffix(err);
+  }
+});
+
 auth.onAuthStateChanged(async (user) => {
   if (!user) {
     currentStaff = null;
@@ -68,8 +86,10 @@ auth.onAuthStateChanged(async (user) => {
     loadSettings();
     if (currentStaff.role === "admin") {
       loadStaff();
+      loadActivityLog();
     } else {
       document.querySelector('.admin-nav button[data-view="staff"]').style.display = "none";
+      document.querySelector('.admin-nav button[data-view="activity"]').style.display = "none";
     }
   } catch (err) {
     console.error("Staff lookup failed:", err);
@@ -85,11 +105,44 @@ document.querySelectorAll(".admin-nav button[data-view]").forEach((btn) => {
   btn.addEventListener("click", () => {
     document.querySelectorAll(".admin-nav button[data-view]").forEach(b => b.classList.remove("active"));
     btn.classList.add("active");
-    ["requests", "products", "collections", "settings", "staff"].forEach((v) => {
+    ["requests", "products", "collections", "settings", "staff", "activity"].forEach((v) => {
       document.getElementById(`view-${v}`).style.display = v === btn.dataset.view ? "block" : "none";
     });
   });
 });
+
+function logActivity(action, target) {
+  db.collection("activityLog").add({
+    action,
+    target: target || "",
+    actor: (currentStaff && (currentStaff.name || currentStaff.email)) || "unknown",
+    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+  }).catch((err) => console.error("Failed to log activity:", err));
+}
+
+function loadActivityLog() {
+  db.collection("activityLog").orderBy("createdAt", "desc").limit(100).onSnapshot((snapshot) => {
+    const tbody = document.getElementById("activityTableBody");
+    const empty = document.getElementById("activityEmpty");
+    tbody.innerHTML = "";
+    if (snapshot.empty) {
+      empty.style.display = "block";
+      return;
+    }
+    empty.style.display = "none";
+    snapshot.forEach((doc) => {
+      const a = doc.data();
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td data-label="Action">${escapeHtml(a.action)}</td>
+        <td data-label="Details">${escapeHtml(a.target)}</td>
+        <td data-label="By">${escapeHtml(a.actor)}</td>
+        <td data-label="When">${formatDate(a.createdAt)}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }, (err) => console.error("Activity log listener error:", err));
+}
 
 function errSuffix(err) {
   return err && err.code ? ` (${err.code})` : "";
@@ -137,6 +190,7 @@ function openRequestDetail(id) {
     detailRow("Client", r.clientName),
     detailRow("Phone", r.clientPhone),
     detailRow("Address", r.clientAddress),
+    r.clientLocationUrl ? `<p style="margin:0 0 10px;"><strong>Location:</strong><br><a href="${escapeHtml(r.clientLocationUrl)}" target="_blank" rel="noopener">${escapeHtml(r.clientLocationUrl)}</a></p>` : "",
     detailRow("Piece", r.productName + (r.productCode ? ` (${r.productCode})` : "")),
     detailRow("Material", MATERIAL_LABELS[r.material] || r.material),
     detailRow("Needed by", r.preferredDate),
@@ -182,16 +236,19 @@ function renderRequestsTable() {
     ).join("");
 
     tr.innerHTML = `
-      <td>${escapeHtml(r.clientName)}</td>
-      <td>${escapeHtml(r.productName || "—")}${r.productCode ? ` <span style="color:var(--text-faint); font-size:12px;">(${escapeHtml(r.productCode)})</span>` : ""}</td>
-      <td>${escapeHtml(r.clientPhone)}</td>
-      <td style="max-width:180px;">${escapeHtml(r.clientAddress || "—")}</td>
-      <td>${escapeHtml(MATERIAL_LABELS[r.material] || "—")}</td>
-      <td>${escapeHtml(r.preferredDate || "—")}</td>
-      <td style="max-width:220px;">${escapeHtml(r.notes || "—")}</td>
-      <td><select class="status-select" data-id="${id}">${optionsHtml}</select></td>
-      <td>${formatDate(r.createdAt)}</td>
-      <td><button class="icon-btn" data-view-request="${id}">View</button></td>
+      <td data-label="Client">${escapeHtml(r.clientName)}</td>
+      <td data-label="Piece">${escapeHtml(r.productName || "—")}${r.productCode ? ` <span style="color:var(--text-faint); font-size:12px;">(${escapeHtml(r.productCode)})</span>` : ""}</td>
+      <td data-label="Contact">${escapeHtml(r.clientPhone)}</td>
+      <td data-label="Address" style="max-width:180px;">${escapeHtml(r.clientAddress || "—")}</td>
+      <td data-label="Material">${escapeHtml(MATERIAL_LABELS[r.material] || "—")}</td>
+      <td data-label="Needed By">${escapeHtml(r.preferredDate || "—")}</td>
+      <td data-label="Notes" style="max-width:220px;">${escapeHtml(r.notes || "—")}</td>
+      <td data-label="Status"><select class="status-select" data-id="${id}">${optionsHtml}</select></td>
+      <td data-label="Received">${formatDate(r.createdAt)}</td>
+      <td data-label="">
+        <button class="icon-btn" data-view-request="${id}">View</button>
+        <button class="icon-btn danger" data-delete-request="${id}">Delete</button>
+      </td>
     `;
     tbody.appendChild(tr);
   });
@@ -200,10 +257,25 @@ function renderRequestsTable() {
     btn.addEventListener("click", () => openRequestDetail(btn.dataset.viewRequest));
   });
 
+  tbody.querySelectorAll("[data-delete-request]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      if (!confirm("Delete this request permanently? This can't be undone.")) return;
+      const r = requestsById[btn.dataset.deleteRequest];
+      try {
+        await db.collection("requests").doc(btn.dataset.deleteRequest).delete();
+        logActivity("Deleted request", r ? r.clientName : "");
+      } catch (err) {
+        console.error("Failed to delete request:", err);
+        alert("Couldn't delete this request. Please try again." + errSuffix(err));
+      }
+    });
+  });
+
   tbody.querySelectorAll(".status-select").forEach((sel) => {
     sel.addEventListener("change", async () => {
       try {
         await db.collection("requests").doc(sel.dataset.id).update({ status: sel.value });
+        logActivity("Changed request status", `${requestsById[sel.dataset.id] ? requestsById[sel.dataset.id].clientName : ""} → ${sel.value}`);
       } catch (err) {
         console.error("Failed to update status:", err);
         alert("Couldn't update status. Please try again." + errSuffix(err));
@@ -286,9 +358,11 @@ saveProductBtn.addEventListener("click", async () => {
   try {
     if (productDocId.value) {
       await db.collection("products").doc(productDocId.value).update(data);
+      logActivity("Updated product", data.name);
     } else {
       data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
       await db.collection("products").add(data);
+      logActivity("Created product", data.name);
     }
     productFormCard.style.display = "none";
   } catch (err) {
@@ -339,12 +413,12 @@ function renderProductsTable() {
   filtered.forEach(([id, p]) => {
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td>${escapeHtml(p.productCode || "—")}</td>
-      <td>${escapeHtml(p.name)}</td>
-      <td>${escapeHtml(p.category || "—")}</td>
-      <td>${p.salePrice ? `${escapeHtml(p.priceRange || "—")} → <strong>${escapeHtml(p.salePrice)}</strong> (Sale)` : escapeHtml(p.priceRange || "—")}</td>
-      <td><span class="status-pill status-${p.status === "active" ? "confirmed" : "delivered"}">${escapeHtml(p.status)}</span></td>
-      <td>
+      <td data-label="Code">${escapeHtml(p.productCode || "—")}</td>
+      <td data-label="Piece">${escapeHtml(p.name)}</td>
+      <td data-label="Category">${escapeHtml(p.category || "—")}</td>
+      <td data-label="Price">${p.salePrice ? `${escapeHtml(p.priceRange || "—")} → <strong>${escapeHtml(p.salePrice)}</strong> (Sale)` : escapeHtml(p.priceRange || "—")}</td>
+      <td data-label="Status"><span class="status-pill status-${p.status === "active" ? "confirmed" : "delivered"}">${escapeHtml(p.status)}</span></td>
+      <td data-label="">
         <button class="icon-btn" data-edit="${id}">Edit</button>
         <button class="icon-btn danger" data-delete="${id}">Delete</button>
       </td>
@@ -376,8 +450,10 @@ function renderProductsTable() {
   tbody.querySelectorAll("[data-delete]").forEach((btn) => {
     btn.addEventListener("click", async () => {
       if (!confirm("Remove this piece from the catalog? This can't be undone.")) return;
+      const entry = allProductsAdmin.find(([id]) => id === btn.dataset.delete);
       try {
         await db.collection("products").doc(btn.dataset.delete).delete();
+        logActivity("Deleted product", entry ? entry[1].name : "");
       } catch (err) {
         console.error("Failed to delete product:", err);
         alert("Couldn't delete this piece. Please try again." + errSuffix(err));
@@ -433,6 +509,7 @@ saveCollectionBtn.addEventListener("click", async () => {
       status: "active",
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
+    logActivity("Created collection", name);
     collectionFormCard.style.display = "none";
   } catch (err) {
     console.error("Failed to save collection:", err);
@@ -471,9 +548,9 @@ function loadCollections() {
     allCollections.forEach((c) => {
       const tr = document.createElement("tr");
       tr.innerHTML = `
-        <td>${escapeHtml(c.name)}</td>
-        <td><span class="status-pill status-${c.status === "active" ? "confirmed" : "delivered"}">${escapeHtml(c.status)}</span></td>
-        <td>
+        <td data-label="Name">${escapeHtml(c.name)}</td>
+        <td data-label="Status"><span class="status-pill status-${c.status === "active" ? "confirmed" : "delivered"}">${escapeHtml(c.status)}</span></td>
+        <td data-label="">
           <button class="icon-btn" data-toggle="${c.id}" data-next="${c.status === "active" ? "archived" : "active"}">${c.status === "active" ? "Archive" : "Restore"}</button>
           <button class="icon-btn danger" data-delete-collection="${c.id}">Delete</button>
         </td>
@@ -485,6 +562,7 @@ function loadCollections() {
       btn.addEventListener("click", async () => {
         try {
           await db.collection("collections").doc(btn.dataset.toggle).update({ status: btn.dataset.next });
+          logActivity("Changed collection status", btn.dataset.next);
         } catch (err) {
           console.error("Failed to update collection status:", err);
           alert("Couldn't update this collection. Please try again." + errSuffix(err));
@@ -495,8 +573,10 @@ function loadCollections() {
     tbody.querySelectorAll("[data-delete-collection]").forEach((btn) => {
       btn.addEventListener("click", async () => {
         if (!confirm("Delete this collection? Products keep their existing tag but it'll no longer show as a filter.")) return;
+        const collection = allCollections.find(c => c.id === btn.dataset.deleteCollection);
         try {
           await db.collection("collections").doc(btn.dataset.deleteCollection).delete();
+          logActivity("Deleted collection", collection ? collection.name : "");
         } catch (err) {
           console.error("Failed to delete collection:", err);
           alert("Couldn't delete this collection. Please try again." + errSuffix(err));
@@ -514,6 +594,8 @@ const settingsFormStatus = document.getElementById("settingsFormStatus");
 const SETTINGS_FIELDS = {
   setHeroTaglineAr: "heroTagline_ar",
   setHeroTaglineEn: "heroTagline_en",
+  setTurnaroundAr: "turnaround_ar",
+  setTurnaroundEn: "turnaround_en",
   setAboutIntroAr: "aboutIntro_ar",
   setAboutIntroEn: "aboutIntro_en",
   setAboutStoryAr: "aboutStory_ar",
@@ -555,6 +637,7 @@ saveSettingsBtn.addEventListener("click", async () => {
   settingsFormStatus.className = "form-status";
   try {
     await db.collection("settings").doc("site").set(data, { merge: true });
+    logActivity("Updated site settings", "");
     settingsFormStatus.className = "form-status success";
     settingsFormStatus.textContent = "Settings saved.";
   } catch (err) {
@@ -586,24 +669,39 @@ function resetStaffForm() {
 
 cancelStaffEditBtn?.addEventListener("click", resetStaffForm);
 
+function populateStaffEmailOptions(emails) {
+  const datalist = document.getElementById("staffEmailOptions");
+  if (!datalist) return;
+  datalist.innerHTML = [...new Set(emails.filter(Boolean))]
+    .map(email => `<option value="${escapeHtml(email)}"></option>`)
+    .join("");
+}
+
 function loadStaff() {
   db.collection("staff").onSnapshot((snapshot) => {
     const tbody = document.getElementById("staffTableBody");
     tbody.innerHTML = "";
+    const knownEmails = [];
     snapshot.forEach((doc) => {
       const s = doc.data();
+      knownEmails.push(s.email);
       const tr = document.createElement("tr");
       tr.innerHTML = `
-        <td>${escapeHtml(s.name || "—")}</td>
-        <td>${escapeHtml(s.email || "—")}</td>
-        <td>${escapeHtml(s.role || "staff")}</td>
-        <td>
+        <td data-label="Name">${escapeHtml(s.name || "—")}</td>
+        <td data-label="Email">${escapeHtml(s.email || "—")}</td>
+        <td data-label="Role">${escapeHtml(s.role || "staff")}</td>
+        <td data-label="">
           <button class="icon-btn" data-edit-staff="${doc.id}" data-name="${escapeHtml(s.name || "")}" data-email="${escapeHtml(s.email || "")}" data-role="${escapeHtml(s.role || "staff")}">Edit</button>
           ${doc.id === currentStaff.uid ? "" : `<button class="icon-btn danger" data-remove="${doc.id}">Remove</button>`}
         </td>
       `;
       tbody.appendChild(tr);
     });
+
+    populateStaffEmailOptions(knownEmails);
+    db.collection("staff_pending").get().then((pendingSnap) => {
+      populateStaffEmailOptions([...knownEmails, ...pendingSnap.docs.map(d => d.data().email)]);
+    }).catch((err) => console.error("Failed to load pending staff emails:", err));
 
     tbody.querySelectorAll("[data-edit-staff]").forEach((btn) => {
       btn.addEventListener("click", () => {
@@ -624,6 +722,7 @@ function loadStaff() {
         if (!confirm("Remove this person's dashboard access?")) return;
         try {
           await db.collection("staff").doc(btn.dataset.remove).delete();
+          logActivity("Removed staff access", btn.dataset.remove);
         } catch (err) {
           console.error("Failed to remove staff member:", err);
           alert("Couldn't remove this person. Please try again." + errSuffix(err));
@@ -641,6 +740,7 @@ addStaffBtn?.addEventListener("click", async () => {
   if (staffEditUid.value) {
     try {
       await db.collection("staff").doc(staffEditUid.value).update({ name, role });
+      logActivity("Updated staff member", `${name} (${role})`);
       resetStaffForm();
     } catch (err) {
       console.error("Failed to update staff member:", err);
@@ -669,6 +769,7 @@ addStaffBtn?.addEventListener("click", async () => {
       email, name, role,
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
+    logActivity("Invited staff member", email);
     document.getElementById("staffEmail").value = "";
     document.getElementById("staffName").value = "";
   } catch (err) {
