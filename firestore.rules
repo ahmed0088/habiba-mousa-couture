@@ -18,10 +18,26 @@ service cloud.firestore {
       allow write: if isStaff();
     }
 
-    // Anyone can submit a request; only staff can read/update the list
+    // Seasonal collections grouping products; same access shape as products
+    match /collections/{collectionId} {
+      allow read: if true;
+      allow write: if isStaff();
+    }
+
+    // Site-wide business settings (contact info, maps, deposit %, hero/about copy)
+    match /settings/{docId} {
+      allow read: if true;
+      allow write: if isStaff();
+    }
+
+    // Anyone can submit a request (optionally tied to their own account via clientUid);
+    // staff can read/update everything, a signed-in client can read only their own requests.
     match /requests/{requestId} {
-      allow create: if true;
-      allow read, update, delete: if isStaff();
+      allow create: if request.resource.data.clientUid == null
+                    || request.resource.data.clientUid == request.auth.uid;
+      allow read: if isStaff()
+                  || (request.auth != null && resource.data.clientUid == request.auth.uid);
+      allow update, delete: if isStaff();
     }
 
     // Staff roster — only admins can manage it, staff can read it

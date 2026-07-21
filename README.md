@@ -1,8 +1,9 @@
 # Habiba Mousa Couture — Reservation & Inquiry Site
 
 A two-part site:
-- **`index.html`** — public gallery + "Request This Design" form (writes to Firestore, no payment)
+- **`index.html`** — public gallery, a product detail view (with image carousel), and a "Request This Design" form (writes to Firestore, no payment). Clients can optionally create an account to track the status of their own requests ("My Requests").
 - **`admin.html`** — staff dashboard to manage the catalog and incoming requests
+- **`about.html` / `faq.html` / `contact.html` / `terms.html`** — static content pages, sharing the same header/footer/account controls as `index.html`
 
 No build step. Plain HTML/CSS/JS + Firebase (same approach as your other Firebase-based tools), so you can open it locally or drop it straight onto Firebase Hosting.
 
@@ -25,8 +26,11 @@ In the Firebase Console:
 Copy the contents of `firestore.rules` into **Firestore → Rules** in the console, and click Publish.
 This makes sure:
 - Anyone can browse products and submit a request (no login needed)
-- Only signed-in staff (listed in the `staff` collection) can view requests, manage products, or edit the catalog
+- A signed-in client can read (only) their own requests, tracked via `requests.clientUid`
+- Only signed-in staff (listed in the `staff` collection) can view/update all requests, manage products, or edit the catalog
 - Only `role: admin` staff can manage other staff
+
+Client accounts use the same Firebase Auth (Email/Password) provider as staff — no extra service to enable. A client account is just a regular Auth user with no matching `staff` doc, so it never gains dashboard access.
 
 ## 4. Create your first staff login (yourself)
 
@@ -50,7 +54,7 @@ Repeat steps 1–5 above for each new person — create their Auth login, then a
 
 Once signed in to `admin.html` → **Products** → **+ Add Piece**. Fields:
 - Name, category, price range, description
-- Image URL — for now, paste a hosted image link (e.g. upload to Firebase Storage and paste the URL, or any hosted image link). Direct image upload from the dashboard can be added as a next step if useful.
+- Image URLs — paste one hosted image link per line (e.g. Firebase Storage URLs, or any hosted image link). The first line is the cover image used in the gallery; all lines feed the image carousel on the public product detail view. Direct image upload from the dashboard can be added as a next step if useful.
 - Status `active` makes it visible on the public site immediately (it's a live listener, no refresh needed)
 
 ## 6. Deploy the site
@@ -75,7 +79,7 @@ You'll get a live URL like `habiba-mousa-couture.web.app` — that's what you li
 | name | string | |
 | category | string | e.g. Evening Gown, Abaya, Bridal |
 | description | string | |
-| priceRange | string | free text, e.g. "AED 1,800 – 2,600" |
+| priceRange | string | free text, e.g. "1,800 – 2,600 EGP" |
 | images | array of strings | image URLs |
 | status | string | `active` or `archived` |
 | createdAt | timestamp | server-set |
@@ -89,6 +93,7 @@ You'll get a live URL like `habiba-mousa-couture.web.app` — that's what you li
 | preferredDate | string | optional |
 | notes | string | |
 | status | string | `new` → `contacted` → `confirmed` → `in_progress` → `delivered` / `cancelled` |
+| clientUid | string \| null | set when submitted while signed in; lets that client read (only) this request back in "My Requests" |
 | createdAt | timestamp | server-set |
 
 **`staff`**
@@ -100,7 +105,7 @@ You'll get a live URL like `habiba-mousa-couture.web.app` — that's what you li
 | role | string | `admin` or `staff` |
 
 ## Natural next steps (not built yet, flag if you want these)
-- Direct image upload to Firebase Storage from the admin panel (right now it's a pasted URL)
+- Direct image upload to Firebase Storage from the admin panel (right now it's pasted URLs)
 - WhatsApp/email/Telegram auto-notification via a Cloud Function when a new request lands
-- Multi-image galleries per piece
-- Arabic-language toggle for the public site
+- Letting a client edit or cancel their own pending request from "My Requests" (currently view-only)
+- Real address/hours/contact details on `contact.html` (placeholder copy for now, same as the WhatsApp number)

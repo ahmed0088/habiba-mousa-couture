@@ -7,6 +7,7 @@
 const galleryGrid = document.getElementById("galleryGrid");
 const emptyState = document.getElementById("emptyState");
 const filterRow = document.getElementById("filterRow");
+const collectionRow = document.getElementById("collectionRow");
 
 const modalBackdrop = document.getElementById("modalBackdrop");
 const modalClose = document.getElementById("modalClose");
@@ -16,22 +17,143 @@ const productIdField = document.getElementById("productId");
 const formStatus = document.getElementById("formStatus");
 const submitBtn = document.getElementById("submitBtn");
 
-let allProducts = [];
-let activeFilter = "all";
-let loadFailed = false;
+const detailView = document.getElementById("detailView");
+const requestView = document.getElementById("requestView");
+const detailCarouselImage = document.getElementById("detailCarouselImage");
+const carouselPrev = document.getElementById("carouselPrev");
+const carouselNext = document.getElementById("carouselNext");
+const carouselDots = document.getElementById("carouselDots");
+const detailCategory = document.getElementById("detailCategory");
+const detailName = document.getElementById("detailName");
+const detailPrice = document.getElementById("detailPrice");
+const detailDescription = document.getElementById("detailDescription");
+const detailRequestBtn = document.getElementById("detailRequestBtn");
+const backToDetailBtn = document.getElementById("backToDetailBtn");
+const zoomHint = document.querySelector(".zoom-hint");
 
-function openModal(product) {
-  modalPieceName.textContent = product.name;
-  productIdField.value = product.id;
+const imageLightbox = document.getElementById("imageLightbox");
+const lightboxImage = document.getElementById("lightboxImage");
+const lightboxClose = document.getElementById("lightboxClose");
+const lightboxPrev = document.getElementById("lightboxPrev");
+const lightboxNext = document.getElementById("lightboxNext");
+
+let allProducts = [];
+let allCollections = [];
+let activeFilter = "all";
+let activeCollection = "all";
+let loadFailed = false;
+let currentProduct = null;
+let currentImageIndex = 0;
+
+function renderCarousel() {
+  const images = (currentProduct && currentProduct.images) || [];
+  if (images.length === 0) {
+    detailCarouselImage.innerHTML = `<span>${escapeHtml(currentProduct ? currentProduct.name : "")}</span>`;
+    detailCarouselImage.style.cursor = "default";
+    if (zoomHint) zoomHint.style.display = "none";
+  } else {
+    detailCarouselImage.innerHTML = `<img src="${escapeHtml(images[currentImageIndex])}" alt="${escapeHtml(currentProduct.name)}" />`;
+    detailCarouselImage.style.cursor = "zoom-in";
+    if (zoomHint) zoomHint.style.display = "flex";
+  }
+
+  const showNav = images.length > 1;
+  carouselPrev.style.display = showNav ? "flex" : "none";
+  carouselNext.style.display = showNav ? "flex" : "none";
+
+  carouselDots.innerHTML = "";
+  if (showNav) {
+    images.forEach((_, i) => {
+      const dot = document.createElement("span");
+      dot.className = "carousel-dot" + (i === currentImageIndex ? " active" : "");
+      carouselDots.appendChild(dot);
+    });
+  }
+
+  if (imageLightbox.classList.contains("open")) {
+    renderLightboxImage();
+  }
+}
+
+function stepImage(delta) {
+  const images = (currentProduct && currentProduct.images) || [];
+  if (images.length < 2) return;
+  currentImageIndex = (currentImageIndex + delta + images.length) % images.length;
+  renderCarousel();
+}
+
+carouselPrev.addEventListener("click", () => stepImage(-1));
+carouselNext.addEventListener("click", () => stepImage(1));
+
+// ---------- Image lightbox ----------
+
+function renderLightboxImage() {
+  const images = (currentProduct && currentProduct.images) || [];
+  if (images.length === 0) return;
+  lightboxImage.src = images[currentImageIndex];
+  lightboxImage.alt = currentProduct.name;
+  const showNav = images.length > 1;
+  lightboxPrev.style.display = showNav ? "flex" : "none";
+  lightboxNext.style.display = showNav ? "flex" : "none";
+}
+
+function openLightbox() {
+  const images = (currentProduct && currentProduct.images) || [];
+  if (images.length === 0) return;
+  renderLightboxImage();
+  imageLightbox.classList.add("open");
+}
+
+function closeLightbox() {
+  imageLightbox.classList.remove("open");
+}
+
+detailCarouselImage.addEventListener("click", openLightbox);
+lightboxClose.addEventListener("click", closeLightbox);
+imageLightbox.addEventListener("click", (e) => {
+  if (e.target === imageLightbox) closeLightbox();
+});
+lightboxPrev.addEventListener("click", () => stepImage(-1));
+lightboxNext.addEventListener("click", () => stepImage(1));
+
+function showDetailView() {
+  detailView.style.display = "block";
+  requestView.style.display = "none";
+}
+
+function showRequestView() {
+  detailView.style.display = "none";
+  requestView.style.display = "block";
+  modalPieceName.textContent = currentProduct.name;
+  productIdField.value = currentProduct.id;
   formStatus.className = "form-status";
   formStatus.textContent = "";
+}
+
+detailRequestBtn.addEventListener("click", showRequestView);
+backToDetailBtn.addEventListener("click", showDetailView);
+
+function openModal(product) {
+  currentProduct = product;
+  currentImageIndex = 0;
+
+  detailCategory.textContent = product.category || t("piece_category_fallback");
+  detailName.textContent = product.name;
+  detailPrice.textContent = product.priceRange || "";
+  detailPrice.style.display = product.priceRange ? "block" : "none";
+  detailDescription.textContent = product.description || "";
+  renderCarousel();
+
   requestForm.reset();
   productIdField.value = product.id; // reset() clears hidden fields too, so set again
+
+  showDetailView();
   modalBackdrop.classList.add("open");
 }
 
 function closeModal() {
   modalBackdrop.classList.remove("open");
+  closeLightbox();
 }
 
 modalClose.addEventListener("click", closeModal);
@@ -39,8 +161,48 @@ modalBackdrop.addEventListener("click", (e) => {
   if (e.target === modalBackdrop) closeModal();
 });
 document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape") closeModal();
+  if (e.key !== "Escape") return;
+  if (imageLightbox.classList.contains("open")) {
+    closeLightbox();
+  } else {
+    closeModal();
+  }
 });
+
+function getCollectionFilteredProducts() {
+  return activeCollection === "all"
+    ? allProducts
+    : allProducts.filter(p => p.collectionId === activeCollection);
+}
+
+function renderCollectionFilters() {
+  if (allCollections.length === 0) {
+    collectionRow.style.display = "none";
+    return;
+  }
+  collectionRow.style.display = "flex";
+  collectionRow.innerHTML = "";
+  const items = [{ id: "all", name: null }, ...allCollections];
+  items.forEach((c) => {
+    const btn = document.createElement("button");
+    btn.className = "filter-chip" + (c.id === activeCollection ? " active" : "");
+    btn.textContent = c.id === "all" ? t("filter_all_collections") : c.name;
+    btn.dataset.collection = c.id;
+    btn.addEventListener("click", () => {
+      activeCollection = c.id;
+      activeFilter = "all";
+      refreshCollectionAndCategoryUI();
+    });
+    collectionRow.appendChild(btn);
+  });
+}
+
+function refreshCollectionAndCategoryUI() {
+  renderCollectionFilters();
+  const categories = [...new Set(getCollectionFilteredProducts().map(p => p.category).filter(Boolean))];
+  renderFilters(categories);
+  renderGallery();
+}
 
 function renderFilters(categories) {
   filterRow.innerHTML = "";
@@ -66,9 +228,10 @@ function renderGallery() {
     return;
   }
 
+  const collectionFiltered = getCollectionFilteredProducts();
   const filtered = activeFilter === "all"
-    ? allProducts
-    : allProducts.filter(p => p.category === activeFilter);
+    ? collectionFiltered
+    : collectionFiltered.filter(p => p.category === activeFilter);
 
   galleryGrid.innerHTML = "";
 
@@ -114,15 +277,29 @@ function loadProducts() {
       (snapshot) => {
         loadFailed = false;
         allProducts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        const categories = [...new Set(allProducts.map(p => p.category).filter(Boolean))];
-        renderFilters(categories);
-        renderGallery();
+        refreshCollectionAndCategoryUI();
       },
       (err) => {
         console.error("Failed to load products:", err);
         loadFailed = true;
         renderGallery();
       }
+    );
+}
+
+function loadCollections() {
+  db.collection("collections")
+    .where("status", "==", "active")
+    .orderBy("createdAt", "desc")
+    .onSnapshot(
+      (snapshot) => {
+        allCollections = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        if (activeCollection !== "all" && !allCollections.some(c => c.id === activeCollection)) {
+          activeCollection = "all";
+        }
+        refreshCollectionAndCategoryUI();
+      },
+      (err) => console.error("Collections listener error:", err)
     );
 }
 
@@ -141,6 +318,7 @@ requestForm.addEventListener("submit", async (e) => {
     preferredDate: document.getElementById("preferredDate").value || null,
     notes: document.getElementById("clientNotes").value.trim(),
     status: "new",
+    clientUid: auth.currentUser ? auth.currentUser.uid : null,
     createdAt: firebase.firestore.FieldValue.serverTimestamp()
   };
 
@@ -163,9 +341,11 @@ requestForm.addEventListener("submit", async (e) => {
 // Re-render dynamic (JS-generated) content whenever the language toggles,
 // since data-i18n only covers static markup.
 document.addEventListener("langchange", () => {
-  const categories = [...new Set(allProducts.map(p => p.category).filter(Boolean))];
-  renderFilters(categories);
-  renderGallery();
+  refreshCollectionAndCategoryUI();
+  if (currentProduct && detailView.style.display !== "none") {
+    detailCategory.textContent = currentProduct.category || t("piece_category_fallback");
+  }
 });
 
 loadProducts();
+loadCollections();

@@ -37,6 +37,8 @@
     <nav class="admin-nav">
       <button data-view="requests" class="active">Requests</button>
       <button data-view="products">Products</button>
+      <button data-view="collections">Collections</button>
+      <button data-view="settings">Settings</button>
       <button data-view="staff">Staff</button>
     </nav>
     <div style="margin-top:40px;">
@@ -91,8 +93,14 @@
             <input type="text" id="pCategory" placeholder="e.g. Evening Gown, Abaya, Bridal" />
           </div>
           <div class="field">
+            <label>Collection</label>
+            <select id="pCollection">
+              <option value="">— No collection —</option>
+            </select>
+          </div>
+          <div class="field">
             <label>Price range</label>
-            <input type="text" id="pPrice" placeholder="e.g. AED 1,800 – 2,600" />
+            <input type="text" id="pPrice" placeholder="e.g. 1,800 – 2,600 EGP" />
           </div>
           <div class="field">
             <label>Status</label>
@@ -107,9 +115,9 @@
           <textarea id="pDescription"></textarea>
         </div>
         <div class="field">
-          <label>Image URL</label>
-          <input type="url" id="pImage" placeholder="https://..." />
-          <p class="form-note">Paste a hosted image link (e.g. from Firebase Storage or Instagram CDN link). Direct image upload can be added later.</p>
+          <label>Image URLs</label>
+          <textarea id="pImages" placeholder="https://...&#10;https://..."></textarea>
+          <p class="form-note">One image URL per line (e.g. from Firebase Storage or Instagram CDN link). The first line is used as the cover image; all lines feed the gallery on the product detail view.</p>
         </div>
         <div class="submit-row" style="display:flex; gap:10px;">
           <button class="btn btn-solid" id="saveProductBtn">Save Piece</button>
@@ -131,6 +139,126 @@
           </thead>
           <tbody id="productsTableBody"></tbody>
         </table>
+      </div>
+    </section>
+
+    <!-- Collections view -->
+    <section id="view-collections" style="display:none;">
+      <div class="admin-topbar">
+        <h1>Collections</h1>
+        <button class="btn btn-solid" id="newCollectionBtn">+ New Collection</button>
+      </div>
+
+      <div class="admin-card" id="collectionFormCard" style="display:none;">
+        <h3 style="font-family:var(--font-display); margin-top:0;">New Collection</h3>
+        <div class="field">
+          <label>Name</label>
+          <input type="text" id="collectionName" placeholder="e.g. Autumn 2026, Ramadan 2026" />
+        </div>
+        <div class="submit-row" style="display:flex; gap:10px;">
+          <button class="btn btn-solid" id="saveCollectionBtn">Create Collection</button>
+          <button class="btn" id="cancelCollectionBtn" style="border-color:#cfc7b4; color:var(--charcoal);">Cancel</button>
+        </div>
+        <div class="form-status" id="collectionFormStatus"></div>
+      </div>
+
+      <div class="admin-card" style="overflow-x:auto;">
+        <table>
+          <thead><tr><th>Name</th><th>Status</th><th></th></tr></thead>
+          <tbody id="collectionsTableBody"></tbody>
+        </table>
+        <p id="collectionsEmpty" style="display:none; color:#8a8a86; padding: 20px 0;">No collections yet — create one for your next drop.</p>
+      </div>
+    </section>
+
+    <!-- Settings view -->
+    <section id="view-settings" style="display:none;">
+      <div class="admin-topbar">
+        <h1>Site Settings</h1>
+      </div>
+      <div class="admin-card">
+        <p style="font-size:14px; color:#555;">
+          These fields feed the public site live — no code changes or redeploy needed. Leave a field blank to fall back to the site's default copy.
+        </p>
+
+        <h3 style="font-family:var(--font-display); font-size:19px;">About / Hero</h3>
+        <div class="product-form-grid">
+          <div class="field">
+            <label>Hero tagline — Arabic</label>
+            <textarea id="setHeroTaglineAr" dir="rtl"></textarea>
+          </div>
+          <div class="field">
+            <label>Hero tagline — English</label>
+            <textarea id="setHeroTaglineEn"></textarea>
+          </div>
+          <div class="field">
+            <label>About intro — Arabic</label>
+            <textarea id="setAboutIntroAr" dir="rtl"></textarea>
+          </div>
+          <div class="field">
+            <label>About intro — English</label>
+            <textarea id="setAboutIntroEn"></textarea>
+          </div>
+          <div class="field">
+            <label>About story — Arabic</label>
+            <textarea id="setAboutStoryAr" dir="rtl"></textarea>
+          </div>
+          <div class="field">
+            <label>About story — English</label>
+            <textarea id="setAboutStoryEn"></textarea>
+          </div>
+        </div>
+
+        <h3 style="font-family:var(--font-display); font-size:19px;">Contact &amp; Maps</h3>
+        <div class="product-form-grid">
+          <div class="field">
+            <label>Phone</label>
+            <input type="text" id="setContactPhone" placeholder="+20 1xx xxx xxxx" />
+          </div>
+          <div class="field">
+            <label>WhatsApp number (digits only, for the wa.me link)</label>
+            <input type="text" id="setContactWhatsapp" placeholder="20100xxxxxxx" />
+          </div>
+          <div class="field">
+            <label>Email</label>
+            <input type="email" id="setContactEmail" placeholder="hello@habibamousa.com" />
+          </div>
+          <div class="field">
+            <label>Hours — Arabic</label>
+            <input type="text" id="setContactHoursAr" dir="rtl" />
+          </div>
+          <div class="field">
+            <label>Hours — English</label>
+            <input type="text" id="setContactHoursEn" />
+          </div>
+          <div class="field">
+            <label>Address — Arabic</label>
+            <input type="text" id="setAddressAr" dir="rtl" />
+          </div>
+          <div class="field">
+            <label>Address — English</label>
+            <input type="text" id="setAddressEn" />
+          </div>
+          <div class="field">
+            <label>Google Maps link</label>
+            <input type="url" id="setGoogleMapsUrl" placeholder="https://maps.google.com/..." />
+          </div>
+          <div class="field">
+            <label>Waze link</label>
+            <input type="url" id="setWazeUrl" placeholder="https://waze.com/ul/..." />
+          </div>
+        </div>
+
+        <h3 style="font-family:var(--font-display); font-size:19px;">Deposit</h3>
+        <div class="field" style="max-width:220px;">
+          <label>Deposit percentage</label>
+          <input type="number" id="setDepositPercent" min="0" max="100" placeholder="40" />
+        </div>
+
+        <div class="submit-row">
+          <button class="btn btn-solid" id="saveSettingsBtn">Save Settings</button>
+        </div>
+        <div class="form-status" id="settingsFormStatus"></div>
       </div>
     </section>
 

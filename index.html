@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>هبة موسى كوتور — طلبات تصميم حسب الطلب</title>
+<title>حبيبه موسي كوتور — طلبات تصميم حسب الطلب</title>
 <meta name="description" content="قطع كوتور مصممة حسب الطلب. استعرضي المجموعة وأرسلي طلب تصميم." />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=El+Messiri:wght@400;500;600;700&family=Jost:wght@400;500;600&family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -13,11 +13,23 @@
 
 <header class="site-header">
   <div class="container">
-    <a href="#" class="brand">Habiba Mousa <em data-i18n="brand_suffix">كوتور</em></a>
-    <nav class="nav-links">
-      <a href="#collection" data-i18n="nav_collection">المجموعة</a>
-      <a href="#how-it-works" data-i18n="nav_how">كيف تتم العملية</a>
-      <a href="#contact" data-i18n="nav_contact">تواصلي معنا</a>
+    <a href="index.html" class="brand">Habiba Mousa <em data-i18n="brand_suffix">كوتور</em></a>
+    <button type="button" class="nav-toggle" id="navToggle" aria-label="Menu" data-i18n-aria-label="nav_menu_label" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+    <nav class="nav-links" id="navLinks">
+      <a href="index.html#collection" data-i18n="nav_collection">المجموعة</a>
+      <a href="index.html#how-it-works" data-i18n="nav_how">كيف تتم العملية</a>
+      <a href="about.html" data-i18n="nav_about">قصتنا</a>
+      <a href="faq.html" data-i18n="nav_faq">الأسئلة الشائعة</a>
+      <a href="contact.html" data-i18n="nav_contact">تواصلي معنا</a>
+      <div class="account-nav">
+        <button type="button" class="btn-link" id="accountSignInBtn" data-i18n="account_signin">تسجيل الدخول</button>
+        <span class="account-signed-in" id="accountSignedIn" style="display:none;">
+          <button type="button" class="btn-link" id="myRequestsBtn" data-i18n="account_my_requests">طلباتي</button>
+          <button type="button" class="btn-link" id="accountSignOutBtn" data-i18n="account_signout">تسجيل الخروج</button>
+        </span>
+      </div>
       <div class="lang-toggle" aria-label="Language / اللغة">
         <button type="button" data-lang="ar">AR</button>
         <button type="button" data-lang="en">EN</button>
@@ -31,7 +43,7 @@
     <div>
       <p class="eyebrow" data-i18n="hero_eyebrow">حسب الطلب — دبي والقاهرة</p>
       <h1 class="hero-title" data-i18n-html="hero_title_html">كل قطعة <em>تبدأ</em><br/>بطلب، لا برف عرض.</h1>
-      <p class="hero-sub" data-i18n="hero_sub">استعرضي المجموعة، اختاري تصميمًا يلامس ذوقكِ، وأرسلي لنا تفاصيلكِ. سنتواصل معكِ شخصيًا لتأكيد المقاس والقماش والموعد.</p>
+      <p class="hero-sub" id="heroSub" data-i18n="hero_sub">تفرجي على الكولكشن، اختاري التصميم اللي عجبك، وابعتيلنا تفاصيلك. هنكلمك بنفسنا نأكد المقاس والقماش والميعاد.</p>
       <a href="#collection" class="btn btn-solid" data-i18n="btn_view_collection">استعرضي المجموعة</a>
     </div>
     <dl class="spec-card">
@@ -47,6 +59,9 @@
 
 <section class="gallery-section" id="collection">
   <div class="container">
+    <div class="filter-row" id="collectionRow" style="display:none; margin-bottom: var(--space-2);">
+      <button class="filter-chip active" data-collection="all" data-i18n="filter_all_collections">كل الكولكشنات</button>
+    </div>
     <div class="section-head">
       <div>
         <p class="eyebrow" data-i18n="collection_eyebrow">المجموعة</p>
@@ -81,51 +96,146 @@
   </div>
 </section>
 
-<footer class="site-footer" id="contact">
+<footer class="site-footer">
   <div class="container">
-    <p data-i18n="footer_tagline">هبة موسى كوتور — قطع مصممة خصيصًا لكِ، حسب الطلب.</p>
+    <p data-i18n="footer_tagline">حبيبه موسي كوتور — قطع مفصلة خصيصي ليكِ، حسب الطلب.</p>
     <p><span data-i18n="footer_contact_prefix">تفضلين التواصل المباشر؟</span> <a href="https://wa.me/000000000000" target="_blank" rel="noopener" data-i18n="footer_whatsapp">راسلينا على واتساب</a></p>
-    <p class="footer-staff-link"><a href="admin.html" data-i18n="footer_staff">دخول الموظفين</a></p>
+    <nav class="footer-links">
+      <a href="about.html" data-i18n="nav_about">قصتنا</a>
+      <a href="faq.html" data-i18n="nav_faq">الأسئلة الشائعة</a>
+      <a href="contact.html" data-i18n="nav_contact">تواصلي معنا</a>
+      <a href="terms.html" data-i18n="nav_terms">الشروط والسياسات</a>
+      <a href="admin.html" data-i18n="footer_staff">دخول الموظفين</a>
+    </nav>
   </div>
 </footer>
 
-<!-- Request Modal -->
+<!-- Product Modal: detail view + request form view -->
 <div class="modal-backdrop" id="modalBackdrop">
   <div class="modal">
     <button class="modal-close" id="modalClose" aria-label="Close">&times;</button>
-    <h3 data-i18n="modal_title">اطلبي هذا التصميم</h3>
-    <p class="modal-piece-name" id="modalPieceName"></p>
-    <form id="requestForm">
-      <input type="hidden" id="productId" />
-      <div class="field">
-        <label for="clientName" data-i18n="label_name">اسمكِ</label>
-        <input type="text" id="clientName" required />
+
+    <div id="detailView">
+      <div class="detail-carousel">
+        <div class="detail-carousel-image" id="detailCarouselImage"></div>
+        <span class="zoom-hint" aria-hidden="true">&#128269;</span>
+        <button type="button" class="carousel-nav carousel-prev" id="carouselPrev" data-i18n-aria-label="detail_img_prev" aria-label="Previous image">&#8249;</button>
+        <button type="button" class="carousel-nav carousel-next" id="carouselNext" data-i18n-aria-label="detail_img_next" aria-label="Next image">&#8250;</button>
+        <div class="carousel-dots" id="carouselDots"></div>
       </div>
-      <div class="field">
-        <label for="clientPhone" data-i18n="label_phone">رقم الهاتف / واتساب</label>
-        <input type="tel" id="clientPhone" required />
-      </div>
-      <div class="field">
-        <label for="preferredDate" data-i18n="label_date">الموعد المطلوب (اختياري)</label>
-        <input type="date" id="preferredDate" />
-      </div>
-      <div class="field">
-        <label for="clientNotes" data-i18n="label_notes">ملاحظات — المقاس، اللون، القماش المفضل، المناسبة</label>
-        <textarea id="clientNotes" data-i18n-placeholder="notes_placeholder" placeholder="أخبرينا بأي تفاصيل تساعدنا في تحضير استشارتكِ"></textarea>
-      </div>
-      <p class="form-note" data-i18n="form_note">سنتواصل معكِ مباشرة لتأكيد التفاصيل والسعر — هذا طلب وليس دفعًا.</p>
+      <p class="piece-eyebrow" id="detailCategory"></p>
+      <h3 class="modal-piece-name" id="detailName"></h3>
+      <p class="piece-price" id="detailPrice"></p>
+      <p class="detail-description" id="detailDescription"></p>
       <div class="submit-row">
-        <button type="submit" class="btn btn-solid" id="submitBtn" data-i18n="submit_btn">إرسال الطلب</button>
+        <button type="button" class="btn btn-solid" id="detailRequestBtn" data-i18n="detail_cta_request">اطلبي هذا التصميم</button>
       </div>
-      <div class="form-status" id="formStatus"></div>
+    </div>
+
+    <div id="requestView" style="display:none;">
+      <button type="button" class="back-link" id="backToDetailBtn" data-i18n="detail_back">→ عودة</button>
+      <h3 data-i18n="modal_title">اطلبي هذا التصميم</h3>
+      <p class="modal-piece-name" id="modalPieceName"></p>
+      <form id="requestForm">
+        <input type="hidden" id="productId" />
+        <div class="field">
+          <label for="clientName" data-i18n="label_name">اسمكِ</label>
+          <input type="text" id="clientName" required />
+        </div>
+        <div class="field">
+          <label for="clientPhone" data-i18n="label_phone">رقم الهاتف / واتساب</label>
+          <input type="tel" id="clientPhone" required />
+        </div>
+        <div class="field">
+          <label for="preferredDate" data-i18n="label_date">الموعد المطلوب (اختياري)</label>
+          <input type="date" id="preferredDate" />
+        </div>
+        <div class="field">
+          <label for="clientNotes" data-i18n="label_notes">ملاحظات — المقاس، اللون، القماش المفضل، المناسبة</label>
+          <textarea id="clientNotes" data-i18n-placeholder="notes_placeholder" placeholder="أخبرينا بأي تفاصيل تساعدنا في تحضير استشارتكِ"></textarea>
+        </div>
+        <p class="form-note" data-i18n="form_note">سنتواصل معكِ مباشرة لتأكيد التفاصيل والسعر — هذا طلب وليس دفعًا.</p>
+        <div class="submit-row">
+          <button type="submit" class="btn btn-solid" id="submitBtn" data-i18n="submit_btn">إرسال الطلب</button>
+        </div>
+        <div class="form-status" id="formStatus"></div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Account Modal: sign in / sign up -->
+<div class="modal-backdrop" id="accountModalBackdrop">
+  <div class="modal">
+    <button class="modal-close" id="accountModalClose" aria-label="Close">&times;</button>
+    <div class="account-tabs">
+      <button type="button" class="account-tab active" data-tab="signin" data-i18n="account_tab_signin">لديّ حساب</button>
+      <button type="button" class="account-tab" data-tab="signup" data-i18n="account_tab_signup">حساب جديد</button>
+    </div>
+
+    <form id="signInForm" class="account-form">
+      <h3 data-i18n="account_modal_title_signin">تسجيل الدخول</h3>
+      <div class="field">
+        <label for="signInEmail" data-i18n="account_email">البريد الإلكتروني</label>
+        <input type="email" id="signInEmail" required />
+      </div>
+      <div class="field">
+        <label for="signInPassword" data-i18n="account_password">كلمة المرور</label>
+        <input type="password" id="signInPassword" required />
+      </div>
+      <div class="submit-row">
+        <button type="submit" class="btn btn-solid" id="signInBtn" data-i18n="account_signin_btn">تسجيل الدخول</button>
+      </div>
+      <div class="form-status" id="signInStatus"></div>
+    </form>
+
+    <form id="signUpForm" class="account-form" style="display:none;">
+      <h3 data-i18n="account_modal_title_signup">إنشاء حساب</h3>
+      <div class="field">
+        <label for="signUpName" data-i18n="account_name">اسمكِ</label>
+        <input type="text" id="signUpName" required />
+      </div>
+      <div class="field">
+        <label for="signUpEmail" data-i18n="account_email">البريد الإلكتروني</label>
+        <input type="email" id="signUpEmail" required />
+      </div>
+      <div class="field">
+        <label for="signUpPassword" data-i18n="account_password">كلمة المرور</label>
+        <input type="password" id="signUpPassword" required minlength="6" />
+      </div>
+      <div class="submit-row">
+        <button type="submit" class="btn btn-solid" id="signUpBtn" data-i18n="account_signup_btn">إنشاء الحساب</button>
+      </div>
+      <div class="form-status" id="signUpStatus"></div>
     </form>
   </div>
 </div>
 
+<!-- My Requests Modal -->
+<div class="modal-backdrop" id="myRequestsBackdrop">
+  <div class="modal">
+    <button class="modal-close" id="myRequestsClose" aria-label="Close">&times;</button>
+    <h3 data-i18n="my_requests_title">طلباتي</h3>
+    <div id="myRequestsList"><!-- populated by account.js --></div>
+    <div class="empty-state" id="myRequestsEmpty" style="display:none;" data-i18n="my_requests_empty"></div>
+  </div>
+</div>
+
+<!-- Image Lightbox -->
+<div class="lightbox-backdrop" id="imageLightbox">
+  <button class="modal-close" id="lightboxClose" aria-label="Close">&times;</button>
+  <button type="button" class="carousel-nav carousel-prev" id="lightboxPrev" data-i18n-aria-label="detail_img_prev" aria-label="Previous image">&#8249;</button>
+  <img id="lightboxImage" src="" alt="" />
+  <button type="button" class="carousel-nav carousel-next" id="lightboxNext" data-i18n-aria-label="detail_img_next" aria-label="Next image">&#8250;</button>
+</div>
+
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="firebase-config.js"></script>
 <script src="i18n.js"></script>
+<script src="account.js"></script>
+<script src="settings.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

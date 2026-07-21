@@ -64,6 +64,8 @@ auth.onAuthStateChanged(async (user) => {
 
     loadRequests();
     loadProducts();
+    loadCollections();
+    loadSettings();
     if (currentStaff.role === "admin") {
       loadStaff();
     } else {
@@ -83,7 +85,7 @@ document.querySelectorAll(".admin-nav button[data-view]").forEach((btn) => {
   btn.addEventListener("click", () => {
     document.querySelectorAll(".admin-nav button[data-view]").forEach(b => b.classList.remove("active"));
     btn.classList.add("active");
-    ["requests", "products", "staff"].forEach((v) => {
+    ["requests", "products", "collections", "settings", "staff"].forEach((v) => {
       document.getElementById(`view-${v}`).style.display = v === btn.dataset.view ? "block" : "none";
     });
   });
@@ -167,10 +169,11 @@ function resetProductForm() {
   productDocId.value = "";
   document.getElementById("pName").value = "";
   document.getElementById("pCategory").value = "";
+  document.getElementById("pCollection").value = "";
   document.getElementById("pPrice").value = "";
   document.getElementById("pStatus").value = "active";
   document.getElementById("pDescription").value = "";
-  document.getElementById("pImage").value = "";
+  document.getElementById("pImages").value = "";
   productFormStatus.className = "form-status";
   productFormStatus.textContent = "";
 }
@@ -196,12 +199,14 @@ saveProductBtn.addEventListener("click", async () => {
   const data = {
     name,
     category: document.getElementById("pCategory").value.trim(),
+    collectionId: document.getElementById("pCollection").value || null,
     priceRange: document.getElementById("pPrice").value.trim(),
     status: document.getElementById("pStatus").value,
     description: document.getElementById("pDescription").value.trim(),
-    images: document.getElementById("pImage").value.trim()
-      ? [document.getElementById("pImage").value.trim()]
-      : []
+    images: document.getElementById("pImages").value
+      .split("\n")
+      .map(line => line.trim())
+      .filter(Boolean)
   };
 
   saveProductBtn.disabled = true;
@@ -250,10 +255,11 @@ function loadProducts() {
         productDocId.value = doc.id;
         document.getElementById("pName").value = p.name || "";
         document.getElementById("pCategory").value = p.category || "";
+        document.getElementById("pCollection").value = p.collectionId || "";
         document.getElementById("pPrice").value = p.priceRange || "";
         document.getElementById("pStatus").value = p.status || "active";
         document.getElementById("pDescription").value = p.description || "";
-        document.getElementById("pImage").value = (p.images && p.images[0]) || "";
+        document.getElementById("pImages").value = (p.images || []).join("\n");
         productFormTitle.textContent = "Edit Piece";
         productFormCard.style.display = "block";
         productFormCard.scrollIntoView({ behavior: "smooth" });
@@ -273,6 +279,177 @@ function loadProducts() {
     });
   }, (err) => console.error("Products listener error:", err));
 }
+
+// ---------- Collections ----------
+
+const newCollectionBtn = document.getElementById("newCollectionBtn");
+const collectionFormCard = document.getElementById("collectionFormCard");
+const collectionNameInput = document.getElementById("collectionName");
+const saveCollectionBtn = document.getElementById("saveCollectionBtn");
+const cancelCollectionBtn = document.getElementById("cancelCollectionBtn");
+const collectionFormStatus = document.getElementById("collectionFormStatus");
+const pCollectionSelect = document.getElementById("pCollection");
+
+let allCollections = [];
+
+newCollectionBtn.addEventListener("click", () => {
+  collectionNameInput.value = "";
+  collectionFormStatus.className = "form-status";
+  collectionFormStatus.textContent = "";
+  collectionFormCard.style.display = "block";
+});
+
+cancelCollectionBtn.addEventListener("click", () => {
+  collectionFormCard.style.display = "none";
+});
+
+saveCollectionBtn.addEventListener("click", async () => {
+  const name = collectionNameInput.value.trim();
+  if (!name) {
+    collectionFormStatus.className = "form-status error";
+    collectionFormStatus.textContent = "Name is required.";
+    return;
+  }
+
+  saveCollectionBtn.disabled = true;
+  try {
+    await db.collection("collections").add({
+      name,
+      status: "active",
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    collectionFormCard.style.display = "none";
+  } catch (err) {
+    console.error("Failed to save collection:", err);
+    collectionFormStatus.className = "form-status error";
+    collectionFormStatus.textContent = "Couldn't create this collection. Please try again.";
+  } finally {
+    saveCollectionBtn.disabled = false;
+  }
+});
+
+function populateCollectionSelect() {
+  const current = pCollectionSelect.value;
+  pCollectionSelect.innerHTML = '<option value="">— No collection —</option>' +
+    allCollections
+      .filter(c => c.status === "active")
+      .map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`)
+      .join("");
+  pCollectionSelect.value = current;
+}
+
+function loadCollections() {
+  db.collection("collections").orderBy("createdAt", "desc").onSnapshot((snapshot) => {
+    allCollections = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    populateCollectionSelect();
+
+    const tbody = document.getElementById("collectionsTableBody");
+    const empty = document.getElementById("collectionsEmpty");
+    tbody.innerHTML = "";
+
+    if (allCollections.length === 0) {
+      empty.style.display = "block";
+      return;
+    }
+    empty.style.display = "none";
+
+    allCollections.forEach((c) => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${escapeHtml(c.name)}</td>
+        <td><span class="status-pill status-${c.status === "active" ? "confirmed" : "delivered"}">${escapeHtml(c.status)}</span></td>
+        <td>
+          <button class="icon-btn" data-toggle="${c.id}" data-next="${c.status === "active" ? "archived" : "active"}">${c.status === "active" ? "Archive" : "Restore"}</button>
+          <button class="icon-btn danger" data-delete-collection="${c.id}">Delete</button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    tbody.querySelectorAll("[data-toggle]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        try {
+          await db.collection("collections").doc(btn.dataset.toggle).update({ status: btn.dataset.next });
+        } catch (err) {
+          console.error("Failed to update collection status:", err);
+          alert("Couldn't update this collection. Please try again.");
+        }
+      });
+    });
+
+    tbody.querySelectorAll("[data-delete-collection]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        if (!confirm("Delete this collection? Products keep their existing tag but it'll no longer show as a filter.")) return;
+        try {
+          await db.collection("collections").doc(btn.dataset.deleteCollection).delete();
+        } catch (err) {
+          console.error("Failed to delete collection:", err);
+          alert("Couldn't delete this collection. Please try again.");
+        }
+      });
+    });
+  }, (err) => console.error("Collections listener error:", err));
+}
+
+// ---------- Site Settings ----------
+
+const saveSettingsBtn = document.getElementById("saveSettingsBtn");
+const settingsFormStatus = document.getElementById("settingsFormStatus");
+
+const SETTINGS_FIELDS = {
+  setHeroTaglineAr: "heroTagline_ar",
+  setHeroTaglineEn: "heroTagline_en",
+  setAboutIntroAr: "aboutIntro_ar",
+  setAboutIntroEn: "aboutIntro_en",
+  setAboutStoryAr: "aboutStory_ar",
+  setAboutStoryEn: "aboutStory_en",
+  setContactPhone: "contactPhone",
+  setContactWhatsapp: "contactWhatsapp",
+  setContactEmail: "contactEmail",
+  setContactHoursAr: "contactHours_ar",
+  setContactHoursEn: "contactHours_en",
+  setAddressAr: "address_ar",
+  setAddressEn: "address_en",
+  setGoogleMapsUrl: "googleMapsUrl",
+  setWazeUrl: "wazeUrl"
+};
+
+function loadSettings() {
+  db.collection("settings").doc("site").onSnapshot((doc) => {
+    const data = doc.exists ? doc.data() : {};
+    Object.entries(SETTINGS_FIELDS).forEach(([elId, field]) => {
+      const el = document.getElementById(elId);
+      if (el && document.activeElement !== el) el.value = data[field] || "";
+    });
+    const depositEl = document.getElementById("setDepositPercent");
+    if (document.activeElement !== depositEl) {
+      depositEl.value = data.depositPercent != null ? data.depositPercent : 40;
+    }
+  }, (err) => console.error("Settings listener error:", err));
+}
+
+saveSettingsBtn.addEventListener("click", async () => {
+  const data = {};
+  Object.entries(SETTINGS_FIELDS).forEach(([elId, field]) => {
+    data[field] = document.getElementById(elId).value.trim();
+  });
+  const depositRaw = document.getElementById("setDepositPercent").value;
+  data.depositPercent = depositRaw === "" ? 40 : Number(depositRaw);
+
+  saveSettingsBtn.disabled = true;
+  settingsFormStatus.className = "form-status";
+  try {
+    await db.collection("settings").doc("site").set(data, { merge: true });
+    settingsFormStatus.className = "form-status success";
+    settingsFormStatus.textContent = "Settings saved.";
+  } catch (err) {
+    console.error("Failed to save settings:", err);
+    settingsFormStatus.className = "form-status error";
+    settingsFormStatus.textContent = "Couldn't save settings. Please try again.";
+  } finally {
+    saveSettingsBtn.disabled = false;
+  }
+});
 
 // ---------- Staff (admin only) ----------
 
