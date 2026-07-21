@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Admin — Habiba Mousa Couture</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=El+Messiri:wght@400;500;600;700&family=Jost:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css" />
+</head>
+<body class="admin-body">
+
+<!-- Login screen -->
+<div class="login-screen" id="loginScreen">
+  <div class="login-card">
+    <p class="eyebrow">Staff Access</p>
+    <h2>Habiba Mousa Couture</h2>
+    <form id="loginForm">
+      <div class="field">
+        <label for="loginEmail">Email</label>
+        <input type="email" id="loginEmail" required />
+      </div>
+      <div class="field">
+        <label for="loginPassword">Password</label>
+        <input type="password" id="loginPassword" required />
+      </div>
+      <button type="submit" class="btn btn-solid btn-block" id="loginBtn">Sign In</button>
+      <div class="form-status" id="loginStatus"></div>
+    </form>
+  </div>
+</div>
+
+<!-- Admin shell -->
+<div class="admin-shell" id="adminShell" style="display:none;">
+  <aside class="admin-sidebar">
+    <a href="#" class="brand">Habiba <em>Admin</em></a>
+    <nav class="admin-nav">
+      <button data-view="requests" class="active">Requests</button>
+      <button data-view="products">Products</button>
+      <button data-view="staff">Staff</button>
+    </nav>
+    <div style="margin-top:40px;">
+      <button id="logoutBtn" style="color:rgba(243,239,230,0.6); font-size:13px;">Sign Out →</button>
+    </div>
+  </aside>
+
+  <main class="admin-main">
+
+    <!-- Requests view -->
+    <section id="view-requests">
+      <div class="admin-topbar">
+        <h1>Inquiries &amp; Requests</h1>
+        <span class="whoami" id="whoamiRequests"></span>
+      </div>
+      <div class="admin-card" style="overflow-x:auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>Client</th>
+              <th>Piece</th>
+              <th>Contact</th>
+              <th>Needed By</th>
+              <th>Notes</th>
+              <th>Status</th>
+              <th>Received</th>
+            </tr>
+          </thead>
+          <tbody id="requestsTableBody"></tbody>
+        </table>
+        <p id="requestsEmpty" style="display:none; color:#8a8a86; padding: 20px 0;">No requests yet.</p>
+      </div>
+    </section>
+
+    <!-- Products view -->
+    <section id="view-products" style="display:none;">
+      <div class="admin-topbar">
+        <h1>Product Catalog</h1>
+        <button class="btn btn-solid" id="newProductBtn">+ Add Piece</button>
+      </div>
+
+      <div class="admin-card" id="productFormCard" style="display:none;">
+        <h3 style="font-family:var(--font-display); margin-top:0;" id="productFormTitle">New Piece</h3>
+        <input type="hidden" id="productDocId" />
+        <div class="product-form-grid">
+          <div class="field">
+            <label>Name</label>
+            <input type="text" id="pName" required />
+          </div>
+          <div class="field">
+            <label>Category</label>
+            <input type="text" id="pCategory" placeholder="e.g. Evening Gown, Abaya, Bridal" />
+          </div>
+          <div class="field">
+            <label>Price range</label>
+            <input type="text" id="pPrice" placeholder="e.g. AED 1,800 – 2,600" />
+          </div>
+          <div class="field">
+            <label>Status</label>
+            <select id="pStatus">
+              <option value="active">Active — visible on site</option>
+              <option value="archived">Archived — hidden</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label>Description</label>
+          <textarea id="pDescription"></textarea>
+        </div>
+        <div class="field">
+          <label>Image URL</label>
+          <input type="url" id="pImage" placeholder="https://..." />
+          <p class="form-note">Paste a hosted image link (e.g. from Firebase Storage or Instagram CDN link). Multiple-image upload can be added later.</p>
+        </div>
+        <div class="submit-row" style="display:flex; gap:10px;">
+          <button class="btn btn-solid" id="saveProductBtn">Save Piece</button>
+          <button class="btn" id="cancelProductBtn" style="border-color:#cfc7b4; color:var(--charcoal);">Cancel</button>
+        </div>
+        <div class="form-status" id="productFormStatus"></div>
+      </div>
+
+      <div class="admin-card" style="overflow-x:auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>Piece</th>
+              <th>Category</th>
+              <th>Price Range</th>
+              <th>Status</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="productsTableBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Staff view -->
+    <section id="view-staff" style="display:none;">
+      <div class="admin-topbar">
+        <h1>Staff Access</h1>
+      </div>
+      <div class="admin-card">
+        <p style="font-size:14px; color:#555;">
+          Staff accounts are created in two steps: (1) create the person's login in
+          <strong>Firebase Console → Authentication</strong>, then (2) add a matching record below
+          so they can access this dashboard.
+        </p>
+        <div class="product-form-grid">
+          <div class="field">
+            <label>Staff email (must match their Firebase Auth login)</label>
+            <input type="email" id="staffEmail" />
+          </div>
+          <div class="field">
+            <label>Name</label>
+            <input type="text" id="staffName" />
+          </div>
+          <div class="field">
+            <label>Role</label>
+            <select id="staffRole">
+              <option value="staff">Staff — manage requests &amp; products</option>
+              <option value="admin">Admin — full access</option>
+            </select>
+          </div>
+        </div>
+        <button class="btn btn-solid" id="addStaffBtn">Add Staff Member</button>
+        <div class="form-status" id="staffFormStatus"></div>
+      </div>
+      <div class="admin-card" style="overflow-x:auto;">
+        <table>
+          <thead><tr><th>Name</th><th>Email</th><th>Role</th><th></th></tr></thead>
+          <tbody id="staffTableBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script src="admin.js"></script>
+</body>
+</html>

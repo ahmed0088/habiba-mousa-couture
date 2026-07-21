@@ -1,0 +1,38 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isStaff() {
+      return request.auth != null &&
+        exists(/databases/$(database)/documents/staff/$(request.auth.uid));
+    }
+
+    function isAdmin() {
+      return isStaff() &&
+        get(/databases/$(database)/documents/staff/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // Anyone can view active products; only staff can create/edit/delete
+    match /products/{productId} {
+      allow read: if true;
+      allow write: if isStaff();
+    }
+
+    // Anyone can submit a request; only staff can read/update the list
+    match /requests/{requestId} {
+      allow create: if true;
+      allow read, update, delete: if isStaff();
+    }
+
+    // Staff roster — only admins can manage it, staff can read it
+    match /staff/{staffUid} {
+      allow read: if isStaff();
+      allow write: if isAdmin();
+    }
+
+    // Pending staff invites (email-keyed, reconciled manually to a UID) — admin only
+    match /staff_pending/{docId} {
+      allow read, write: if isAdmin();
+    }
+  }
+}

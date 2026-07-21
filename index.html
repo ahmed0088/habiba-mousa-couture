@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>هبة موسى كوتور — طلبات تصميم حسب الطلب</title>
+<meta name="description" content="قطع كوتور مصممة حسب الطلب. استعرضي المجموعة وأرسلي طلب تصميم." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=El+Messiri:wght@400;500;600;700&family=Jost:wght@400;500;600&family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<header class="site-header">
+  <div class="container">
+    <a href="#" class="brand">Habiba Mousa <em data-i18n="brand_suffix">كوتور</em></a>
+    <nav class="nav-links">
+      <a href="#collection" data-i18n="nav_collection">المجموعة</a>
+      <a href="#how-it-works" data-i18n="nav_how">كيف تتم العملية</a>
+      <a href="#contact" data-i18n="nav_contact">تواصلي معنا</a>
+      <div class="lang-toggle" aria-label="Language / اللغة">
+        <button type="button" data-lang="ar">AR</button>
+        <button type="button" data-lang="en">EN</button>
+      </div>
+    </nav>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="container">
+    <div>
+      <p class="eyebrow" data-i18n="hero_eyebrow">حسب الطلب — دبي والقاهرة</p>
+      <h1 class="hero-title" data-i18n-html="hero_title_html">كل قطعة <em>تبدأ</em><br/>بطلب، لا برف عرض.</h1>
+      <p class="hero-sub" data-i18n="hero_sub">استعرضي المجموعة، اختاري تصميمًا يلامس ذوقكِ، وأرسلي لنا تفاصيلكِ. سنتواصل معكِ شخصيًا لتأكيد المقاس والقماش والموعد.</p>
+      <a href="#collection" class="btn btn-solid" data-i18n="btn_view_collection">استعرضي المجموعة</a>
+    </div>
+    <dl class="spec-card">
+      <dt data-i18n="spec_process_label">المراحل</dt>
+      <dd data-i18n="spec_process_value">الطلب ← الاستشارة ← القياس ← التسليم</dd>
+      <dt data-i18n="spec_turnaround_label">المدة</dt>
+      <dd data-i18n="spec_turnaround_value">عادةً من ٢ إلى ٤ أسابيع</dd>
+      <dt data-i18n="spec_reach_label">تواصلي معنا</dt>
+      <dd data-i18n="spec_reach_value">عبر نموذج الطلب أو واتساب</dd>
+    </dl>
+  </div>
+</section>
+
+<section class="gallery-section" id="collection">
+  <div class="container">
+    <div class="section-head">
+      <div>
+        <p class="eyebrow" data-i18n="collection_eyebrow">المجموعة</p>
+        <h2 class="section-title" data-i18n="collection_title">القطع الحالية</h2>
+      </div>
+      <div class="filter-row" id="filterRow">
+        <button class="filter-chip active" data-filter="all" data-i18n="filter_all">الكل</button>
+      </div>
+    </div>
+
+    <div id="galleryGrid" class="gallery-grid">
+      <!-- populated by app.js -->
+    </div>
+    <div id="emptyState" class="empty-state" style="display:none;" data-i18n="empty_state">
+      يتم إضافة قطع جديدة إلى الأتيليه — تابعينا قريبًا.
+    </div>
+  </div>
+</section>
+
+<hr class="stitch-line container" id="how-it-works" />
+
+<section class="gallery-section" style="padding-top:0;">
+  <div class="container">
+    <p class="eyebrow" data-i18n="how_eyebrow">كيف تتم العملية</p>
+    <h2 class="section-title" style="margin-bottom: 24px;" data-i18n="how_title">من الطلب إلى الإطلالة</h2>
+    <dl class="spec-card how-grid">
+      <div><dt data-i18n="step1_title">١. الطلب</dt><dd data-i18n="step1_desc">اختاري قطعة وأخبرينا بما تتخيلينه</dd></div>
+      <div><dt data-i18n="step2_title">٢. الاستشارة</dt><dd data-i18n="step2_desc">نؤكد القماش والمقاس والسعر عبر الهاتف أو واتساب</dd></div>
+      <div><dt data-i18n="step3_title">٣. القياس</dt><dd data-i18n="step3_desc">تُجرى التعديلات حسب مقاساتكِ</dd></div>
+      <div><dt data-i18n="step4_title">٤. التسليم</dt><dd data-i18n="step4_desc">قطعتكِ جاهزة للاستلام أو الشحن</dd></div>
+    </dl>
+  </div>
+</section>
+
+<footer class="site-footer" id="contact">
+  <div class="container">
+    <p data-i18n="footer_tagline">هبة موسى كوتور — قطع مصممة خصيصًا لكِ، حسب الطلب.</p>
+    <p><span data-i18n="footer_contact_prefix">تفضلين التواصل المباشر؟</span> <a href="https://wa.me/000000000000" target="_blank" rel="noopener" data-i18n="footer_whatsapp">راسلينا على واتساب</a></p>
+    <p class="footer-staff-link"><a href="admin.html" data-i18n="footer_staff">دخول الموظفين</a></p>
+  </div>
+</footer>
+
+<!-- Request Modal -->
+<div class="modal-backdrop" id="modalBackdrop">
+  <div class="modal">
+    <button class="modal-close" id="modalClose" aria-label="Close">&times;</button>
+    <h3 data-i18n="modal_title">اطلبي هذا التصميم</h3>
+    <p class="modal-piece-name" id="modalPieceName"></p>
+    <form id="requestForm">
+      <input type="hidden" id="productId" />
+      <div class="field">
+        <label for="clientName" data-i18n="label_name">اسمكِ</label>
+        <input type="text" id="clientName" required />
+      </div>
+      <div class="field">
+        <label for="clientPhone" data-i18n="label_phone">رقم الهاتف / واتساب</label>
+        <input type="tel" id="clientPhone" required />
+      </div>
+      <div class="field">
+        <label for="preferredDate" data-i18n="label_date">الموعد المطلوب (اختياري)</label>
+        <input type="date" id="preferredDate" />
+      </div>
+      <div class="field">
+        <label for="clientNotes" data-i18n="label_notes">ملاحظات — المقاس، اللون، القماش المفضل، المناسبة</label>
+        <textarea id="clientNotes" data-i18n-placeholder="notes_placeholder" placeholder="أخبرينا بأي تفاصيل تساعدنا في تحضير استشارتكِ"></textarea>
+      </div>
+      <p class="form-note" data-i18n="form_note">سنتواصل معكِ مباشرة لتأكيد التفاصيل والسعر — هذا طلب وليس دفعًا.</p>
+      <div class="submit-row">
+        <button type="submit" class="btn btn-solid" id="submitBtn" data-i18n="submit_btn">إرسال الطلب</button>
+      </div>
+      <div class="form-status" id="formStatus"></div>
+    </form>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script src="i18n.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
