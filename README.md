@@ -33,6 +33,15 @@ This makes sure:
 
 Client accounts use the same Firebase Auth (Email/Password) provider as staff — no extra service to enable. A client account is just a regular Auth user with no matching `staff` doc, so it never gains dashboard access.
 
+### A note on Firestore indexes
+
+Rules control *who* can read something; **indexes** control whether a specific query is even allowed to run. Any query that combines a `where(...)` on one field with an `orderBy(...)` on a *different* field needs a composite index — Firestore won't create these automatically. If a feature that reads from Firestore silently shows "empty" or logs a `failed-precondition` error in the browser console, this is almost always why:
+
+- **"My Requests"** (`requests` filtered by `clientUid`, ordered by `createdAt`) needs a composite index: collection `requests`, fields `clientUid` (Ascending) + `createdAt` (Descending).
+- The easiest way to create it: sign in as a test client, open "My Requests", open the browser console (F12) — Firestore prints a direct link that pre-fills the index for you. Click it, then click **Create Index** on the page that opens, and wait a couple of minutes for it to finish building.
+- Alternatively, create it by hand in **Firestore Database → Indexes → Composite → Add Index** using the field list above.
+- (The public product/collection listings were written to avoid needing this entirely — they filter `status == "active"` in the browser instead of in the query — so they don't have this requirement.)
+
 ## 4. Create your first staff login (yourself)
 
 The admin dashboard checks two things: a Firebase **Auth** login, and a matching doc in the **`staff`** Firestore collection with the same ID as that user's UID. For your first account:
@@ -85,6 +94,7 @@ You'll get a live URL like `habiba-mousa-couture.web.app` — that's what you li
 | priceRange | string | free text, e.g. "1,800 – 2,600 EGP" |
 | salePrice | string | optional; non-empty means the piece is on sale — shown struck-through next to `priceRange` on the public site |
 | images | array of strings | image URLs — first is the cover image, all feed the product detail carousel |
+| imageFocus | string | `top` (default) / `center` / `bottom` — which part of the photo stays visible when cropped to the thumbnail frame |
 | status | string | `active` or `archived` |
 | createdAt | timestamp | server-set |
 

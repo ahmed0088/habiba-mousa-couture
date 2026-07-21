@@ -268,7 +268,14 @@ function loadMyRequests(uid) {
     .orderBy("createdAt", "desc")
     .onSnapshot(
       (snapshot) => renderMyRequests(snapshot.docs.map((d) => d.data())),
-      (err) => console.error("My requests listener error:", err)
+      (err) => {
+        console.error("My requests listener error:", err);
+        if (myRequestsList) myRequestsList.innerHTML = "";
+        if (myRequestsEmpty) {
+          myRequestsEmpty.style.display = "block";
+          myRequestsEmpty.textContent = `Couldn't load your requests (${err.code || err.message}). If this says "failed-precondition", a Firestore index still needs to be created — check the browser console for a link.`;
+        }
+      }
     );
 }
 

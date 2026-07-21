@@ -29,6 +29,9 @@
   --border-soft: #eee0c9;
   --input-border: #d8c9a8;
   --row-hover: #fbf6ea;
+  --glass-surface: rgba(255, 255, 255, 0.68);
+  --glass-border: rgba(255, 255, 255, 0.45);
+  --glass-sidebar: rgba(28, 16, 19, 0.82);
 
   --font-display: "El Messiri", "Cormorant Garamond", "Times New Roman", serif;
   --font-body: "Jost", "Helvetica Neue", sans-serif;
@@ -53,6 +56,9 @@
   --border-soft: rgba(201, 151, 63, 0.22);
   --input-border: rgba(201, 151, 63, 0.32);
   --row-hover: rgba(201, 151, 63, 0.07);
+  --glass-surface: rgba(36, 26, 28, 0.6);
+  --glass-border: rgba(201, 151, 63, 0.22);
+  --glass-sidebar: rgba(20, 13, 15, 0.75);
 }
 
 * { box-sizing: border-box; }
@@ -436,15 +442,23 @@ button {
 
 .sale-badge {
   position: absolute;
-  top: 10px;
-  left: 10px;
-  background: var(--emerald);
-  color: var(--ivory);
-  font-size: 11px;
-  letter-spacing: 0.08em;
+  top: 12px;
+  left: -6px;
+  background: linear-gradient(135deg, #e2483e, #b8283a);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  padding: 4px 10px;
+  padding: 5px 14px 5px 18px;
   z-index: 2;
+  box-shadow: 0 3px 10px -2px rgba(0,0,0,0.45);
+  clip-path: polygon(0 0, 100% 0, 92% 50%, 100% 100%, 0 100%);
+  animation: sale-pulse 2.2s ease-in-out infinite;
+}
+@keyframes sale-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.06); }
 }
 
 .empty-state {
@@ -470,7 +484,10 @@ button {
 .modal-backdrop.open { display: flex; }
 
 .modal {
-  background: var(--surface);
+  background: var(--glass-surface);
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  border: 1px solid var(--glass-border);
   max-width: 520px;
   width: 100%;
   max-height: 90vh;
@@ -567,7 +584,9 @@ button {
 
 .admin-sidebar {
   width: 220px;
-  background: var(--ink);
+  background: var(--glass-sidebar);
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
   color: var(--ivory);
   padding: var(--space-3) var(--space-2);
   flex-shrink: 0;
@@ -636,8 +655,10 @@ select.status-select {
 }
 
 .admin-card {
-  background: var(--surface);
-  border: 1px solid var(--border-soft);
+  background: var(--glass-surface);
+  backdrop-filter: blur(14px) saturate(150%);
+  -webkit-backdrop-filter: blur(14px) saturate(150%);
+  border: 1px solid var(--glass-border);
   padding: var(--space-3);
   margin-bottom: var(--space-3);
 }
@@ -663,7 +684,10 @@ select.status-select {
   pointer-events: none;
 }
 .login-card {
-  background: var(--surface);
+  background: var(--glass-surface);
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  border: 1px solid var(--glass-border);
   padding: var(--space-4);
   width: 100%;
   max-width: 380px;
@@ -749,7 +773,9 @@ select.status-select {
     flex-direction: column;
     align-items: flex-start;
     gap: var(--space-2);
-    background: var(--surface);
+    background: var(--glass-surface);
+    backdrop-filter: blur(18px) saturate(160%);
+    -webkit-backdrop-filter: blur(18px) saturate(160%);
     border-bottom: 1px solid var(--line);
     padding: var(--space-2) var(--space-3) var(--space-3);
     display: none;

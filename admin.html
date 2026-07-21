@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -13,20 +13,24 @@
 <!-- Login screen -->
 <div class="login-screen" id="loginScreen">
   <div class="login-card">
-    <p class="eyebrow">Staff Access</p>
-    <h2>Habiba Mousa Couture</h2>
+    <p class="eyebrow" data-i18n="admin_eyebrow">Staff Access</p>
+    <h2 data-i18n="admin_brand">Habiba Mousa Couture</h2>
     <form id="loginForm">
       <div class="field">
-        <label for="loginEmail">Email</label>
+        <label for="loginEmail" data-i18n="admin_email">Email</label>
         <input type="email" id="loginEmail" required />
       </div>
       <div class="field">
-        <label for="loginPassword">Password</label>
+        <label for="loginPassword" data-i18n="admin_password">Password</label>
         <input type="password" id="loginPassword" required />
       </div>
-      <button type="submit" class="btn btn-solid btn-block" id="loginBtn">Sign In</button>
+      <button type="submit" class="btn btn-solid btn-block" id="loginBtn" data-i18n="admin_signin">Sign In</button>
       <div class="form-status" id="loginStatus"></div>
     </form>
+    <div class="lang-toggle" aria-label="Language / اللغة" style="margin-top:16px; justify-content:center; display:flex;">
+      <button type="button" data-lang="ar">AR</button>
+      <button type="button" data-lang="en">EN</button>
+    </div>
   </div>
 </div>
 
@@ -35,14 +39,18 @@
   <aside class="admin-sidebar">
     <a href="#" class="brand">Habiba <em>Admin</em></a>
     <nav class="admin-nav">
-      <button data-view="requests" class="active">Requests</button>
-      <button data-view="products">Products</button>
-      <button data-view="collections">Collections</button>
-      <button data-view="settings">Settings</button>
-      <button data-view="staff">Staff</button>
+      <button data-view="requests" class="active" data-i18n="admin_nav_requests">Requests</button>
+      <button data-view="products" data-i18n="admin_nav_products">Products</button>
+      <button data-view="collections" data-i18n="admin_nav_collections">Collections</button>
+      <button data-view="settings" data-i18n="admin_nav_settings">Settings</button>
+      <button data-view="staff" data-i18n="admin_nav_staff">Staff</button>
     </nav>
-    <div style="margin-top:40px; display:flex; align-items:center; gap:12px;">
-      <button id="logoutBtn" style="color:rgba(243,239,230,0.6); font-size:13px;">Sign Out →</button>
+    <div class="lang-toggle" aria-label="Language / اللغة" style="margin-top:32px;">
+      <button type="button" data-lang="ar">AR</button>
+      <button type="button" data-lang="en">EN</button>
+    </div>
+    <div style="margin-top:16px; display:flex; align-items:center; gap:10px;">
+      <button id="logoutBtn" class="btn" style="border-color:rgba(243,239,230,0.4); color:var(--ivory); font-size:13px; padding:8px 16px;" data-i18n="admin_signout">Sign Out →</button>
       <button type="button" class="theme-toggle" aria-label="Toggle theme">🌙</button>
     </div>
   </aside>
@@ -52,43 +60,50 @@
     <!-- Requests view -->
     <section id="view-requests">
       <div class="admin-topbar">
-        <h1>Inquiries &amp; Requests</h1>
+        <h1 data-i18n="admin_requests_title">Inquiries &amp; Requests</h1>
         <span class="whoami" id="whoamiRequests"></span>
+      </div>
+      <div class="field" style="max-width:320px;">
+        <input type="text" id="requestsSearch" data-i18n-placeholder="admin_requests_search_ph" placeholder="Search by name, phone, piece..." />
       </div>
       <div class="admin-card" style="overflow-x:auto;">
         <table>
           <thead>
             <tr>
-              <th>Client</th>
-              <th>Piece</th>
-              <th>Contact</th>
-              <th>Address</th>
-              <th>Material</th>
-              <th>Needed By</th>
-              <th>Notes</th>
-              <th>Status</th>
-              <th>Received</th>
+              <th data-i18n="admin_th_client">Client</th>
+              <th data-i18n="admin_th_piece2">Piece</th>
+              <th data-i18n="admin_th_contact">Contact</th>
+              <th data-i18n="admin_th_address">Address</th>
+              <th data-i18n="admin_th_material">Material</th>
+              <th data-i18n="admin_th_needed">Needed By</th>
+              <th data-i18n="admin_th_notes">Notes</th>
+              <th data-i18n="admin_th_status">Status</th>
+              <th data-i18n="admin_th_received">Received</th>
+              <th></th>
             </tr>
           </thead>
           <tbody id="requestsTableBody"></tbody>
         </table>
-        <p id="requestsEmpty" style="display:none; color:#8a8a86; padding: 20px 0;">No requests yet.</p>
+        <p id="requestsEmpty" style="display:none; color:#8a8a86; padding: 20px 0;" data-i18n="admin_requests_empty">No requests yet.</p>
       </div>
     </section>
 
     <!-- Products view -->
     <section id="view-products" style="display:none;">
       <div class="admin-topbar">
-        <h1>Product Catalog</h1>
-        <button class="btn btn-solid" id="newProductBtn">+ Add Piece</button>
+        <h1 data-i18n="admin_products_title">Product Catalog</h1>
+        <button class="btn btn-solid" id="newProductBtn" data-i18n="admin_add_piece">+ Add Piece</button>
+      </div>
+      <div class="field" style="max-width:320px;">
+        <input type="text" id="productsSearch" data-i18n-placeholder="admin_products_search_ph" placeholder="Search by name, code, category..." />
       </div>
 
       <div class="admin-card" id="productFormCard" style="display:none;">
-        <h3 style="font-family:var(--font-display); margin-top:0;" id="productFormTitle">New Piece</h3>
+        <h3 style="font-family:var(--font-display); margin-top:0;" id="productFormTitle" data-i18n="admin_new_piece">New Piece</h3>
         <input type="hidden" id="productDocId" />
         <div class="product-form-grid">
           <div class="field">
-            <label>Name</label>
+            <label data-i18n="admin_p_name">Name</label>
             <input type="text" id="pName" required />
           </div>
           <div class="field">
@@ -96,7 +111,7 @@
             <input type="text" id="pCode" placeholder="e.g. HM-1024" />
           </div>
           <div class="field">
-            <label>Category</label>
+            <label data-i18n="admin_p_category">Category</label>
             <input type="text" id="pCategory" list="categoryOptions" placeholder="Pick a suggestion or type your own" />
             <datalist id="categoryOptions">
               <option value="Evening Gown"></option>
@@ -117,33 +132,48 @@
             </select>
           </div>
           <div class="field">
-            <label>Price range</label>
+            <label data-i18n="admin_p_price">Price range</label>
             <input type="text" id="pPrice" placeholder="e.g. 1,800 – 2,600 EGP" />
           </div>
           <div class="field">
             <label>Sale price (optional)</label>
             <input type="text" id="pSalePrice" placeholder="e.g. 1,500 EGP — leave blank if not on sale" />
+            <div style="display:flex; gap:6px; margin-top:6px;">
+              <button type="button" class="icon-btn quick-sale-btn" data-off="10">-10%</button>
+              <button type="button" class="icon-btn quick-sale-btn" data-off="20">-20%</button>
+              <button type="button" class="icon-btn quick-sale-btn" data-off="30">-30%</button>
+              <button type="button" class="icon-btn quick-sale-btn" data-off="50">-50%</button>
+              <button type="button" class="icon-btn danger" id="clearSaleBtn">Clear</button>
+            </div>
           </div>
           <div class="field">
-            <label>Status</label>
+            <label data-i18n="admin_p_status">Status</label>
             <select id="pStatus">
-              <option value="active">Active — visible on site</option>
-              <option value="archived">Archived — hidden</option>
+              <option value="active" data-i18n="admin_p_status_active">Active — visible on site</option>
+              <option value="archived" data-i18n="admin_p_status_archived">Archived — hidden</option>
             </select>
           </div>
         </div>
         <div class="field">
-          <label>Description</label>
+          <label data-i18n="admin_p_description">Description</label>
           <textarea id="pDescription"></textarea>
         </div>
         <div class="field">
-          <label>Image URLs</label>
+          <label data-i18n="admin_p_image">Image URLs</label>
           <textarea id="pImages" placeholder="https://...&#10;https://..."></textarea>
-          <p class="form-note">One image URL per line (e.g. from Firebase Storage or Instagram CDN link). The first line is used as the cover image; all lines feed the gallery on the product detail view.</p>
+          <p class="form-note" data-i18n="admin_p_image_note">One image URL per line (e.g. from Firebase Storage or Instagram CDN link). The first line is used as the cover image; all lines feed the gallery on the product detail view.</p>
+        </div>
+        <div class="field" style="max-width:260px;">
+          <label>Thumbnail focus (fixes cropped photos)</label>
+          <select id="pImageFocus">
+            <option value="top">Top (keep heads/faces)</option>
+            <option value="center">Center</option>
+            <option value="bottom">Bottom</option>
+          </select>
         </div>
         <div class="submit-row" style="display:flex; gap:10px;">
-          <button class="btn btn-solid" id="saveProductBtn">Save Piece</button>
-          <button class="btn" id="cancelProductBtn" style="border-color:#cfc7b4; color:var(--charcoal);">Cancel</button>
+          <button class="btn btn-solid" id="saveProductBtn" data-i18n="admin_save_piece">Save Piece</button>
+          <button class="btn" id="cancelProductBtn" style="border-color:#cfc7b4; color:var(--charcoal);" data-i18n="admin_cancel">Cancel</button>
         </div>
         <div class="form-status" id="productFormStatus"></div>
       </div>
@@ -153,10 +183,10 @@
           <thead>
             <tr>
               <th>Code</th>
-              <th>Piece</th>
-              <th>Category</th>
-              <th>Price Range</th>
-              <th>Status</th>
+              <th data-i18n="admin_th_piece2">Piece</th>
+              <th data-i18n="admin_th_category">Category</th>
+              <th data-i18n="admin_th_price">Price Range</th>
+              <th data-i18n="admin_th_status">Status</th>
               <th></th>
             </tr>
           </thead>
@@ -288,37 +318,41 @@
     <!-- Staff view -->
     <section id="view-staff" style="display:none;">
       <div class="admin-topbar">
-        <h1>Staff Access</h1>
+        <h1 data-i18n="admin_staff_title">Staff Access</h1>
       </div>
       <div class="admin-card">
-        <p style="font-size:14px; color:#555;">
+        <p style="font-size:14px; color:#555;" data-i18n-html="admin_staff_intro_html">
           Staff accounts are created in two steps: (1) create the person's login in
           <strong>Firebase Console → Authentication</strong>, then (2) add a matching record below
           so they can access this dashboard.
         </p>
+        <input type="hidden" id="staffEditUid" />
         <div class="product-form-grid">
           <div class="field">
-            <label>Staff email (must match their Firebase Auth login)</label>
+            <label data-i18n="admin_staff_email">Staff email (must match their Firebase Auth login)</label>
             <input type="email" id="staffEmail" />
           </div>
           <div class="field">
-            <label>Name</label>
+            <label data-i18n="admin_staff_name">Name</label>
             <input type="text" id="staffName" />
           </div>
           <div class="field">
-            <label>Role</label>
+            <label data-i18n="admin_staff_role">Role</label>
             <select id="staffRole">
-              <option value="staff">Staff — manage requests &amp; products</option>
-              <option value="admin">Admin — full access</option>
+              <option value="staff" data-i18n="admin_staff_role_staff">Staff — manage requests &amp; products</option>
+              <option value="admin" data-i18n="admin_staff_role_admin">Admin — full access</option>
             </select>
           </div>
         </div>
-        <button class="btn btn-solid" id="addStaffBtn">Add Staff Member</button>
+        <div style="display:flex; gap:10px;">
+          <button class="btn btn-solid" id="addStaffBtn" data-i18n="admin_add_staff">Add Staff Member</button>
+          <button class="btn" id="cancelStaffEditBtn" style="display:none; border-color:#cfc7b4; color:var(--charcoal);" data-i18n="admin_cancel">Cancel</button>
+        </div>
         <div class="form-status" id="staffFormStatus"></div>
       </div>
       <div class="admin-card" style="overflow-x:auto;">
         <table>
-          <thead><tr><th>Name</th><th>Email</th><th>Role</th><th></th></tr></thead>
+          <thead><tr><th data-i18n="admin_th_name">Name</th><th data-i18n="admin_th_email">Email</th><th data-i18n="admin_th_role">Role</th><th></th></tr></thead>
           <tbody id="staffTableBody"></tbody>
         </table>
       </div>
@@ -327,10 +361,20 @@
   </main>
 </div>
 
+<!-- Request Detail Modal (full, copy-paste friendly view) -->
+<div class="modal-backdrop" id="requestDetailBackdrop">
+  <div class="modal">
+    <button class="modal-close" id="requestDetailClose" aria-label="Close">&times;</button>
+    <h3 style="font-family:var(--font-display); margin-top:0;">Request Details</h3>
+    <div id="requestDetailBody" style="font-size:14px; line-height:1.8; user-select:text;"></div>
+  </div>
+</div>
+
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="firebase-config.js"></script>
+<script src="i18n.js"></script>
 <script src="theme.js"></script>
 <script src="admin.js"></script>
 </body>

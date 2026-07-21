@@ -8,6 +8,7 @@ const galleryGrid = document.getElementById("galleryGrid");
 const emptyState = document.getElementById("emptyState");
 const filterRow = document.getElementById("filterRow");
 const collectionRow = document.getElementById("collectionRow");
+const productSearchInput = document.getElementById("productSearch");
 
 const modalBackdrop = document.getElementById("modalBackdrop");
 const modalClose = document.getElementById("modalClose");
@@ -234,9 +235,16 @@ function renderGallery() {
   }
 
   const collectionFiltered = getCollectionFilteredProducts();
-  const filtered = activeFilter === "all"
+  const categoryFiltered = activeFilter === "all"
     ? collectionFiltered
     : collectionFiltered.filter(p => p.category === activeFilter);
+
+  const searchQuery = (productSearchInput?.value || "").trim().toLowerCase();
+  const filtered = searchQuery
+    ? categoryFiltered.filter(p =>
+        `${p.name || ""} ${p.category || ""} ${p.description || ""}`.toLowerCase().includes(searchQuery)
+      )
+    : categoryFiltered;
 
   galleryGrid.innerHTML = "";
 
@@ -258,7 +266,7 @@ function renderGallery() {
       <div class="piece-media">
         ${onSale ? `<span class="sale-badge">${t("sale_badge")}</span>` : ""}
         ${product.images && product.images[0]
-          ? `<img src="${escapeHtml(product.images[0])}" alt="${escapeHtml(product.name)}" loading="lazy" />`
+          ? `<img src="${escapeHtml(product.images[0])}" alt="${escapeHtml(product.name)}" loading="lazy" style="object-position: center ${escapeHtml(product.imageFocus || "top")};" />`
           : `<span>${escapeHtml(product.name)}</span>`}
       </div>
       <div class="piece-body">
@@ -298,12 +306,15 @@ function loadProducts() {
 }
 
 function loadCollections() {
+  // Filtering status client-side (rather than .where("status","==","active")) avoids needing
+  // a composite Firestore index — collections are publicly readable so this is safe either way.
   db.collection("collections")
-    .where("status", "==", "active")
     .orderBy("createdAt", "desc")
     .onSnapshot(
       (snapshot) => {
-        allCollections = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        allCollections = snapshot.docs
+          .map(doc => ({ id: doc.id, ...doc.data() }))
+          .filter(c => c.status === "active");
         if (activeCollection !== "all" && !allCollections.some(c => c.id === activeCollection)) {
           activeCollection = "all";
         }
@@ -359,6 +370,8 @@ document.addEventListener("langchange", () => {
     detailCategory.textContent = currentProduct.category || t("piece_category_fallback");
   }
 });
+
+productSearchInput?.addEventListener("input", renderGallery);
 
 loadProducts();
 loadCollections();

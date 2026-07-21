@@ -16,7 +16,7 @@ const I18N = {
     brand_suffix: "كوتور",
 
     // Hero
-    hero_eyebrow: "تفصيل حسب الطلب — القاهرة",
+    hero_eyebrow: "تفصيل حسب الطلب — الإسكندرية",
     hero_title_html: "كل قطعة <em>بتتولد</em><br/>من طلب، مش من رف.",
     hero_sub: "تفرجي على الكولكشن، اختاري التصميم اللي عجبك، وابعتيلنا تفاصيلك. هنكلمك بنفسنا نأكد المقاس والقماش والميعاد.",
     btn_view_collection: "شوفي الكولكشن",
@@ -32,6 +32,7 @@ const I18N = {
     collection_title: "القطع المتاحة دلوقتي",
     filter_all: "الكل",
     filter_all_collections: "كل الكولكشنات",
+    search_placeholder: "دوّري على قطعة...",
     empty_state: "بنجهز قطع جديدة للأتيليه — تابعينا هيبقى فيه كل حاجة حلوة قريب.",
     empty_state_error: "معلش، حصلت مشكلة في تحميل الكولكشن دلوقتي. جربي تاني بعد شوية.",
     piece_category_fallback: "كوتور",
@@ -81,6 +82,8 @@ const I18N = {
     // Admin — shell
     admin_nav_requests: "الطلبات",
     admin_nav_products: "المنتجات",
+    admin_nav_collections: "الكولكشنات",
+    admin_nav_settings: "الإعدادات",
     admin_nav_staff: "الموظفين",
     admin_signout: "تسجيل خروج ←",
     admin_requests_title: "الطلبات والاستفسارات",
@@ -91,10 +94,14 @@ const I18N = {
     admin_th_notes: "ملاحظات",
     admin_th_status: "الحالة",
     admin_th_received: "تاريخ الاستلام",
+    admin_th_address: "العنوان",
+    admin_th_material: "القماش",
+    admin_requests_search_ph: "دوّري بالاسم، الرقم، أو القطعة...",
     admin_requests_empty: "لسه مفيش طلبات.",
 
     admin_products_title: "كتالوج المنتجات",
     admin_add_piece: "+ إضافة قطعة",
+    admin_products_search_ph: "دوّري بالاسم، الكود، أو النوع...",
     admin_new_piece: "قطعة جديدة",
     admin_edit_piece: "تعديل القطعة",
     admin_p_name: "الاسم",
@@ -245,7 +252,7 @@ const I18N = {
     contact_hours_label: "مواعيد الشغل",
     contact_hours_value: "من السبت للخميس، من ١٠ الصبح لـ ٦ المغرب",
     contact_location_label: "العنوان",
-    contact_location_value: "القاهرة، مصر (بميعاد مسبق)",
+    contact_location_value: "الإسكندرية، مصر (بميعاد مسبق)",
 
     // Terms & policies page
     terms_eyebrow: "الشروط والسياسات",
@@ -269,7 +276,7 @@ const I18N = {
     nav_contact: "Contact",
     brand_suffix: "Couture",
 
-    hero_eyebrow: "Made to order — Cairo, Egypt",
+    hero_eyebrow: "Made to order — Alexandria, Egypt",
     hero_title_html: "Every piece <em>begins</em><br/>with a request, not a rack.",
     hero_sub: "Browse the collection, choose a design that speaks to you, and send us your details. We'll follow up personally to confirm fit, fabric, and timeline.",
     btn_view_collection: "View the Collection",
@@ -284,6 +291,7 @@ const I18N = {
     collection_title: "Current Pieces",
     filter_all: "All",
     filter_all_collections: "All Collections",
+    search_placeholder: "Search for a piece...",
     empty_state: "New pieces are being added to the atelier — check back soon.",
     empty_state_error: "Unable to load the collection right now. Please check back shortly.",
     piece_category_fallback: "Couture",
@@ -328,6 +336,8 @@ const I18N = {
 
     admin_nav_requests: "Requests",
     admin_nav_products: "Products",
+    admin_nav_collections: "Collections",
+    admin_nav_settings: "Settings",
     admin_nav_staff: "Staff",
     admin_signout: "Sign Out →",
     admin_requests_title: "Inquiries & Requests",
@@ -338,10 +348,14 @@ const I18N = {
     admin_th_notes: "Notes",
     admin_th_status: "Status",
     admin_th_received: "Received",
+    admin_th_address: "Address",
+    admin_th_material: "Material",
+    admin_requests_search_ph: "Search by name, phone, piece...",
     admin_requests_empty: "No requests yet.",
 
     admin_products_title: "Product Catalog",
     admin_add_piece: "+ Add Piece",
+    admin_products_search_ph: "Search by name, code, category...",
     admin_new_piece: "New Piece",
     admin_edit_piece: "Edit Piece",
     admin_p_name: "Name",
@@ -492,7 +506,7 @@ const I18N = {
     contact_hours_label: "Hours",
     contact_hours_value: "Saturday – Thursday, 10am – 6pm",
     contact_location_label: "Location",
-    contact_location_value: "Cairo, Egypt (by appointment)",
+    contact_location_value: "Alexandria, Egypt (by appointment)",
 
     // Terms & policies page
     terms_eyebrow: "Terms & Policies",

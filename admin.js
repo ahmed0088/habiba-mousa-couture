@@ -30,7 +30,7 @@ loginForm.addEventListener("submit", async (e) => {
   } catch (err) {
     console.error(err);
     loginStatus.className = "form-status error";
-    loginStatus.textContent = "Sign in failed — check your email and password.";
+    loginStatus.textContent = "Sign in failed — check your email and password." + errSuffix(err);
   } finally {
     loginBtn.disabled = false;
     loginBtn.textContent = "Sign In";
@@ -74,7 +74,7 @@ auth.onAuthStateChanged(async (user) => {
   } catch (err) {
     console.error("Staff lookup failed:", err);
     loginStatus.className = "form-status error";
-    loginStatus.textContent = "Couldn't verify access. Try again.";
+    loginStatus.textContent = "Couldn't verify access. Try again." + errSuffix(err);
     await auth.signOut();
   }
 });
@@ -90,6 +90,10 @@ document.querySelectorAll(".admin-nav button[data-view]").forEach((btn) => {
     });
   });
 });
+
+function errSuffix(err) {
+  return err && err.code ? ` (${err.code})` : "";
+}
 
 function escapeHtml(str) {
   const div = document.createElement("div");
@@ -116,49 +120,105 @@ const MATERIAL_LABELS = {
   unspecified: "Not sure yet"
 };
 
+let requestsById = {};
+
+const requestDetailBackdrop = document.getElementById("requestDetailBackdrop");
+const requestDetailClose = document.getElementById("requestDetailClose");
+const requestDetailBody = document.getElementById("requestDetailBody");
+
+function detailRow(label, value) {
+  return `<p style="margin:0 0 10px;"><strong>${escapeHtml(label)}:</strong><br>${escapeHtml(value || "—")}</p>`;
+}
+
+function openRequestDetail(id) {
+  const r = requestsById[id];
+  if (!r) return;
+  requestDetailBody.innerHTML = [
+    detailRow("Client", r.clientName),
+    detailRow("Phone", r.clientPhone),
+    detailRow("Address", r.clientAddress),
+    detailRow("Piece", r.productName + (r.productCode ? ` (${r.productCode})` : "")),
+    detailRow("Material", MATERIAL_LABELS[r.material] || r.material),
+    detailRow("Needed by", r.preferredDate),
+    detailRow("Notes", r.notes),
+    detailRow("Status", STATUS_LABELS[r.status] || r.status),
+    detailRow("Received", formatDate(r.createdAt))
+  ].join("");
+  requestDetailBackdrop.classList.add("open");
+}
+
+requestDetailClose?.addEventListener("click", () => requestDetailBackdrop.classList.remove("open"));
+requestDetailBackdrop?.addEventListener("click", (e) => {
+  if (e.target === requestDetailBackdrop) requestDetailBackdrop.classList.remove("open");
+});
+
+let allRequests = [];
+const requestsSearchInput = document.getElementById("requestsSearch");
+
+function requestMatchesSearch(r, q) {
+  if (!q) return true;
+  const hay = `${r.clientName || ""} ${r.clientPhone || ""} ${r.productName || ""} ${r.productCode || ""} ${r.clientAddress || ""}`.toLowerCase();
+  return hay.includes(q);
+}
+
+function renderRequestsTable() {
+  const tbody = document.getElementById("requestsTableBody");
+  const empty = document.getElementById("requestsEmpty");
+  const q = (requestsSearchInput?.value || "").trim().toLowerCase();
+  const filtered = allRequests.filter(([, r]) => requestMatchesSearch(r, q));
+  tbody.innerHTML = "";
+
+  if (filtered.length === 0) {
+    empty.style.display = "block";
+    empty.textContent = q ? "No requests match your search." : "No requests yet.";
+    return;
+  }
+  empty.style.display = "none";
+
+  filtered.forEach(([id, r]) => {
+    const tr = document.createElement("tr");
+    const optionsHtml = STATUS_OPTIONS.map(
+      s => `<option value="${s}" ${r.status === s ? "selected" : ""}>${STATUS_LABELS[s]}</option>`
+    ).join("");
+
+    tr.innerHTML = `
+      <td>${escapeHtml(r.clientName)}</td>
+      <td>${escapeHtml(r.productName || "—")}${r.productCode ? ` <span style="color:var(--text-faint); font-size:12px;">(${escapeHtml(r.productCode)})</span>` : ""}</td>
+      <td>${escapeHtml(r.clientPhone)}</td>
+      <td style="max-width:180px;">${escapeHtml(r.clientAddress || "—")}</td>
+      <td>${escapeHtml(MATERIAL_LABELS[r.material] || "—")}</td>
+      <td>${escapeHtml(r.preferredDate || "—")}</td>
+      <td style="max-width:220px;">${escapeHtml(r.notes || "—")}</td>
+      <td><select class="status-select" data-id="${id}">${optionsHtml}</select></td>
+      <td>${formatDate(r.createdAt)}</td>
+      <td><button class="icon-btn" data-view-request="${id}">View</button></td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  tbody.querySelectorAll("[data-view-request]").forEach((btn) => {
+    btn.addEventListener("click", () => openRequestDetail(btn.dataset.viewRequest));
+  });
+
+  tbody.querySelectorAll(".status-select").forEach((sel) => {
+    sel.addEventListener("change", async () => {
+      try {
+        await db.collection("requests").doc(sel.dataset.id).update({ status: sel.value });
+      } catch (err) {
+        console.error("Failed to update status:", err);
+        alert("Couldn't update status. Please try again." + errSuffix(err));
+      }
+    });
+  });
+}
+
+requestsSearchInput?.addEventListener("input", renderRequestsTable);
+
 function loadRequests() {
   db.collection("requests").orderBy("createdAt", "desc").onSnapshot((snapshot) => {
-    const tbody = document.getElementById("requestsTableBody");
-    const empty = document.getElementById("requestsEmpty");
-    tbody.innerHTML = "";
-
-    if (snapshot.empty) {
-      empty.style.display = "block";
-      return;
-    }
-    empty.style.display = "none";
-
-    snapshot.forEach((doc) => {
-      const r = doc.data();
-      const tr = document.createElement("tr");
-      const optionsHtml = STATUS_OPTIONS.map(
-        s => `<option value="${s}" ${r.status === s ? "selected" : ""}>${STATUS_LABELS[s]}</option>`
-      ).join("");
-
-      tr.innerHTML = `
-        <td>${escapeHtml(r.clientName)}</td>
-        <td>${escapeHtml(r.productName || "—")}${r.productCode ? ` <span style="color:var(--text-faint); font-size:12px;">(${escapeHtml(r.productCode)})</span>` : ""}</td>
-        <td>${escapeHtml(r.clientPhone)}</td>
-        <td style="max-width:180px;">${escapeHtml(r.clientAddress || "—")}</td>
-        <td>${escapeHtml(MATERIAL_LABELS[r.material] || "—")}</td>
-        <td>${escapeHtml(r.preferredDate || "—")}</td>
-        <td style="max-width:220px;">${escapeHtml(r.notes || "—")}</td>
-        <td><select class="status-select" data-id="${doc.id}">${optionsHtml}</select></td>
-        <td>${formatDate(r.createdAt)}</td>
-      `;
-      tbody.appendChild(tr);
-    });
-
-    tbody.querySelectorAll(".status-select").forEach((sel) => {
-      sel.addEventListener("change", async () => {
-        try {
-          await db.collection("requests").doc(sel.dataset.id).update({ status: sel.value });
-        } catch (err) {
-          console.error("Failed to update status:", err);
-          alert("Couldn't update status. Please try again.");
-        }
-      });
-    });
+    allRequests = snapshot.docs.map(doc => [doc.id, doc.data()]);
+    requestsById = Object.fromEntries(allRequests);
+    renderRequestsTable();
   }, (err) => console.error("Requests listener error:", err));
 }
 
@@ -183,6 +243,7 @@ function resetProductForm() {
   document.getElementById("pStatus").value = "active";
   document.getElementById("pDescription").value = "";
   document.getElementById("pImages").value = "";
+  document.getElementById("pImageFocus").value = "top";
   productFormStatus.className = "form-status";
   productFormStatus.textContent = "";
 }
@@ -217,7 +278,8 @@ saveProductBtn.addEventListener("click", async () => {
     images: document.getElementById("pImages").value
       .split("\n")
       .map(line => line.trim())
-      .filter(Boolean)
+      .filter(Boolean),
+    imageFocus: document.getElementById("pImageFocus").value
   };
 
   saveProductBtn.disabled = true;
@@ -232,35 +294,65 @@ saveProductBtn.addEventListener("click", async () => {
   } catch (err) {
     console.error("Failed to save product:", err);
     productFormStatus.className = "form-status error";
-    productFormStatus.textContent = "Couldn't save this piece. Please try again.";
+    productFormStatus.textContent = "Couldn't save this piece. Please try again." + errSuffix(err);
   } finally {
     saveProductBtn.disabled = false;
   }
 });
 
-function loadProducts() {
-  db.collection("products").orderBy("createdAt", "desc").onSnapshot((snapshot) => {
-    const tbody = document.getElementById("productsTableBody");
-    tbody.innerHTML = "";
+document.querySelectorAll(".quick-sale-btn").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    const priceRaw = document.getElementById("pPrice").value;
+    const numberMatch = priceRaw.match(/[\d,]+(\.\d+)?/);
+    if (!numberMatch) {
+      alert("Add a numeric price range first (e.g. 1,800 EGP) so a discount can be calculated.");
+      return;
+    }
+    const base = parseFloat(numberMatch[0].replace(/,/g, ""));
+    const off = Number(btn.dataset.off);
+    const discounted = Math.round(base * (1 - off / 100));
+    const currencyMatch = priceRaw.match(/[A-Za-z]+$/);
+    const currency = currencyMatch ? ` ${currencyMatch[0]}` : "";
+    document.getElementById("pSalePrice").value = `${discounted.toLocaleString()}${currency}`;
+  });
+});
 
-    snapshot.forEach((doc) => {
-      const p = doc.data();
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td>${escapeHtml(p.productCode || "—")}</td>
-        <td>${escapeHtml(p.name)}</td>
-        <td>${escapeHtml(p.category || "—")}</td>
-        <td>${p.salePrice ? `${escapeHtml(p.priceRange || "—")} → <strong>${escapeHtml(p.salePrice)}</strong> (Sale)` : escapeHtml(p.priceRange || "—")}</td>
-        <td><span class="status-pill status-${p.status === "active" ? "confirmed" : "delivered"}">${escapeHtml(p.status)}</span></td>
-        <td>
-          <button class="icon-btn" data-edit="${doc.id}">Edit</button>
-          <button class="icon-btn danger" data-delete="${doc.id}">Delete</button>
-        </td>
-      `;
-      tbody.appendChild(tr);
-    });
+document.getElementById("clearSaleBtn")?.addEventListener("click", () => {
+  document.getElementById("pSalePrice").value = "";
+});
 
-    tbody.querySelectorAll("[data-edit]").forEach((btn) => {
+let allProductsAdmin = [];
+const productsSearchInput = document.getElementById("productsSearch");
+
+function productMatchesSearch(p, q) {
+  if (!q) return true;
+  const hay = `${p.name || ""} ${p.productCode || ""} ${p.category || ""}`.toLowerCase();
+  return hay.includes(q);
+}
+
+function renderProductsTable() {
+  const tbody = document.getElementById("productsTableBody");
+  const q = (productsSearchInput?.value || "").trim().toLowerCase();
+  const filtered = allProductsAdmin.filter(([, p]) => productMatchesSearch(p, q));
+  tbody.innerHTML = "";
+
+  filtered.forEach(([id, p]) => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${escapeHtml(p.productCode || "—")}</td>
+      <td>${escapeHtml(p.name)}</td>
+      <td>${escapeHtml(p.category || "—")}</td>
+      <td>${p.salePrice ? `${escapeHtml(p.priceRange || "—")} → <strong>${escapeHtml(p.salePrice)}</strong> (Sale)` : escapeHtml(p.priceRange || "—")}</td>
+      <td><span class="status-pill status-${p.status === "active" ? "confirmed" : "delivered"}">${escapeHtml(p.status)}</span></td>
+      <td>
+        <button class="icon-btn" data-edit="${id}">Edit</button>
+        <button class="icon-btn danger" data-delete="${id}">Delete</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  tbody.querySelectorAll("[data-edit]").forEach((btn) => {
       btn.addEventListener("click", async () => {
         const doc = await db.collection("products").doc(btn.dataset.edit).get();
         const p = doc.data();
@@ -274,23 +366,32 @@ function loadProducts() {
         document.getElementById("pStatus").value = p.status || "active";
         document.getElementById("pDescription").value = p.description || "";
         document.getElementById("pImages").value = (p.images || []).join("\n");
+        document.getElementById("pImageFocus").value = p.imageFocus || "top";
         productFormTitle.textContent = "Edit Piece";
         productFormCard.style.display = "block";
         productFormCard.scrollIntoView({ behavior: "smooth" });
       });
     });
 
-    tbody.querySelectorAll("[data-delete]").forEach((btn) => {
-      btn.addEventListener("click", async () => {
-        if (!confirm("Remove this piece from the catalog? This can't be undone.")) return;
-        try {
-          await db.collection("products").doc(btn.dataset.delete).delete();
-        } catch (err) {
-          console.error("Failed to delete product:", err);
-          alert("Couldn't delete this piece. Please try again.");
-        }
-      });
+  tbody.querySelectorAll("[data-delete]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      if (!confirm("Remove this piece from the catalog? This can't be undone.")) return;
+      try {
+        await db.collection("products").doc(btn.dataset.delete).delete();
+      } catch (err) {
+        console.error("Failed to delete product:", err);
+        alert("Couldn't delete this piece. Please try again." + errSuffix(err));
+      }
     });
+  });
+}
+
+productsSearchInput?.addEventListener("input", renderProductsTable);
+
+function loadProducts() {
+  db.collection("products").orderBy("createdAt", "desc").onSnapshot((snapshot) => {
+    allProductsAdmin = snapshot.docs.map(doc => [doc.id, doc.data()]);
+    renderProductsTable();
   }, (err) => console.error("Products listener error:", err));
 }
 
@@ -336,7 +437,7 @@ saveCollectionBtn.addEventListener("click", async () => {
   } catch (err) {
     console.error("Failed to save collection:", err);
     collectionFormStatus.className = "form-status error";
-    collectionFormStatus.textContent = "Couldn't create this collection. Please try again.";
+    collectionFormStatus.textContent = "Couldn't create this collection. Please try again." + errSuffix(err);
   } finally {
     saveCollectionBtn.disabled = false;
   }
@@ -386,7 +487,7 @@ function loadCollections() {
           await db.collection("collections").doc(btn.dataset.toggle).update({ status: btn.dataset.next });
         } catch (err) {
           console.error("Failed to update collection status:", err);
-          alert("Couldn't update this collection. Please try again.");
+          alert("Couldn't update this collection. Please try again." + errSuffix(err));
         }
       });
     });
@@ -398,7 +499,7 @@ function loadCollections() {
           await db.collection("collections").doc(btn.dataset.deleteCollection).delete();
         } catch (err) {
           console.error("Failed to delete collection:", err);
-          alert("Couldn't delete this collection. Please try again.");
+          alert("Couldn't delete this collection. Please try again." + errSuffix(err));
         }
       });
     });
@@ -459,13 +560,31 @@ saveSettingsBtn.addEventListener("click", async () => {
   } catch (err) {
     console.error("Failed to save settings:", err);
     settingsFormStatus.className = "form-status error";
-    settingsFormStatus.textContent = "Couldn't save settings. Please try again.";
+    settingsFormStatus.textContent = "Couldn't save settings. Please try again." + errSuffix(err);
   } finally {
     saveSettingsBtn.disabled = false;
   }
 });
 
 // ---------- Staff (admin only) ----------
+
+const staffEditUid = document.getElementById("staffEditUid");
+const cancelStaffEditBtn = document.getElementById("cancelStaffEditBtn");
+const addStaffBtn = document.getElementById("addStaffBtn");
+
+function resetStaffForm() {
+  staffEditUid.value = "";
+  document.getElementById("staffEmail").value = "";
+  document.getElementById("staffEmail").disabled = false;
+  document.getElementById("staffName").value = "";
+  document.getElementById("staffRole").value = "staff";
+  addStaffBtn.textContent = "Add Staff Member";
+  cancelStaffEditBtn.style.display = "none";
+  document.getElementById("staffFormStatus").className = "form-status";
+  document.getElementById("staffFormStatus").textContent = "";
+}
+
+cancelStaffEditBtn?.addEventListener("click", resetStaffForm);
 
 function loadStaff() {
   db.collection("staff").onSnapshot((snapshot) => {
@@ -478,26 +597,60 @@ function loadStaff() {
         <td>${escapeHtml(s.name || "—")}</td>
         <td>${escapeHtml(s.email || "—")}</td>
         <td>${escapeHtml(s.role || "staff")}</td>
-        <td>${doc.id === currentStaff.uid ? "" : `<button class="icon-btn danger" data-remove="${doc.id}">Remove</button>`}</td>
+        <td>
+          <button class="icon-btn" data-edit-staff="${doc.id}" data-name="${escapeHtml(s.name || "")}" data-email="${escapeHtml(s.email || "")}" data-role="${escapeHtml(s.role || "staff")}">Edit</button>
+          ${doc.id === currentStaff.uid ? "" : `<button class="icon-btn danger" data-remove="${doc.id}">Remove</button>`}
+        </td>
       `;
       tbody.appendChild(tr);
+    });
+
+    tbody.querySelectorAll("[data-edit-staff]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        staffEditUid.value = btn.dataset.editStaff;
+        document.getElementById("staffEmail").value = btn.dataset.email;
+        document.getElementById("staffEmail").disabled = true;
+        document.getElementById("staffName").value = btn.dataset.name;
+        document.getElementById("staffRole").value = btn.dataset.role;
+        addStaffBtn.textContent = "Update Staff Member";
+        cancelStaffEditBtn.style.display = "inline-block";
+        document.getElementById("staffFormStatus").className = "form-status";
+        document.getElementById("staffFormStatus").textContent = "";
+      });
     });
 
     tbody.querySelectorAll("[data-remove]").forEach((btn) => {
       btn.addEventListener("click", async () => {
         if (!confirm("Remove this person's dashboard access?")) return;
-        await db.collection("staff").doc(btn.dataset.remove).delete();
+        try {
+          await db.collection("staff").doc(btn.dataset.remove).delete();
+        } catch (err) {
+          console.error("Failed to remove staff member:", err);
+          alert("Couldn't remove this person. Please try again." + errSuffix(err));
+        }
       });
     });
-  });
+  }, (err) => console.error("Staff listener error:", err));
 }
 
-document.getElementById("addStaffBtn")?.addEventListener("click", async () => {
-  const email = document.getElementById("staffEmail").value.trim();
+addStaffBtn?.addEventListener("click", async () => {
   const name = document.getElementById("staffName").value.trim();
   const role = document.getElementById("staffRole").value;
   const statusEl = document.getElementById("staffFormStatus");
 
+  if (staffEditUid.value) {
+    try {
+      await db.collection("staff").doc(staffEditUid.value).update({ name, role });
+      resetStaffForm();
+    } catch (err) {
+      console.error("Failed to update staff member:", err);
+      statusEl.className = "form-status error";
+      statusEl.textContent = "Couldn't update this person. Please try again." + errSuffix(err);
+    }
+    return;
+  }
+
+  const email = document.getElementById("staffEmail").value.trim();
   if (!email) {
     statusEl.className = "form-status error";
     statusEl.textContent = "Email is required.";
