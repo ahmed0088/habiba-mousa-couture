@@ -222,7 +222,7 @@ const I18N = {
     admin_p_status_archived: "Archived — hidden",
     admin_p_description: "Description",
     admin_p_image: "Image URL",
-    admin_p_image_note: "Paste a hosted image link (e.g. from Firebase Storage or Instagram CDN link). Multiple-image upload can be added later.",
+    admin_p_image_note: "Paste a hosted image link (e.g. from Firebase Storage or Instagram CDN link). Direct image upload can be added later.",
     admin_save_piece: "Save Piece",
     admin_cancel: "Cancel",
     admin_th_piece2: "Piece",
