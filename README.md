@@ -77,11 +77,20 @@ You'll get a live URL like `habiba-mousa-couture.web.app` — that's what you li
 | field | type | notes |
 |---|---|---|
 | name | string | |
-| category | string | e.g. Evening Gown, Abaya, Bridal |
+| category | string | free-text tag, e.g. Evening Gown, Abaya, Bridal |
+| collectionId | string \| null | references a `collections` doc — assigns the piece to a seasonal drop |
 | description | string | |
 | priceRange | string | free text, e.g. "1,800 – 2,600 EGP" |
-| images | array of strings | image URLs |
+| salePrice | string | optional; non-empty means the piece is on sale — shown struck-through next to `priceRange` on the public site |
+| images | array of strings | image URLs — first is the cover image, all feed the product detail carousel |
 | status | string | `active` or `archived` |
+| createdAt | timestamp | server-set |
+
+**`collections`**
+| field | type | notes |
+|---|---|---|
+| name | string | free text, e.g. "Autumn 2026", "Ramadan 2026" |
+| status | string | `active` (shows in the public collection picker) or `archived` |
 | createdAt | timestamp | server-set |
 
 **`requests`**
@@ -89,6 +98,8 @@ You'll get a live URL like `habiba-mousa-couture.web.app` — that's what you li
 |---|---|---|
 | clientName | string | |
 | clientPhone | string | |
+| clientAddress | string | optional; governorate/city/street in Egypt |
+| material | string | one of the fixed material keys (`silk`, `chiffon`, `satin`, `lace`, `cotton`, `crepe`, `tulle`, `organza`, `velvet`, `brocade`, `unspecified`) chosen from a dropdown — no free typing |
 | productId / productName | string | which piece they're asking about |
 | preferredDate | string | optional |
 | notes | string | |
@@ -104,8 +115,26 @@ You'll get a live URL like `habiba-mousa-couture.web.app` — that's what you li
 | email | string | |
 | role | string | `admin` or `staff` |
 
+**`settings/site`** (singleton doc, edited from Admin → Settings)
+| field | type | notes |
+|---|---|---|
+| heroTagline_ar / heroTagline_en | string | overrides the homepage hero subtitle |
+| aboutIntro_ar / aboutIntro_en | string | overrides the About page intro paragraph |
+| aboutStory_ar / aboutStory_en | string | overrides the About page story paragraph |
+| contactPhone | string | |
+| contactWhatsapp | string | digits only, used to build the wa.me link |
+| contactEmail | string | |
+| contactHours_ar / contactHours_en | string | |
+| address_ar / address_en | string | |
+| googleMapsUrl | string | Maps button on `contact.html` is hidden until this is set |
+| wazeUrl | string | Waze button on `contact.html` is hidden until this is set |
+| depositPercent | number | defaults to 40 if unset; interpolated into the Terms page's deposit paragraph |
+
+All fields fall back to the site's built-in copy/defaults when blank, so the site works correctly before any of this is filled in.
+
 ## Natural next steps (not built yet, flag if you want these)
 - Direct image upload to Firebase Storage from the admin panel (right now it's pasted URLs)
 - WhatsApp/email/Telegram auto-notification via a Cloud Function when a new request lands
 - Letting a client edit or cancel their own pending request from "My Requests" (currently view-only)
-- Real address/hours/contact details on `contact.html` (placeholder copy for now, same as the WhatsApp number)
+- Real address/hours/contact details are placeholders until filled in via Admin → Settings
+- Numeric pricing (currently free text) if you ever want an automatically-calculated discount % instead of a manually-typed sale price

@@ -139,8 +139,13 @@ function openModal(product) {
 
   detailCategory.textContent = product.category || t("piece_category_fallback");
   detailName.textContent = product.name;
-  detailPrice.textContent = product.priceRange || "";
-  detailPrice.style.display = product.priceRange ? "block" : "none";
+  if (product.salePrice) {
+    detailPrice.innerHTML = `<span class="piece-price-original">${escapeHtml(product.priceRange || "")}</span><span class="piece-price-sale">${escapeHtml(product.salePrice)}</span>`;
+    detailPrice.style.display = "block";
+  } else {
+    detailPrice.textContent = product.priceRange || "";
+    detailPrice.style.display = product.priceRange ? "block" : "none";
+  }
   detailDescription.textContent = product.description || "";
   renderCarousel();
 
@@ -245,8 +250,13 @@ function renderGallery() {
   filtered.forEach((product) => {
     const card = document.createElement("div");
     card.className = "piece-card";
+    const onSale = Boolean(product.salePrice);
+    const priceHtml = onSale
+      ? `<p class="piece-price"><span class="piece-price-original">${escapeHtml(product.priceRange || "")}</span><span class="piece-price-sale">${escapeHtml(product.salePrice)}</span></p>`
+      : (product.priceRange ? `<p class="piece-price">${escapeHtml(product.priceRange)}</p>` : "");
     card.innerHTML = `
       <div class="piece-media">
+        ${onSale ? `<span class="sale-badge">${t("sale_badge")}</span>` : ""}
         ${product.images && product.images[0]
           ? `<img src="${escapeHtml(product.images[0])}" alt="${escapeHtml(product.name)}" loading="lazy" />`
           : `<span>${escapeHtml(product.name)}</span>`}
@@ -255,7 +265,7 @@ function renderGallery() {
         <p class="piece-eyebrow">${escapeHtml(product.category || t("piece_category_fallback"))}</p>
         <h3 class="piece-name">${escapeHtml(product.name)}</h3>
         <p class="piece-desc">${escapeHtml(product.description || "")}</p>
-        ${product.priceRange ? `<p class="piece-price">${escapeHtml(product.priceRange)}</p>` : ""}
+        ${priceHtml}
       </div>
     `;
     card.addEventListener("click", () => openModal(product));
@@ -315,6 +325,8 @@ requestForm.addEventListener("submit", async (e) => {
     productName: product ? product.name : null,
     clientName: document.getElementById("clientName").value.trim(),
     clientPhone: document.getElementById("clientPhone").value.trim(),
+    clientAddress: document.getElementById("clientAddress").value.trim(),
+    material: document.getElementById("clientMaterial").value,
     preferredDate: document.getElementById("preferredDate").value || null,
     notes: document.getElementById("clientNotes").value.trim(),
     status: "new",

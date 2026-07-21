@@ -110,6 +110,11 @@ const STATUS_LABELS = {
   new: "New", contacted: "Contacted", confirmed: "Confirmed",
   in_progress: "In Progress", delivered: "Delivered", cancelled: "Cancelled"
 };
+const MATERIAL_LABELS = {
+  silk: "Silk", chiffon: "Chiffon", satin: "Satin", lace: "Lace", cotton: "Cotton",
+  crepe: "Crepe", tulle: "Tulle", organza: "Organza", velvet: "Velvet", brocade: "Brocade",
+  unspecified: "Not sure yet"
+};
 
 function loadRequests() {
   db.collection("requests").orderBy("createdAt", "desc").onSnapshot((snapshot) => {
@@ -134,6 +139,8 @@ function loadRequests() {
         <td>${escapeHtml(r.clientName)}</td>
         <td>${escapeHtml(r.productName || "—")}</td>
         <td>${escapeHtml(r.clientPhone)}</td>
+        <td style="max-width:180px;">${escapeHtml(r.clientAddress || "—")}</td>
+        <td>${escapeHtml(MATERIAL_LABELS[r.material] || "—")}</td>
         <td>${escapeHtml(r.preferredDate || "—")}</td>
         <td style="max-width:220px;">${escapeHtml(r.notes || "—")}</td>
         <td><select class="status-select" data-id="${doc.id}">${optionsHtml}</select></td>
@@ -171,6 +178,7 @@ function resetProductForm() {
   document.getElementById("pCategory").value = "";
   document.getElementById("pCollection").value = "";
   document.getElementById("pPrice").value = "";
+  document.getElementById("pSalePrice").value = "";
   document.getElementById("pStatus").value = "active";
   document.getElementById("pDescription").value = "";
   document.getElementById("pImages").value = "";
@@ -201,6 +209,7 @@ saveProductBtn.addEventListener("click", async () => {
     category: document.getElementById("pCategory").value.trim(),
     collectionId: document.getElementById("pCollection").value || null,
     priceRange: document.getElementById("pPrice").value.trim(),
+    salePrice: document.getElementById("pSalePrice").value.trim(),
     status: document.getElementById("pStatus").value,
     description: document.getElementById("pDescription").value.trim(),
     images: document.getElementById("pImages").value
@@ -238,7 +247,7 @@ function loadProducts() {
       tr.innerHTML = `
         <td>${escapeHtml(p.name)}</td>
         <td>${escapeHtml(p.category || "—")}</td>
-        <td>${escapeHtml(p.priceRange || "—")}</td>
+        <td>${p.salePrice ? `${escapeHtml(p.priceRange || "—")} → <strong>${escapeHtml(p.salePrice)}</strong> (Sale)` : escapeHtml(p.priceRange || "—")}</td>
         <td><span class="status-pill status-${p.status === "active" ? "confirmed" : "delivered"}">${escapeHtml(p.status)}</span></td>
         <td>
           <button class="icon-btn" data-edit="${doc.id}">Edit</button>
@@ -257,6 +266,7 @@ function loadProducts() {
         document.getElementById("pCategory").value = p.category || "";
         document.getElementById("pCollection").value = p.collectionId || "";
         document.getElementById("pPrice").value = p.priceRange || "";
+        document.getElementById("pSalePrice").value = p.salePrice || "";
         document.getElementById("pStatus").value = p.status || "active";
         document.getElementById("pDescription").value = p.description || "";
         document.getElementById("pImages").value = (p.images || []).join("\n");

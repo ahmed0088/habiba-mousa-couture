@@ -34,6 +34,7 @@
         <button type="button" data-lang="ar">AR</button>
         <button type="button" data-lang="en">EN</button>
       </div>
+      <button type="button" class="theme-toggle" data-i18n-aria-label="theme_toggle_label" aria-label="Toggle theme">🌙</button>
     </nav>
   </div>
 </header>
@@ -147,6 +148,26 @@
           <input type="tel" id="clientPhone" required />
         </div>
         <div class="field">
+          <label for="clientAddress" data-i18n="label_address">العنوان (المحافظة، المدينة، الشارع)</label>
+          <input type="text" id="clientAddress" />
+        </div>
+        <div class="field">
+          <label for="clientMaterial" data-i18n="label_material">القماش المفضل</label>
+          <select id="clientMaterial">
+            <option value="unspecified" data-i18n="material_unspecified">مش متأكدة لسه</option>
+            <option value="silk" data-i18n="material_silk">حرير</option>
+            <option value="chiffon" data-i18n="material_chiffon">شيفون</option>
+            <option value="satin" data-i18n="material_satin">ساتان</option>
+            <option value="lace" data-i18n="material_lace">دانتيل</option>
+            <option value="cotton" data-i18n="material_cotton">قطن</option>
+            <option value="crepe" data-i18n="material_crepe">كريب</option>
+            <option value="tulle" data-i18n="material_tulle">تول</option>
+            <option value="organza" data-i18n="material_organza">أورجانزا</option>
+            <option value="velvet" data-i18n="material_velvet">قطيفة</option>
+            <option value="brocade" data-i18n="material_brocade">بروكار</option>
+          </select>
+        </div>
+        <div class="field">
           <label for="preferredDate" data-i18n="label_date">الموعد المطلوب (اختياري)</label>
           <input type="date" id="preferredDate" />
         </div>
@@ -172,6 +193,9 @@
       <button type="button" class="account-tab active" data-tab="signin" data-i18n="account_tab_signin">لديّ حساب</button>
       <button type="button" class="account-tab" data-tab="signup" data-i18n="account_tab_signup">حساب جديد</button>
     </div>
+
+    <button type="button" class="btn google-signin-btn" id="googleSignInBtn" data-i18n="account_google_signin">الدخول بحساب جوجل</button>
+    <p class="account-divider" data-i18n="account_or_divider">أو</p>
 
     <form id="signInForm" class="account-form">
       <h3 data-i18n="account_modal_title_signin">تسجيل الدخول</h3>
@@ -234,6 +258,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="firebase-config.js"></script>
 <script src="i18n.js"></script>
+<script src="theme.js"></script>
 <script src="account.js"></script>
 <script src="settings.js"></script>
 <script src="app.js"></script>

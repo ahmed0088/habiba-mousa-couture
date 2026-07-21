@@ -19,6 +19,7 @@ const signInStatus = document.getElementById("signInStatus");
 const signUpStatus = document.getElementById("signUpStatus");
 const signInBtn = document.getElementById("signInBtn");
 const signUpBtn = document.getElementById("signUpBtn");
+const googleSignInBtn = document.getElementById("googleSignInBtn");
 
 const myRequestsBackdrop = document.getElementById("myRequestsBackdrop");
 const myRequestsClose = document.getElementById("myRequestsClose");
@@ -134,6 +135,22 @@ signUpForm?.addEventListener("submit", async (e) => {
   } finally {
     signUpBtn.disabled = false;
     signUpBtn.textContent = t("account_signup_btn");
+  }
+});
+
+googleSignInBtn?.addEventListener("click", async () => {
+  googleSignInBtn.disabled = true;
+  signInStatus.className = "form-status";
+  try {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    await auth.signInWithPopup(provider);
+    closeAccountModal();
+  } catch (err) {
+    console.error("Google sign in failed:", err);
+    signInStatus.className = "form-status error";
+    signInStatus.textContent = t("account_google_error");
+  } finally {
+    googleSignInBtn.disabled = false;
   }
 });
 

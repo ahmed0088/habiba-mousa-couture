@@ -138,6 +138,7 @@ const I18N = {
     nav_faq: "الأسئلة اللي بتتكرر",
     nav_terms: "الشروط والأحكام",
     nav_menu_label: "القايمة",
+    theme_toggle_label: "تبديل المظهر",
 
     // Client account
     account_signin: "دخول",
@@ -158,6 +159,9 @@ const I18N = {
     account_signin_error: "الدخول مش ظابط — راجعي الإيميل والباسورد.",
     account_switch_to_signup: "معندكيش حساب؟ اعمليه دلوقتي",
     account_switch_to_signin: "عندك حساب خلاص؟ سجلي دخول",
+    account_or_divider: "أو",
+    account_google_signin: "الدخول بحساب جوجل",
+    account_google_error: "معرفناش نسجل دخولك بجوجل. جربي تاني.",
 
     // My Requests (client-side tracking)
     my_requests_title: "طلباتي",
@@ -178,6 +182,22 @@ const I18N = {
     detail_back: "→ رجوع",
     detail_img_prev: "الصورة اللي قبلها",
     detail_img_next: "الصورة اللي بعدها",
+    sale_badge: "خصم",
+
+    // Request form — address & material
+    label_address: "العنوان (المحافظة، المدينة، الشارع)",
+    label_material: "القماش المفضل",
+    material_silk: "حرير",
+    material_chiffon: "شيفون",
+    material_satin: "ساتان",
+    material_lace: "دانتيل",
+    material_cotton: "قطن",
+    material_crepe: "كريب",
+    material_tulle: "تول",
+    material_organza: "أورجانزا",
+    material_velvet: "قطيفة",
+    material_brocade: "بروكار",
+    material_unspecified: "مش متأكدة لسه",
 
     // About page
     about_eyebrow: "قصتنا",
@@ -359,6 +379,7 @@ const I18N = {
     nav_faq: "FAQ",
     nav_terms: "Terms & Policies",
     nav_menu_label: "Menu",
+    theme_toggle_label: "Toggle theme",
 
     // Client account
     account_signin: "Sign In",
@@ -379,6 +400,9 @@ const I18N = {
     account_signin_error: "Sign in failed — check your email and password.",
     account_switch_to_signup: "Don't have an account? Sign up",
     account_switch_to_signin: "Already have an account? Sign in",
+    account_or_divider: "or",
+    account_google_signin: "Continue with Google",
+    account_google_error: "Couldn't sign you in with Google. Please try again.",
 
     // My Requests (client-side tracking)
     my_requests_title: "My Requests",
@@ -399,6 +423,22 @@ const I18N = {
     detail_back: "← Back",
     detail_img_prev: "Previous image",
     detail_img_next: "Next image",
+    sale_badge: "Sale",
+
+    // Request form — address & material
+    label_address: "Address (Governorate, City, Street)",
+    label_material: "Preferred Material",
+    material_silk: "Silk",
+    material_chiffon: "Chiffon",
+    material_satin: "Satin",
+    material_lace: "Lace",
+    material_cotton: "Cotton",
+    material_crepe: "Crepe",
+    material_tulle: "Tulle",
+    material_organza: "Organza",
+    material_velvet: "Velvet",
+    material_brocade: "Brocade",
+    material_unspecified: "Not sure yet",
 
     // About page
     about_eyebrow: "Our Story",
