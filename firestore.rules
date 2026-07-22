@@ -71,7 +71,9 @@ service cloud.firestore {
                     && request.resource.data.email == resource.data.email;
     }
 
-    // Pending staff invites (email-keyed, reconciled manually to a UID) — admin only
+    // Legacy from the old manual invite flow — the app no longer writes here
+    // (see the createStaffMember Cloud Function), kept only so any old docs
+    // remain readable/removable by an admin.
     match /staff_pending/{docId} {
       allow read, write: if isAdmin();
     }

@@ -57,8 +57,10 @@ The admin dashboard checks two things: a Firebase **Auth** login, and a matching
 
 Now sign in at `admin.html` with that email/password.
 
+This manual bootstrap (steps 1–5) is only needed for your very first admin account, since it's what lets you add everyone else from inside the dashboard.
+
 ### Adding more staff later
-Repeat steps 1–5 above for each new person — create their Auth login, then add a `staff` doc keyed by their UID with `role: staff` (or `admin` if they need full access). The "Add Staff Member" form in the dashboard records a request for this in a `staff_pending` list as a reminder, but the actual access grant needs the UID step above, since Firestore rules check against Auth UIDs for security.
+Once you have at least one admin account, adding staff is fully self-service: **Staff → + Add Staff Member**, enter their email/name/role, and submit. A Cloud Function (`functions/index.js`, `createStaffMember`) creates their Firebase Auth login, creates the matching `staff` doc keyed by the new UID, and emails them a link to set their password — no manual Firebase Console steps or UID copy-pasting. See "Deploy the site" below for the one-time step to deploy that function.
 
 ## 5. Add your first products
 
@@ -69,15 +71,19 @@ Once signed in to `admin.html` → **Products** → **+ Add Piece**. Fields:
 
 ## 6. Deploy the site
 
-Easiest path — Firebase Hosting (free tier is generous for this use case):
+`firebase.json` and `.firebaserc` are already checked in, so there's no `firebase init` step needed:
 
 ```bash
 npm install -g firebase-tools
 firebase login
-firebase init hosting
-# Select your project, set public directory to this folder, single-page app: No
 firebase deploy
 ```
+
+That deploys both the static site (Hosting) and the `createStaffMember` Cloud Function. The **first** time you deploy the function, you'll need:
+- The **Blaze (pay-as-you-go)** plan on the Firebase project — Cloud Functions require it even though this function's actual usage cost is $0/month for a small team (it only runs when you add a staff member)
+- `cd functions && npm install` once, so its dependencies are available to deploy
+
+To redeploy only the site (skipping functions) after a front-end-only change: `firebase deploy --only hosting`. To redeploy only the function: `firebase deploy --only functions`.
 
 You'll get a live URL like `habiba-mousa-couture.web.app` — that's what you link from the Instagram bio.
 

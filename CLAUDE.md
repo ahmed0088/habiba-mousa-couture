@@ -8,7 +8,7 @@ A two-page reservation/inquiry site for "Habiba Mousa Couture" (Arabic-first, bi
 - `index.html` + `app.js` — public gallery of pieces + a "Request This Design" inquiry form (no payment, just writes an inquiry to Firestore)
 - `admin.html` + `admin.js` — staff dashboard to manage the product catalog and incoming requests, gated by Firebase Auth + a Firestore `staff` roster
 
-No build step, no bundler, no package manager — plain HTML/CSS/JS loaded directly via `<script>` tags, using the Firebase compat SDK from a CDN. Firebase (Firestore + Auth) is the only backend.
+No build step, no bundler, no package manager for the front end — plain HTML/CSS/JS loaded directly via `<script>` tags, using the Firebase compat SDK from a CDN. Firebase (Firestore + Auth) is the primary backend, plus one Cloud Function (`functions/`) for the one operation the client genuinely can't do itself: creating another person's Auth login (see "Staff onboarding" below). The front end has no build step; `functions/` is an ordinary Node project deployed separately via `firebase deploy --only functions` and doesn't affect how `index.html`/`admin.html` are served.
 
 ## Commands
 
@@ -22,8 +22,9 @@ python -m http.server 8080
 
 To deploy, per [README.md](README.md):
 ```bash
-firebase deploy   # after `firebase login` and `firebase init hosting`
+firebase deploy   # after `firebase login`; firebase.json/.firebaserc are already checked in
 ```
+The first deploy of the Cloud Function needs `cd functions && npm install` once, and the Firebase project on the Blaze (pay-as-you-go) plan — Cloud Functions require it regardless of actual usage/cost.
 
 ## Architecture
 
@@ -32,8 +33,8 @@ firebase deploy   # after `firebase login` and `firebase init hosting`
 **Collections** (see README.md's "Data model reference" for full field lists):
 - `products` — catalog pieces (`status: active|archived` controls public visibility)
 - `requests` — client inquiries, with a status pipeline: `new` → `contacted` → `confirmed` → `in_progress` → `delivered`/`cancelled`
-- `staff` — doc ID **must equal the Firebase Auth UID**; `role: admin|staff`. This is what `firestore.rules` checks to gate all writes and most reads.
-- `staff_pending` — email-keyed placeholder records created by the admin dashboard's "Add Staff Member" form; these are *not* real access grants. Granting access still requires manually creating the Auth user and copying their UID into a `staff` doc (see README.md § "Adding more staff later"). Don't assume `staff_pending` entries have working logins.
+- `staff` — doc ID **must equal the Firebase Auth UID**; `role: admin|staff`. This is what `firestore.rules` checks to gate all writes and most reads. Created automatically (Auth user + this doc, atomically) by the `createStaffMember` Cloud Function when an admin uses "Add Staff Member" in the dashboard — see "Staff onboarding" below.
+- `staff_pending` — legacy from the old manual invite flow; no longer written to by the app. Any existing docs are inert leftovers, not real access grants — don't build on this collection.
 
 **Access control lives in `firestore.rules`**, not in the client code — `app.js`/`admin.js` UI gating is convenience only. Key invariants: public read on `products` and public create on `requests`; everything else requires `isStaff()` (a `staff/{uid}` doc exists) or `isAdmin()` (that doc's `role == 'admin'`). Any change to permissions must be made here and re-published via Firebase Console → Firestore → Rules (there's no CLI/CI deploy for rules in this repo).
 
@@ -43,4 +44,4 @@ firebase deploy   # after `firebase login` and `firebase init hosting`
 
 **XSS**: all dynamic HTML in `app.js`/`admin.js` that embeds user-controlled or Firestore-sourced data goes through the local `escapeHtml()` helper (defined separately in each file) before being inserted via `innerHTML`. Preserve this pattern for any new dynamic rendering.
 
-**Staff onboarding is a two-step, partly-manual process** (Firebase Console Auth user creation + matching `staff` doc keyed by UID) — the in-app "Add Staff Member" form cannot complete it alone since client code can't create Auth users. See README.md for the exact steps; don't try to "fix" `staff_pending` into a full self-service flow without discussing it first, since it's a deliberate simplification.
+**Staff onboarding** is fully self-service from the dashboard (Staff → + Add Staff Member) for anyone who is already an admin, via the `createStaffMember` callable Cloud Function (`functions/index.js`): it verifies the caller is an admin, creates (or reuses) the Firebase Auth user for the given email via the Admin SDK, writes the matching `staff/{uid}` doc immediately, and triggers Firebase Auth's built-in "reset your password" email via the Identity Toolkit REST API (`accounts:sendOobCode`) — no third-party email service configured or needed. The *very first* admin account still has to be created manually via Firebase Console (chicken-and-egg: someone has to be an admin before they can call the function) — see README.md § "Create your first staff login (yourself)".

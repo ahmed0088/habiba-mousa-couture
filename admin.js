@@ -13,6 +13,7 @@ const logoutBtn = document.getElementById("logoutBtn");
 
 let currentStaff = null; // { uid, name, email, role }
 const DEFAULT_LOGO_SRC = document.getElementById("brandLogo")?.getAttribute("src");
+const staffFunctions = firebase.functions();
 
 // ---------- Auth ----------
 
@@ -1325,26 +1326,28 @@ addStaffBtn?.addEventListener("click", async () => {
   const email = document.getElementById("staffEmail").value.trim();
   if (!email) {
     statusEl.className = "form-status error";
-    statusEl.textContent = "Email is required.";
+    statusEl.textContent = t("admin_staff_email_required");
     return;
   }
 
-  statusEl.className = "form-status error";
-  statusEl.textContent =
-    "Note: this creates a staff record, but you still need the matching login created in Firebase Console → Authentication first, using the same email — then copy that user's UID here as the document ID. (See README for the step-by-step.)";
+  statusEl.className = "form-status";
+  statusEl.textContent = t("admin_staff_creating");
+  addStaffBtn.disabled = true;
 
-  // Staff docs are keyed by Firebase Auth UID so security rules can check access.
-  // Since this simple form doesn't create Auth users directly, we store a pending
-  // record keyed by email for the admin to reconcile — see README for the full flow.
   try {
-    await db.collection("staff_pending").add({
-      email, name, role,
-      createdAt: firebase.firestore.FieldValue.serverTimestamp()
-    });
-    logActivity("Invited staff member", email);
+    const result = await staffFunctions.httpsCallable("createStaffMember")({ email, name, role });
+    logActivity("Added staff member", email);
+    statusEl.className = "form-status";
+    statusEl.textContent = result.data?.emailSent
+      ? t("admin_staff_note")
+      : t("admin_staff_note_no_email");
     document.getElementById("staffEmail").value = "";
     document.getElementById("staffName").value = "";
   } catch (err) {
-    console.error("Failed to save staff invite:", err);
+    console.error("Failed to add staff member:", err);
+    statusEl.className = "form-status error";
+    statusEl.textContent = "Couldn't add this person. Please try again." + errSuffix(err);
+  } finally {
+    addStaffBtn.disabled = false;
   }
 });
