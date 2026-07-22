@@ -531,7 +531,7 @@ function renderRequestsTable() {
       <td data-label="Piece">${escapeHtml(r.productName || "—")}${r.productCode ? ` <span style="color:var(--text-faint); font-size:12px;">(${escapeHtml(r.productCode)})</span>` : ""}</td>
       <td data-label="Contact">${escapeHtml(r.clientPhone)}</td>
       <td data-label="Address" style="max-width:180px;">${escapeHtml(r.clientAddress || "—")}</td>
-      <td data-label="Material">${escapeHtml(MATERIAL_LABELS[r.material] || "—")}</td>
+      <td class="request-material-subtitle" data-label="Material">${escapeHtml(MATERIAL_LABELS[r.material] || "—")}</td>
       <td data-label="Needed By">${escapeHtml(r.preferredDate || "—")}</td>
       <td data-label="Notes" style="max-width:220px;">${escapeHtml(r.notes || "—")}</td>
       <td data-label="Status"><select class="status-select status-${r.status}" data-id="${id}">${optionsHtml}</select></td>
@@ -540,6 +540,8 @@ function renderRequestsTable() {
         <button class="icon-btn" data-view-request="${id}">View</button>
         <button class="icon-btn danger" data-delete-request="${id}">Delete</button>
       </td>
+      <td class="request-section-label request-section-label-customer">${escapeHtml(t("admin_section_customer"))}</td>
+      <td class="request-section-label request-section-label-details">${escapeHtml(t("admin_section_details"))}</td>
     `;
     tbody.appendChild(tr);
   });

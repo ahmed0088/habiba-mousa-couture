@@ -1183,6 +1183,12 @@ select.status-select.status-cancelled { background-color: #f6dcdc; color: #a13a3
   grid-template-columns: 1fr 1fr;
   gap: var(--space-2);
 }
+
+/* Mobile-only section captions for the request card — appended to the row
+   markup but must stay hidden here (unconditionally) so they never render
+   as phantom extra columns in the desktop table. */
+.request-section-label { display: none; }
+
 @media (max-width: 700px) {
   .admin-shell { flex-direction: column; }
   .admin-sidebar { width: 100%; }
@@ -1238,23 +1244,27 @@ select.status-select.status-cancelled { background-color: #f6dcdc; color: #a13a3
     margin: 0 auto;
   }
 
-  /* Request cards get a redesigned mobile layout: thumbnail + name + status
-     read as a header, with the rest as supporting detail underneath instead
-     of one flat list of equally-weighted rows. Reordering via flex `order`
-     only touches the mobile card view — the desktop table's real columns
-     (and their DOM order) are untouched. */
+  /* Request cards get a redesigned mobile layout, grouped into sections
+     (piece header / customer info / other details / actions) instead of one
+     flat list of equally-weighted, individually-divided rows. Reordering via
+     flex `order` only touches the mobile card view — the desktop table's
+     real columns (and their DOM order) are untouched. Section-label cells
+     are appended to the row markup but hidden outside this media query, so
+     they never appear as phantom columns on desktop. */
   #requestsTable tr { display: flex; flex-direction: column; }
-  #requestsTable td.request-thumb-cell { order: 1; }
-  #requestsTable td.request-client-cell { order: 2; }
-  #requestsTable td[data-label="Piece"] { order: 3; }
-  #requestsTable td[data-label="Status"] { order: 4; }
-  #requestsTable td[data-label="Contact"] { order: 5; }
-  #requestsTable td[data-label="Address"] { order: 6; }
-  #requestsTable td[data-label="Material"] { order: 7; }
-  #requestsTable td[data-label="Needed By"] { order: 8; }
-  #requestsTable td[data-label="Notes"] { order: 9; }
-  #requestsTable td[data-label="Received"] { order: 10; }
-  #requestsTable td.request-actions-cell { order: 11; }
+  #requestsTable td.request-thumb-cell { order: 1; border-bottom: none; }
+  #requestsTable td.request-client-cell { order: 2; border-bottom: none; }
+  #requestsTable td[data-label="Piece"] { order: 3; border-bottom: none; }
+  #requestsTable td.request-material-subtitle { order: 4; border-bottom: none; }
+  #requestsTable td[data-label="Status"] { order: 5; }
+  #requestsTable td.request-section-label-customer { order: 6; }
+  #requestsTable td[data-label="Contact"] { order: 7; border-bottom: none; }
+  #requestsTable td[data-label="Address"] { order: 8; }
+  #requestsTable td.request-section-label-details { order: 9; }
+  #requestsTable td[data-label="Needed By"] { order: 10; border-bottom: none; }
+  #requestsTable td[data-label="Notes"] { order: 11; border-bottom: none; }
+  #requestsTable td[data-label="Received"] { order: 12; border-bottom: none; }
+  #requestsTable td.request-actions-cell { order: 13; }
 
   #requestsTable td.request-client-cell {
     text-align: center;
@@ -1265,18 +1275,35 @@ select.status-select.status-cancelled { background-color: #f6dcdc; color: #a13a3
   #requestsTable td.request-client-cell::before { float: none; display: block; margin-bottom: 2px; }
   #requestsTable td[data-label="Piece"] {
     text-align: center;
-    border-bottom: none;
     padding-top: 0;
     font-size: 13px;
     color: var(--text-muted);
   }
   #requestsTable td[data-label="Piece"]::before { display: none; }
+  #requestsTable td.request-material-subtitle {
+    text-align: center;
+    padding-top: 0;
+    font-size: 12.5px;
+    color: var(--text-faint);
+  }
+  #requestsTable td.request-material-subtitle::before { content: "· "; float: none; margin-right: 0; }
   #requestsTable td[data-label="Status"] {
     text-align: center;
-    border-bottom: none;
-    padding-top: 4px;
+    padding-top: 10px;
   }
   #requestsTable td[data-label="Status"]::before { display: none; }
+
+  #requestsTable td.request-section-label {
+    display: block;
+    text-align: center;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--gold);
+    border-bottom: none;
+    padding: 16px 0 2px;
+  }
 
   #requestsTable td.request-actions-cell {
     text-align: center;
