@@ -40,6 +40,11 @@ function applySettingsOverrides() {
     whatsappLink.href = `https://wa.me/${s.contactWhatsapp.replace(/\D/g, "")}`;
   }
 
+  const footerWhatsappLink = document.getElementById("footerWhatsappLink");
+  if (footerWhatsappLink && s.contactWhatsapp) {
+    footerWhatsappLink.href = `https://wa.me/${s.contactWhatsapp.replace(/\D/g, "")}`;
+  }
+
   const emailLink = document.getElementById("contactEmailLink");
   if (emailLink && s.contactEmail) {
     emailLink.textContent = s.contactEmail;

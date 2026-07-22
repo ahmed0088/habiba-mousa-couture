@@ -217,7 +217,20 @@ function loadActivityLog() {
         recentBox.appendChild(row);
       }
     });
-  }, (err) => console.error("Activity log listener error:", err));
+  }, (err) => {
+    console.error("Activity log listener error:", err);
+    const empty = document.getElementById("activityEmpty");
+    const recentEmpty = document.getElementById("dashboardActivityEmpty");
+    const message = "Couldn't load activity — the live Firestore rules may be out of date." + errSuffix(err);
+    if (empty) {
+      empty.style.display = "block";
+      empty.textContent = message;
+    }
+    if (recentEmpty) {
+      recentEmpty.style.display = "block";
+      recentEmpty.textContent = message;
+    }
+  });
 }
 
 function errSuffix(err) {
@@ -294,6 +307,7 @@ requestDetailBackdrop?.addEventListener("click", (e) => {
 
 let allRequests = [];
 const requestsSearchInput = document.getElementById("requestsSearch");
+const requestsStatusFilter = document.getElementById("requestsStatusFilter");
 
 function requestMatchesSearch(r, q) {
   if (!q) return true;
@@ -316,12 +330,15 @@ function renderRequestsTable() {
   const tbody = document.getElementById("requestsTableBody");
   const empty = document.getElementById("requestsEmpty");
   const q = (requestsSearchInput?.value || "").trim().toLowerCase();
-  const filtered = allRequests.filter(([, r]) => requestMatchesSearch(r, q));
+  const statusFilter = requestsStatusFilter?.value || "all";
+  const filtered = allRequests.filter(([, r]) =>
+    requestMatchesSearch(r, q) && (statusFilter === "all" || r.status === statusFilter)
+  );
   tbody.innerHTML = "";
 
   if (filtered.length === 0) {
     empty.style.display = "block";
-    empty.textContent = q ? "No requests match your search." : "No requests yet.";
+    empty.textContent = (q || statusFilter !== "all") ? "No requests match your search/filter." : "No requests yet.";
     return;
   }
   empty.style.display = "none";
@@ -390,6 +407,7 @@ function renderRequestsTable() {
 }
 
 requestsSearchInput?.addEventListener("input", renderRequestsTable);
+requestsStatusFilter?.addEventListener("change", renderRequestsTable);
 
 function loadRequests() {
   db.collection("requests").orderBy("createdAt", "desc").onSnapshot((snapshot) => {

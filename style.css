@@ -419,7 +419,21 @@ button {
   display: flex;
   gap: var(--space-2);
   flex-wrap: wrap;
+  align-items: center;
 }
+
+.filter-select {
+  padding: 11px 14px;
+  min-height: 44px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--surface);
+  color: var(--charcoal);
+  font-family: var(--font-body);
+  font-size: 13.5px;
+  cursor: pointer;
+}
+.filter-select:focus { outline: none; border-color: var(--gold); }
 
 .filter-chip {
   border: 1px solid var(--line);
@@ -433,16 +447,6 @@ button {
 }
 .filter-chip.active { background: var(--ink); color: var(--gold-soft); border-color: var(--ink); }
 
-.filter-group-label {
-  display: flex;
-  align-items: center;
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--text-faint);
-  margin-inline-start: 6px;
-}
-.filter-group-label:first-of-type { margin-inline-start: 10px; }
 .filter-chip.filter-chip-sale {
   margin-inline-start: auto;
   border-color: #b8283a;
@@ -726,7 +730,7 @@ button {
 .field input:focus, .field textarea:focus, .field select:focus { border-color: var(--gold); }
 .field textarea { resize: vertical; min-height: 90px; }
 
-.form-note { font-size: 12.5px; color: var(--text-faint); margin-top: -4px; margin-bottom: var(--space-2); }
+.form-note { font-size: 12.5px; color: var(--text-faint); margin-top: 6px; margin-bottom: var(--space-2); line-height: 1.5; }
 .field-hint { font-size: 11px; font-weight: 400; color: var(--text-faint); text-transform: none; letter-spacing: 0; }
 
 .submit-row { margin-top: var(--space-3); }
@@ -737,8 +741,12 @@ button {
   padding: 10px 12px;
   display: none;
 }
-.form-status.success { display: block; background: rgba(110,31,47,0.08); color: var(--emerald-deep); }
-.form-status.error { display: block; background: rgba(199,60,60,0.1); color: #a33; }
+.form-status.success { display: block; background: rgba(46,125,79,0.14); color: #3a9463; font-weight: 600; animation: form-status-in 0.3s ease; }
+.form-status.error { display: block; background: rgba(224,82,82,0.14); color: #e05252; font-weight: 600; animation: form-status-in 0.3s ease; }
+@keyframes form-status-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: none; }
+}
 
 /* ---------- Footer ---------- */
 

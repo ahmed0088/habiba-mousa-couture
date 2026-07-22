@@ -118,8 +118,21 @@
         <h1 data-i18n="admin_requests_title">Inquiries &amp; Requests</h1>
         <span class="whoami" id="whoamiRequests"></span>
       </div>
-      <div class="field" style="max-width:320px;">
-        <input type="text" id="requestsSearch" data-i18n-placeholder="admin_requests_search_ph" placeholder="Search by name, phone, piece..." />
+      <div style="display:flex; gap:14px; flex-wrap:wrap; align-items:flex-end;">
+        <div class="field" style="max-width:320px; flex:1;">
+          <input type="text" id="requestsSearch" data-i18n-placeholder="admin_requests_search_ph" placeholder="Search by name, phone, piece..." />
+        </div>
+        <div class="field" style="max-width:200px;">
+          <select id="requestsStatusFilter">
+            <option value="all" data-i18n="admin_status_filter_all">All Statuses</option>
+            <option value="new" data-i18n="status_new">New</option>
+            <option value="contacted" data-i18n="status_contacted">Contacted</option>
+            <option value="confirmed" data-i18n="status_confirmed">Confirmed</option>
+            <option value="in_progress" data-i18n="status_in_progress">In Progress</option>
+            <option value="delivered" data-i18n="status_delivered">Delivered</option>
+            <option value="cancelled" data-i18n="status_cancelled">Cancelled</option>
+          </select>
+        </div>
       </div>
       <div class="admin-card" style="overflow-x:auto;">
         <table>

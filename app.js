@@ -291,58 +291,42 @@ function refreshCollectionAndCategoryUI() {
   renderGallery();
 }
 
-// Collections and categories are two different taxonomies, but showing them as two
-// separate chip rows (each with its own "All") read as cluttered/confusing, so they're
-// combined into one row: a single "All" resets both, then collection chips, then category chips.
+// Collections and categories are two different, unbounded-growth lists — a row of chips
+// that keeps adding a button per item gets unreadable and hard to tap on mobile as the
+// owner adds more of them. Two native <select> dropdowns scale to any number of options,
+// give a large native touch target, and take up a fixed, predictable amount of space.
 function renderCombinedFilters(categories) {
   filterRow.innerHTML = "";
 
-  const allBtn = document.createElement("button");
-  allBtn.className = "filter-chip" + (activeCollection === "all" && activeFilter === "all" ? " active" : "");
-  allBtn.textContent = t("filter_all");
-  allBtn.addEventListener("click", () => {
-    activeCollection = "all";
-    activeFilter = "all";
-    refreshCollectionAndCategoryUI();
-  });
-  filterRow.appendChild(allBtn);
-
   if (allCollections.length > 0) {
-    const label = document.createElement("span");
-    label.className = "filter-group-label";
-    label.textContent = t("filter_group_collections");
-    filterRow.appendChild(label);
-  }
-  allCollections.forEach((c) => {
-    const btn = document.createElement("button");
-    btn.className = "filter-chip" + (c.id === activeCollection ? " active" : "");
-    btn.textContent = c.name;
-    btn.addEventListener("click", () => {
-      activeCollection = c.id;
+    const collectionSelect = document.createElement("select");
+    collectionSelect.className = "filter-select";
+    collectionSelect.setAttribute("aria-label", t("filter_group_collections"));
+    collectionSelect.innerHTML = `<option value="all">${escapeHtml(t("filter_all_collections"))}</option>` +
+      allCollections.map(c => `<option value="${escapeHtml(c.id)}"${c.id === activeCollection ? " selected" : ""}>${escapeHtml(c.name)}</option>`).join("");
+    collectionSelect.addEventListener("change", () => {
+      activeCollection = collectionSelect.value;
       activeFilter = "all";
       refreshCollectionAndCategoryUI();
     });
-    filterRow.appendChild(btn);
-  });
+    filterRow.appendChild(collectionSelect);
+  }
 
   if (categories.length > 0) {
-    const label = document.createElement("span");
-    label.className = "filter-group-label";
-    label.textContent = t("filter_group_categories");
-    filterRow.appendChild(label);
-  }
-  categories.forEach((cat) => {
-    const btn = document.createElement("button");
-    btn.className = "filter-chip" + (cat === activeFilter ? " active" : "");
-    btn.textContent = cat;
-    btn.addEventListener("click", () => {
-      activeFilter = cat;
+    const categorySelect = document.createElement("select");
+    categorySelect.className = "filter-select";
+    categorySelect.setAttribute("aria-label", t("filter_group_categories"));
+    categorySelect.innerHTML = `<option value="all">${escapeHtml(t("filter_all_types"))}</option>` +
+      categories.map(cat => `<option value="${escapeHtml(cat)}"${cat === activeFilter ? " selected" : ""}>${escapeHtml(cat)}</option>`).join("");
+    categorySelect.addEventListener("change", () => {
+      activeFilter = categorySelect.value;
       refreshCollectionAndCategoryUI();
     });
-    filterRow.appendChild(btn);
-  });
+    filterRow.appendChild(categorySelect);
+  }
 
   const saleBtn = document.createElement("button");
+  saleBtn.type = "button";
   saleBtn.className = "filter-chip filter-chip-sale" + (saleOnly ? " active" : "");
   saleBtn.textContent = t("filter_sale");
   saleBtn.addEventListener("click", () => {
