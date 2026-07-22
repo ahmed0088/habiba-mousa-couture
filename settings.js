@@ -65,6 +65,21 @@ function applySettingsOverrides() {
     }
   }
 
+  applyShopLocationMap(s.shopLatLng);
+
+  const logoImg = document.getElementById("brandLogo");
+  const brandText = document.getElementById("brandText");
+  if (logoImg && brandText) {
+    if (s.logoUrl) {
+      logoImg.src = s.logoUrl;
+      logoImg.style.display = "block";
+      brandText.style.display = "none";
+    } else {
+      logoImg.style.display = "none";
+      brandText.style.display = "inline";
+    }
+  }
+
   const depositEl = document.getElementById("termsDepositBody");
   if (depositEl) {
     const percent = s.depositPercent != null ? s.depositPercent : 40;
@@ -81,3 +96,32 @@ db.collection("settings").doc("site").onSnapshot(
 );
 
 document.addEventListener("langchange", applySettingsOverrides);
+
+// Only present on contact.html; renders a free (Leaflet/OpenStreetMap, no API key)
+// static map with a marker at the owner-set coordinates, replacing the plain link buttons.
+let shopLocationMap = null;
+function applyShopLocationMap(latLngRaw) {
+  const container = document.getElementById("shopLocationMap");
+  if (!container || typeof L === "undefined") return;
+
+  const match = (latLngRaw || "").split(",").map(v => parseFloat(v.trim()));
+  if (match.length !== 2 || match.some(isNaN)) {
+    container.style.display = "none";
+    return;
+  }
+  const [lat, lng] = match;
+  container.style.display = "block";
+
+  if (!shopLocationMap) {
+    shopLocationMap = L.map("shopLocationMap", { scrollWheelZoom: false }).setView([lat, lng], 14);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: "&copy; OpenStreetMap contributors",
+      maxZoom: 19
+    }).addTo(shopLocationMap);
+    shopLocationMap.marker = L.marker([lat, lng]).addTo(shopLocationMap);
+  } else {
+    shopLocationMap.setView([lat, lng], 14);
+    shopLocationMap.marker.setLatLng([lat, lng]);
+  }
+  setTimeout(() => shopLocationMap.invalidateSize(), 50);
+}

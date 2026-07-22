@@ -7,13 +7,13 @@
 <meta name="description" content="سياسات الطلب والإلغاء والخصوصية لدى حبيبه موسي." />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=El+Messiri:wght@400;500;600;700&family=Jost:wght@400;500;600&family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css" />
+<link rel="stylesheet" href="style.css?v=2" />
 </head>
 <body>
 
 <header class="site-header">
   <div class="container">
-    <a href="index.html" class="brand">Habiba Mousa <em data-i18n="brand_suffix"></em></a>
+    <a href="index.html" class="brand"><img id="brandLogo" class="brand-logo" alt="Habiba Mousa" style="display:none;" /><span id="brandText">Habiba Mousa <em data-i18n="brand_suffix"></em></span></a>
     <button type="button" class="nav-toggle" id="navToggle" aria-label="Menu" data-i18n-aria-label="nav_menu_label" aria-expanded="false">
       <span></span><span></span><span></span>
     </button>
@@ -144,6 +144,25 @@
 <div class="modal-backdrop" id="myRequestsBackdrop">
   <div class="modal">
     <button class="modal-close" id="myRequestsClose" aria-label="Close">&times;</button>
+    <div class="my-account-form">
+      <h4 data-i18n="my_account_title">معلوماتي</h4>
+      <p class="form-note" data-i18n="my_account_intro">عدّلي بياناتك هنا عشان تتملى تلقائي في أي طلب جديد.</p>
+      <div class="field">
+        <label data-i18n="label_name">اسمكِ</label>
+        <input type="text" id="myAccountName" />
+      </div>
+      <div class="field">
+        <label data-i18n="label_phone">رقم الهاتف / واتساب</label>
+        <input type="tel" id="myAccountPhone" />
+      </div>
+      <div class="field">
+        <label data-i18n="label_address">العنوان (المحافظة، المدينة، الشارع)</label>
+        <input type="text" id="myAccountAddress" />
+      </div>
+      <button type="button" class="btn btn-solid" id="myAccountSaveBtn" data-i18n="my_account_save">حفظ بياناتي</button>
+      <div class="form-status" id="myAccountStatus"></div>
+    </div>
+    <hr class="my-account-divider" />
     <h3 data-i18n="my_requests_title">طلباتي</h3>
     <div id="myRequestsList"><!-- populated by account.js --></div>
     <div class="empty-state" id="myRequestsEmpty" style="display:none;" data-i18n="my_requests_empty"></div>
@@ -172,10 +191,10 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-<script src="firebase-config.js"></script>
-<script src="i18n.js"></script>
-<script src="theme.js"></script>
-<script src="account.js"></script>
-<script src="settings.js"></script>
+<script src="firebase-config.js?v=2"></script>
+<script src="i18n.js?v=2"></script>
+<script src="theme.js?v=2"></script>
+<script src="account.js?v=2"></script>
+<script src="settings.js?v=2"></script>
 </body>
 </html>

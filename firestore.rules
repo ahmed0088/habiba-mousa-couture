@@ -24,6 +24,12 @@ service cloud.firestore {
       allow write: if isStaff();
     }
 
+    // Managed garment-type categories (Dress, Abaya, Pants, ...) — same access shape
+    match /categories/{categoryId} {
+      allow read: if true;
+      allow write: if isStaff();
+    }
+
     // Site-wide business settings (contact info, maps, deposit %, hero/about copy)
     match /settings/{docId} {
       allow read: if true;
@@ -54,10 +60,15 @@ service cloud.firestore {
       allow read: if isAdmin();
     }
 
-    // Staff roster — only admins can manage it, staff can read it
+    // Staff roster — admins can manage anyone, staff can read the roster and
+    // update their own name (but not their own role or email, to prevent
+    // self-escalation or breaking the Auth-UID email match).
     match /staff/{staffUid} {
       allow read: if isStaff();
       allow write: if isAdmin();
+      allow update: if request.auth != null && request.auth.uid == staffUid
+                    && request.resource.data.role == resource.data.role
+                    && request.resource.data.email == resource.data.email;
     }
 
     // Pending staff invites (email-keyed, reconciled manually to a UID) — admin only

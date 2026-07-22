@@ -6,7 +6,7 @@
 <title>Admin — Habiba Mousa</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=El+Messiri:wght@400;500;600;700&family=Jost:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css" />
+<link rel="stylesheet" href="style.css?v=2" />
 </head>
 <body class="admin-body">
 
@@ -38,11 +38,12 @@
 <!-- Admin shell -->
 <div class="admin-shell" id="adminShell" style="display:none;">
   <aside class="admin-sidebar">
-    <a href="#" class="brand">Habiba <em>Admin</em></a>
+    <a href="#" class="brand"><img id="brandLogo" class="brand-logo" alt="Habiba Mousa" style="display:none;" /><span id="brandText">Habiba <em>Admin</em></span></a>
     <nav class="admin-nav">
       <button data-view="dashboard" class="active" data-i18n="admin_nav_dashboard">Dashboard</button>
       <button data-view="requests" data-i18n="admin_nav_requests">Requests</button>
       <button data-view="products" data-i18n="admin_nav_products">Products</button>
+      <button data-view="categories" data-i18n="admin_nav_categories">Categories</button>
       <button data-view="collections" data-i18n="admin_nav_collections">Collections</button>
       <button data-view="settings" data-i18n="admin_nav_settings">Settings</button>
       <button data-view="staff" data-i18n="admin_nav_staff">Staff</button>
@@ -56,7 +57,23 @@
       <button id="logoutBtn" class="btn" style="background:rgba(243,239,230,0.12); border-color:rgba(243,239,230,0.5); color:var(--ivory); font-size:13px; padding:8px 16px;" data-i18n="admin_signout">Sign Out →</button>
       <button type="button" class="theme-toggle" aria-label="Toggle theme">🌙</button>
     </div>
+    <button type="button" id="myProfileBtn" class="btn-link" style="margin-top:12px; color:rgba(243,239,230,0.75); font-size:12.5px;" data-i18n="admin_my_profile">✎ Edit My Profile</button>
   </aside>
+
+  <div class="modal-backdrop" id="myProfileBackdrop">
+    <div class="modal">
+      <button class="modal-close" id="myProfileClose" aria-label="Close">&times;</button>
+      <h3 style="font-family:var(--font-display); margin-top:0;" data-i18n="admin_my_profile">Edit My Profile</h3>
+      <div class="field">
+        <label data-i18n="admin_staff_name">Name</label>
+        <input type="text" id="myProfileName" />
+      </div>
+      <div class="submit-row">
+        <button class="btn btn-solid" id="myProfileSaveBtn" data-i18n="admin_save">Save</button>
+      </div>
+      <div class="form-status" id="myProfileStatus"></div>
+    </div>
+  </div>
 
   <main class="admin-main">
 
@@ -149,24 +166,10 @@
           </div>
           <div class="field">
             <label data-i18n="admin_p_category">Category</label>
-            <input type="text" id="pCategory" list="categoryOptions" placeholder="Pick a suggestion or type your own" />
-            <datalist id="categoryOptions">
-              <option value="Dress"></option>
-              <option value="Evening Gown"></option>
-              <option value="Abaya"></option>
-              <option value="Bridal"></option>
-              <option value="Kaftan"></option>
-              <option value="Cocktail"></option>
-              <option value="Casual"></option>
-              <option value="Skirt"></option>
-              <option value="Pants"></option>
-              <option value="Shirt"></option>
-              <option value="T-Shirt"></option>
-              <option value="Jumpsuit"></option>
-              <option value="Blazer / Coat"></option>
-              <option value="Made with Love"></option>
-            </datalist>
-            <p class="form-note" data-i18n="admin_p_category_note">The type of garment — e.g. Dress, Abaya, Pants.</p>
+            <select id="pCategory">
+              <option value="">— Select a category —</option>
+            </select>
+            <p class="form-note" data-i18n="admin_p_category_note">The type of garment — e.g. Dress, Abaya, Pants. Manage the list under the Categories tab.</p>
           </div>
           <div class="field">
             <label>Collection</label>
@@ -207,13 +210,18 @@
           <textarea id="pImages" placeholder="https://...&#10;https://..."></textarea>
           <p class="form-note" data-i18n="admin_p_image_note">One image URL per line (e.g. from Firebase Storage or Instagram CDN link). The first line is used as the cover image; all lines feed the gallery on the product detail view.</p>
         </div>
-        <div class="field" style="max-width:260px;">
-          <label>Thumbnail focus (fixes cropped photos)</label>
-          <select id="pImageFocus">
-            <option value="top">Top (keep heads/faces)</option>
-            <option value="center">Center</option>
-            <option value="bottom">Bottom</option>
-          </select>
+        <div style="display:flex; gap:16px; align-items:flex-start; flex-wrap:wrap;">
+          <div id="pImagePreviewWrap" style="display:none;">
+            <img id="pImagePreview" alt="" style="width:90px; height:120px; object-fit:cover; border-radius:6px; border:1px solid var(--line); display:block;" />
+          </div>
+          <div class="field" style="max-width:260px; flex:1;">
+            <label>Thumbnail focus (fixes cropped photos)</label>
+            <select id="pImageFocus">
+              <option value="top">Top (keep heads/faces)</option>
+              <option value="center">Center</option>
+              <option value="bottom">Bottom</option>
+            </select>
+          </div>
         </div>
         <div class="submit-row" style="display:flex; gap:10px;">
           <button class="btn btn-solid" id="saveProductBtn" data-i18n="admin_save_piece">Save Piece</button>
@@ -237,6 +245,36 @@
           </thead>
           <tbody id="productsTableBody"></tbody>
         </table>
+      </div>
+    </section>
+
+    <!-- Categories view -->
+    <section id="view-categories" style="display:none;">
+      <div class="admin-topbar">
+        <h1 data-i18n="admin_nav_categories">Categories</h1>
+        <button class="btn btn-solid" id="newCategoryBtn" data-i18n="admin_add_category">+ New Category</button>
+      </div>
+      <p class="form-note" data-i18n="admin_categories_intro">Garment types clients can filter by — e.g. Dress, Abaya, Pants. Keep this list distinct from Collections (seasonal drops).</p>
+
+      <div class="admin-card" id="categoryFormCard" style="display:none;">
+        <h3 style="font-family:var(--font-display); margin-top:0;" data-i18n="admin_add_category">New Category</h3>
+        <div class="field">
+          <label data-i18n="admin_category_name">Name</label>
+          <input type="text" id="categoryName" placeholder="e.g. Dress, Abaya, Pants" />
+        </div>
+        <div class="submit-row" style="display:flex; gap:10px;">
+          <button class="btn btn-solid" id="saveCategoryBtn" data-i18n="admin_create_category">Create Category</button>
+          <button class="btn" id="cancelCategoryBtn" style="border-color:#cfc7b4; color:var(--charcoal);" data-i18n="admin_cancel">Cancel</button>
+        </div>
+        <div class="form-status" id="categoryFormStatus"></div>
+      </div>
+
+      <div class="admin-card" style="overflow-x:auto;">
+        <table>
+          <thead><tr><th data-i18n="admin_th_name">Name</th><th data-i18n="admin_th_status">Status</th><th></th></tr></thead>
+          <tbody id="categoriesTableBody"></tbody>
+        </table>
+        <p id="categoriesEmpty" style="display:none; color:#8a8a86; padding: 20px 0;" data-i18n="admin_categories_empty">No categories yet — add the garment types clients can filter by.</p>
       </div>
     </section>
 
@@ -422,6 +460,14 @@
             <label>Waze link</label>
             <input type="url" id="setWazeUrl" placeholder="https://waze.com/ul/..." />
           </div>
+          <div class="field">
+            <label>Shop coordinates (lat,lng) — shows an embedded map on Contact Us</label>
+            <input type="text" id="setShopLatLng" placeholder="31.2001,29.9187" />
+          </div>
+          <div class="field">
+            <label>Logo image URL — replaces the "Habiba Mousa" text in the header when set</label>
+            <input type="url" id="setLogoUrl" placeholder="https://..." />
+          </div>
         </div>
 
         <h3 style="font-family:var(--font-display); font-size:19px;">Deposit</h3>
@@ -441,15 +487,19 @@
     <section id="view-staff" style="display:none;">
       <div class="admin-topbar">
         <h1 data-i18n="admin_staff_title">Staff Access</h1>
+        <button class="btn btn-solid" id="newStaffBtn" data-i18n="admin_add_staff">+ Add Staff Member</button>
       </div>
-      <div class="admin-card">
-        <p style="font-size:14px; color:#555;" data-i18n-html="admin_staff_intro_html">
-          Staff accounts are created in two steps: (1) create the person's login in
-          <strong>Firebase Console → Authentication</strong>, then (2) add a matching record below
-          so they can access this dashboard.
-        </p>
-        <input type="hidden" id="staffEditUid" />
-        <div class="product-form-grid">
+
+      <div class="modal-backdrop" id="staffFormBackdrop">
+        <div class="modal">
+          <button class="modal-close" id="staffFormClose" aria-label="Close">&times;</button>
+          <h3 style="font-family:var(--font-display); margin-top:0;" id="staffFormTitle" data-i18n="admin_add_staff">Add Staff Member</h3>
+          <p style="font-size:13px; color:#777;" data-i18n-html="admin_staff_intro_html">
+            Staff accounts are created in two steps: (1) create the person's login in
+            <strong>Firebase Console → Authentication</strong>, then (2) add a matching record below
+            so they can access this dashboard.
+          </p>
+          <input type="hidden" id="staffEditUid" />
           <div class="field">
             <label data-i18n="admin_staff_email">Staff email (must match their Firebase Auth login)</label>
             <input type="email" id="staffEmail" list="staffEmailOptions" />
@@ -466,13 +516,14 @@
               <option value="admin" data-i18n="admin_staff_role_admin">Admin — full access</option>
             </select>
           </div>
+          <div class="submit-row" style="display:flex; gap:10px;">
+            <button class="btn btn-solid" id="addStaffBtn" data-i18n="admin_add_staff">Add Staff Member</button>
+            <button class="btn" id="cancelStaffEditBtn" style="border-color:#cfc7b4; color:var(--charcoal);" data-i18n="admin_cancel">Cancel</button>
+          </div>
+          <div class="form-status" id="staffFormStatus"></div>
         </div>
-        <div style="display:flex; gap:10px;">
-          <button class="btn btn-solid" id="addStaffBtn" data-i18n="admin_add_staff">Add Staff Member</button>
-          <button class="btn" id="cancelStaffEditBtn" style="display:none; border-color:#cfc7b4; color:var(--charcoal);" data-i18n="admin_cancel">Cancel</button>
-        </div>
-        <div class="form-status" id="staffFormStatus"></div>
       </div>
+
       <div class="admin-card" style="overflow-x:auto;">
         <table>
           <thead><tr><th data-i18n="admin_th_name">Name</th><th data-i18n="admin_th_email">Email</th><th data-i18n="admin_th_role">Role</th><th></th></tr></thead>
@@ -510,9 +561,9 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-<script src="firebase-config.js"></script>
-<script src="i18n.js"></script>
-<script src="theme.js"></script>
-<script src="admin.js"></script>
+<script src="firebase-config.js?v=2"></script>
+<script src="i18n.js?v=2"></script>
+<script src="theme.js?v=2"></script>
+<script src="admin.js?v=2"></script>
 </body>
 </html>

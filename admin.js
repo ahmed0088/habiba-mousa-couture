@@ -39,6 +39,45 @@ loginForm.addEventListener("submit", async (e) => {
 
 logoutBtn.addEventListener("click", () => auth.signOut());
 
+const myProfileBtn = document.getElementById("myProfileBtn");
+const myProfileBackdrop = document.getElementById("myProfileBackdrop");
+const myProfileClose = document.getElementById("myProfileClose");
+const myProfileName = document.getElementById("myProfileName");
+const myProfileSaveBtn = document.getElementById("myProfileSaveBtn");
+const myProfileStatus = document.getElementById("myProfileStatus");
+
+myProfileBtn?.addEventListener("click", () => {
+  myProfileName.value = (currentStaff && currentStaff.name) || "";
+  myProfileStatus.className = "form-status";
+  myProfileStatus.textContent = "";
+  myProfileBackdrop.classList.add("open");
+});
+
+myProfileClose?.addEventListener("click", () => myProfileBackdrop.classList.remove("open"));
+myProfileBackdrop?.addEventListener("click", (e) => {
+  if (e.target === myProfileBackdrop) myProfileBackdrop.classList.remove("open");
+});
+
+myProfileSaveBtn?.addEventListener("click", async () => {
+  const name = myProfileName.value.trim();
+  myProfileSaveBtn.disabled = true;
+  try {
+    await db.collection("staff").doc(currentStaff.uid).update({ name });
+    currentStaff.name = name;
+    const whoamiText = `Signed in as ${currentStaff.name || currentStaff.email} (${currentStaff.role})`;
+    document.getElementById("whoamiRequests").textContent = whoamiText;
+    document.getElementById("whoamiDashboard").textContent = whoamiText;
+    logActivity("Updated own profile", name);
+    myProfileBackdrop.classList.remove("open");
+  } catch (err) {
+    console.error("Failed to save profile:", err);
+    myProfileStatus.className = "form-status error";
+    myProfileStatus.textContent = "Couldn't save your profile. Please try again." + errSuffix(err);
+  } finally {
+    myProfileSaveBtn.disabled = false;
+  }
+});
+
 document.getElementById("forgotPasswordBtn")?.addEventListener("click", async () => {
   const email = document.getElementById("loginEmail").value.trim();
   if (!email) {
@@ -83,6 +122,7 @@ auth.onAuthStateChanged(async (user) => {
 
     loadRequests();
     loadProducts();
+    loadCategories();
     loadCollections();
     loadSettings();
     if (currentStaff.role === "admin") {
@@ -108,11 +148,26 @@ document.querySelectorAll(".admin-nav button[data-view]").forEach((btn) => {
   btn.addEventListener("click", () => {
     document.querySelectorAll(".admin-nav button[data-view]").forEach(b => b.classList.remove("active"));
     btn.classList.add("active");
-    ["dashboard", "requests", "products", "collections", "settings", "staff", "activity"].forEach((v) => {
+    ["dashboard", "requests", "products", "categories", "collections", "settings", "staff", "activity"].forEach((v) => {
       document.getElementById(`view-${v}`).style.display = v === btn.dataset.view ? "block" : "none";
     });
   });
 });
+
+function showToast(message, type) {
+  let container = document.getElementById("toastContainer");
+  if (!container) {
+    container = document.createElement("div");
+    container.id = "toastContainer";
+    container.className = "toast-container";
+    document.body.appendChild(container);
+  }
+  const toast = document.createElement("div");
+  toast.className = "toast" + (type === "error" ? " toast-error" : "");
+  toast.textContent = message;
+  container.appendChild(toast);
+  setTimeout(() => toast.remove(), 5000);
+}
 
 function logActivity(action, target) {
   db.collection("activityLog").add({
@@ -120,7 +175,10 @@ function logActivity(action, target) {
     target: target || "",
     actor: (currentStaff && (currentStaff.name || currentStaff.email)) || "unknown",
     createdAt: firebase.firestore.FieldValue.serverTimestamp()
-  }).catch((err) => console.error("Failed to log activity:", err));
+  }).catch((err) => {
+    console.error("Failed to log activity:", err);
+    showToast("Couldn't save to the activity log — the live Firestore rules may be out of date." + errSuffix(err), "error");
+  });
 }
 
 function loadActivityLog() {
@@ -197,24 +255,34 @@ const requestDetailClose = document.getElementById("requestDetailClose");
 const requestDetailBody = document.getElementById("requestDetailBody");
 
 function detailRow(label, value) {
-  return `<p style="margin:0 0 10px;"><strong>${escapeHtml(label)}:</strong><br>${escapeHtml(value || "—")}</p>`;
+  return `<div><p style="margin:0; font-size:11px; text-transform:uppercase; letter-spacing:0.06em; color:var(--text-faint);">${escapeHtml(label)}</p><p style="margin:2px 0 0; font-weight:500;">${escapeHtml(value || "—")}</p></div>`;
 }
 
 function openRequestDetail(id) {
   const r = requestsById[id];
   if (!r) return;
-  requestDetailBody.innerHTML = [
-    detailRow("Client", r.clientName),
-    detailRow("Phone", r.clientPhone),
-    detailRow("Address", r.clientAddress),
-    r.clientLocationUrl ? `<p style="margin:0 0 10px;"><strong>Location:</strong><br><a href="${escapeHtml(r.clientLocationUrl)}" target="_blank" rel="noopener">${escapeHtml(r.clientLocationUrl)}</a></p>` : "",
-    detailRow("Piece", r.productName + (r.productCode ? ` (${r.productCode})` : "")),
-    detailRow("Material", MATERIAL_LABELS[r.material] || r.material),
-    detailRow("Needed by", r.preferredDate),
-    detailRow("Notes", r.notes),
-    detailRow("Status", STATUS_LABELS[r.status] || r.status),
-    detailRow("Received", formatDate(r.createdAt))
-  ].join("");
+  const product = r.productId ? allProductsAdmin.find(([pid]) => pid === r.productId) : null;
+  const thumbSrc = product && product[1].images && product[1].images[0] ? product[1].images[0] : "";
+  const thumbFocus = product && product[1].imageFocus ? product[1].imageFocus : "top";
+  const photoHtml = thumbSrc
+    ? `<img src="${escapeHtml(thumbSrc)}" alt="" style="width:100%; max-width:220px; aspect-ratio:3/4; object-fit:cover; object-position: center ${escapeHtml(thumbFocus)}; border-radius:8px; border:1px solid var(--line); display:block; margin:0 auto 18px; box-shadow:0 10px 24px -14px rgba(28,16,19,0.4);" />`
+    : "";
+
+  requestDetailBody.innerHTML = `
+    ${photoHtml}
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px 20px;">
+      ${detailRow("Client", r.clientName)}
+      ${detailRow("Phone", r.clientPhone)}
+      ${detailRow("Piece", r.productName + (r.productCode ? ` (${r.productCode})` : ""))}
+      ${detailRow("Material", MATERIAL_LABELS[r.material] || r.material)}
+      ${detailRow("Address", r.clientAddress)}
+      ${detailRow("Needed by", r.preferredDate)}
+      ${detailRow("Status", STATUS_LABELS[r.status] || r.status)}
+      ${detailRow("Received", formatDate(r.createdAt))}
+    </div>
+    ${r.clientLocationUrl ? `<p style="margin:16px 0 0;"><strong>Location:</strong> <a href="${escapeHtml(r.clientLocationUrl)}" target="_blank" rel="noopener">Open pinned location in Maps</a></p>` : ""}
+    ${r.notes ? `<div style="margin-top:16px;">${detailRow("Notes", r.notes)}</div>` : ""}
+  `;
   requestDetailBackdrop.classList.add("open");
 }
 
@@ -350,6 +418,22 @@ function closeProductForm() {
   productFormBackdrop.classList.remove("open");
 }
 
+function updateProductImagePreview() {
+  const wrap = document.getElementById("pImagePreviewWrap");
+  const img = document.getElementById("pImagePreview");
+  const firstUrl = document.getElementById("pImages").value.split("\n").map(l => l.trim()).find(Boolean);
+  if (firstUrl) {
+    img.src = firstUrl;
+    img.style.objectPosition = `center ${document.getElementById("pImageFocus").value}`;
+    wrap.style.display = "block";
+  } else {
+    wrap.style.display = "none";
+  }
+}
+
+document.getElementById("pImages")?.addEventListener("input", updateProductImagePreview);
+document.getElementById("pImageFocus")?.addEventListener("change", updateProductImagePreview);
+
 function resetProductForm() {
   productDocId.value = "";
   document.getElementById("pName").value = "";
@@ -364,6 +448,7 @@ function resetProductForm() {
   document.getElementById("pImageFocus").value = "top";
   productFormStatus.className = "form-status";
   productFormStatus.textContent = "";
+  updateProductImagePreview();
 }
 
 newProductBtn.addEventListener("click", () => {
@@ -495,6 +580,7 @@ function renderProductsTable() {
         document.getElementById("pDescription").value = p.description || "";
         document.getElementById("pImages").value = (p.images || []).join("\n");
         document.getElementById("pImageFocus").value = p.imageFocus || "top";
+        updateProductImagePreview();
         productFormTitle.textContent = "Edit Piece";
         openProductForm();
       });
@@ -524,6 +610,146 @@ function loadProducts() {
     renderRequestsTable();
     updateDashboardStats();
   }, (err) => console.error("Products listener error:", err));
+}
+
+// ---------- Categories ----------
+
+const newCategoryBtn = document.getElementById("newCategoryBtn");
+const categoryFormCard = document.getElementById("categoryFormCard");
+const categoryNameInput = document.getElementById("categoryName");
+const saveCategoryBtn = document.getElementById("saveCategoryBtn");
+const cancelCategoryBtn = document.getElementById("cancelCategoryBtn");
+const categoryFormStatus = document.getElementById("categoryFormStatus");
+const pCategorySelect = document.getElementById("pCategory");
+
+let allCategories = [];
+let hasSeededCategories = false;
+
+const DEFAULT_CATEGORIES = [
+  "Dress", "Evening Gown", "Abaya", "Bridal", "Kaftan", "Cocktail",
+  "Casual", "Skirt", "Pants", "Shirt", "T-Shirt", "Jumpsuit", "Blazer / Coat"
+];
+
+newCategoryBtn.addEventListener("click", () => {
+  categoryNameInput.value = "";
+  categoryFormStatus.className = "form-status";
+  categoryFormStatus.textContent = "";
+  categoryFormCard.style.display = "block";
+});
+
+cancelCategoryBtn.addEventListener("click", () => {
+  categoryFormCard.style.display = "none";
+});
+
+saveCategoryBtn.addEventListener("click", async () => {
+  const name = categoryNameInput.value.trim();
+  if (!name) {
+    categoryFormStatus.className = "form-status error";
+    categoryFormStatus.textContent = "Name is required.";
+    return;
+  }
+
+  saveCategoryBtn.disabled = true;
+  try {
+    await db.collection("categories").add({
+      name,
+      status: "active",
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    logActivity("Created category", name);
+    categoryFormCard.style.display = "none";
+  } catch (err) {
+    console.error("Failed to save category:", err);
+    categoryFormStatus.className = "form-status error";
+    categoryFormStatus.textContent = "Couldn't create this category. Please try again." + errSuffix(err);
+  } finally {
+    saveCategoryBtn.disabled = false;
+  }
+});
+
+function populateCategorySelect() {
+  const current = pCategorySelect.value;
+  pCategorySelect.innerHTML = '<option value="">— Select a category —</option>' +
+    allCategories
+      .filter(c => c.status === "active")
+      .map(c => `<option value="${escapeHtml(c.name)}">${escapeHtml(c.name)}</option>`)
+      .join("");
+  pCategorySelect.value = current;
+}
+
+async function seedDefaultCategories() {
+  hasSeededCategories = true;
+  try {
+    const batch = db.batch();
+    DEFAULT_CATEGORIES.forEach((name) => {
+      const ref = db.collection("categories").doc();
+      batch.set(ref, { name, status: "active", createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+    });
+    await batch.commit();
+  } catch (err) {
+    console.error("Failed to seed default categories:", err);
+  }
+}
+
+function loadCategories() {
+  db.collection("categories").orderBy("createdAt", "desc").onSnapshot((snapshot) => {
+    allCategories = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+    if (allCategories.length === 0 && !hasSeededCategories) {
+      seedDefaultCategories();
+    }
+
+    populateCategorySelect();
+
+    const tbody = document.getElementById("categoriesTableBody");
+    const empty = document.getElementById("categoriesEmpty");
+    tbody.innerHTML = "";
+
+    if (allCategories.length === 0) {
+      empty.style.display = "block";
+      return;
+    }
+    empty.style.display = "none";
+
+    allCategories.forEach((c) => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td data-label="Name">${escapeHtml(c.name)}</td>
+        <td data-label="Status"><span class="status-pill status-${c.status === "active" ? "confirmed" : "delivered"}">${escapeHtml(c.status)}</span></td>
+        <td data-label="">
+          <button class="icon-btn" data-toggle-category="${c.id}" data-next="${c.status === "active" ? "archived" : "active"}">${c.status === "active" ? "Archive" : "Restore"}</button>
+          <button class="icon-btn danger" data-delete-category="${c.id}">Delete</button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    tbody.querySelectorAll("[data-toggle-category]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        try {
+          await db.collection("categories").doc(btn.dataset.toggleCategory).update({ status: btn.dataset.next });
+          logActivity("Changed category status", btn.dataset.next);
+        } catch (err) {
+          console.error("Failed to update category status:", err);
+          alert("Couldn't update this category. Please try again." + errSuffix(err));
+        }
+      });
+    });
+
+    tbody.querySelectorAll("[data-delete-category]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        if (!confirm("Delete this category? Products already using it keep their value, but it won't be selectable anymore.")) return;
+        const category = allCategories.find(c => c.id === btn.dataset.deleteCategory);
+        try {
+          await db.collection("categories").doc(btn.dataset.deleteCategory).delete();
+          logActivity("Deleted category", category ? category.name : "");
+        } catch (err) {
+          console.error("Failed to delete category:", err);
+          alert("Couldn't delete this category. Please try again." + errSuffix(err));
+        }
+      });
+    });
+  }, (err) => console.error("Categories listener error:", err));
 }
 
 // ---------- Collections ----------
@@ -680,7 +906,9 @@ const SETTINGS_FIELDS = {
   setAddressAr: "address_ar",
   setAddressEn: "address_en",
   setGoogleMapsUrl: "googleMapsUrl",
-  setWazeUrl: "wazeUrl"
+  setWazeUrl: "wazeUrl",
+  setShopLatLng: "shopLatLng",
+  setLogoUrl: "logoUrl"
 };
 
 function loadSettings() {
@@ -693,6 +921,19 @@ function loadSettings() {
     const depositEl = document.getElementById("setDepositPercent");
     if (document.activeElement !== depositEl) {
       depositEl.value = data.depositPercent != null ? data.depositPercent : 40;
+    }
+
+    const logoImg = document.getElementById("brandLogo");
+    const brandText = document.getElementById("brandText");
+    if (logoImg && brandText) {
+      if (data.logoUrl) {
+        logoImg.src = data.logoUrl;
+        logoImg.style.display = "block";
+        brandText.style.display = "none";
+      } else {
+        logoImg.style.display = "none";
+        brandText.style.display = "inline";
+      }
     }
   }, (err) => console.error("Settings listener error:", err));
 }
@@ -726,6 +967,18 @@ saveSettingsBtn.addEventListener("click", async () => {
 const staffEditUid = document.getElementById("staffEditUid");
 const cancelStaffEditBtn = document.getElementById("cancelStaffEditBtn");
 const addStaffBtn = document.getElementById("addStaffBtn");
+const staffFormBackdrop = document.getElementById("staffFormBackdrop");
+const staffFormClose = document.getElementById("staffFormClose");
+const staffFormTitle = document.getElementById("staffFormTitle");
+const newStaffBtn = document.getElementById("newStaffBtn");
+
+function openStaffForm() {
+  staffFormBackdrop.classList.add("open");
+}
+
+function closeStaffForm() {
+  staffFormBackdrop.classList.remove("open");
+}
 
 function resetStaffForm() {
   staffEditUid.value = "";
@@ -734,12 +987,25 @@ function resetStaffForm() {
   document.getElementById("staffName").value = "";
   document.getElementById("staffRole").value = "staff";
   addStaffBtn.textContent = "Add Staff Member";
-  cancelStaffEditBtn.style.display = "none";
+  staffFormTitle.textContent = "Add Staff Member";
   document.getElementById("staffFormStatus").className = "form-status";
   document.getElementById("staffFormStatus").textContent = "";
 }
 
-cancelStaffEditBtn?.addEventListener("click", resetStaffForm);
+newStaffBtn?.addEventListener("click", () => {
+  resetStaffForm();
+  openStaffForm();
+});
+
+cancelStaffEditBtn?.addEventListener("click", () => {
+  resetStaffForm();
+  closeStaffForm();
+});
+
+staffFormClose?.addEventListener("click", closeStaffForm);
+staffFormBackdrop?.addEventListener("click", (e) => {
+  if (e.target === staffFormBackdrop) closeStaffForm();
+});
 
 function populateStaffEmailOptions(emails) {
   const datalist = document.getElementById("staffEmailOptions");
@@ -783,9 +1049,10 @@ function loadStaff() {
         document.getElementById("staffName").value = btn.dataset.name;
         document.getElementById("staffRole").value = btn.dataset.role;
         addStaffBtn.textContent = "Update Staff Member";
-        cancelStaffEditBtn.style.display = "inline-block";
+        staffFormTitle.textContent = "Edit Staff Member";
         document.getElementById("staffFormStatus").className = "form-status";
         document.getElementById("staffFormStatus").textContent = "";
+        openStaffForm();
       });
     });
 
@@ -814,6 +1081,7 @@ addStaffBtn?.addEventListener("click", async () => {
       await db.collection("staff").doc(staffEditUid.value).update({ name, role });
       logActivity("Updated staff member", `${name} (${role})`);
       resetStaffForm();
+      closeStaffForm();
     } catch (err) {
       console.error("Failed to update staff member:", err);
       statusEl.className = "form-status error";

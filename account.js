@@ -34,6 +34,13 @@ const completeProfileBtn = document.getElementById("completeProfileBtn");
 const completeProfileClose = document.getElementById("completeProfileClose");
 
 let myRequestsUnsubscribe = null;
+let currentClientProfile = null;
+
+const myAccountName = document.getElementById("myAccountName");
+const myAccountPhone = document.getElementById("myAccountPhone");
+const myAccountAddress = document.getElementById("myAccountAddress");
+const myAccountSaveBtn = document.getElementById("myAccountSaveBtn");
+const myAccountStatus = document.getElementById("myAccountStatus");
 
 // ---------- Mobile nav toggle ----------
 
@@ -254,6 +261,17 @@ const STATUS_KEY_MAP = {
   cancelled: "status_cancelled"
 };
 
+function renderRequestRow(r) {
+  const row = document.createElement("div");
+  row.className = "my-request-row";
+  row.innerHTML = `
+    <div class="my-request-piece">${escapeHtmlAccount(r.productName || "—")}</div>
+    <span class="status-pill status-${escapeHtmlAccount(r.status)}">${escapeHtmlAccount(t(STATUS_KEY_MAP[r.status] || r.status))}</span>
+    <div class="my-request-date">${formatDateAccount(r.createdAt)}</div>
+  `;
+  return row;
+}
+
 function renderMyRequests(docs) {
   if (!myRequestsList) return;
   myRequestsList.innerHTML = "";
@@ -265,16 +283,24 @@ function renderMyRequests(docs) {
   }
   myRequestsEmpty.style.display = "none";
 
-  docs.forEach((r) => {
-    const row = document.createElement("div");
-    row.className = "my-request-row";
-    row.innerHTML = `
-      <div class="my-request-piece">${escapeHtmlAccount(r.productName || "—")}</div>
-      <span class="status-pill status-${escapeHtmlAccount(r.status)}">${escapeHtmlAccount(t(STATUS_KEY_MAP[r.status] || r.status))}</span>
-      <div class="my-request-date">${formatDateAccount(r.createdAt)}</div>
-    `;
-    myRequestsList.appendChild(row);
-  });
+  const past = docs.filter(r => r.status === "delivered" || r.status === "cancelled");
+  const current = docs.filter(r => r.status !== "delivered" && r.status !== "cancelled");
+
+  if (current.length > 0) {
+    const heading = document.createElement("p");
+    heading.className = "my-requests-group-title";
+    heading.textContent = t("my_requests_current");
+    myRequestsList.appendChild(heading);
+    current.forEach(r => myRequestsList.appendChild(renderRequestRow(r)));
+  }
+
+  if (past.length > 0) {
+    const heading = document.createElement("p");
+    heading.className = "my-requests-group-title";
+    heading.textContent = t("my_requests_past");
+    myRequestsList.appendChild(heading);
+    past.forEach(r => myRequestsList.appendChild(renderRequestRow(r)));
+  }
 }
 
 function loadMyRequests(uid) {
@@ -295,6 +321,40 @@ function loadMyRequests(uid) {
     );
 }
 
+function populateMyAccountForm() {
+  if (!myAccountName) return;
+  const p = currentClientProfile || {};
+  myAccountName.value = p.name || "";
+  myAccountPhone.value = p.phone || "";
+  myAccountAddress.value = p.address || "";
+}
+
+myAccountSaveBtn?.addEventListener("click", async () => {
+  const user = auth.currentUser;
+  if (!user) return;
+  myAccountSaveBtn.disabled = true;
+  myAccountStatus.className = "form-status";
+  myAccountStatus.textContent = "";
+  const data = {
+    name: myAccountName.value.trim(),
+    phone: myAccountPhone.value.trim(),
+    address: myAccountAddress.value.trim(),
+    email: user.email || ""
+  };
+  try {
+    await db.collection("clients").doc(user.uid).set(data, { merge: true });
+    currentClientProfile = { ...(currentClientProfile || {}), ...data };
+    myAccountStatus.className = "form-status success";
+    myAccountStatus.textContent = t("my_account_saved");
+  } catch (err) {
+    console.error("Failed to save profile:", err);
+    myAccountStatus.className = "form-status error";
+    myAccountStatus.textContent = t("my_account_error");
+  } finally {
+    myAccountSaveBtn.disabled = false;
+  }
+});
+
 auth.onAuthStateChanged(async (user) => {
   if (user) {
     if (accountSignInBtn) accountSignInBtn.style.display = "none";
@@ -302,7 +362,12 @@ auth.onAuthStateChanged(async (user) => {
     loadMyRequests(user.uid);
     try {
       const clientDoc = await db.collection("clients").doc(user.uid).get();
-      if (!clientDoc.exists) openCompleteProfile();
+      if (!clientDoc.exists) {
+        openCompleteProfile();
+      } else {
+        currentClientProfile = clientDoc.data();
+        populateMyAccountForm();
+      }
     } catch (err) {
       console.error("Client profile check failed:", err);
     }
@@ -314,6 +379,7 @@ auth.onAuthStateChanged(async (user) => {
       myRequestsUnsubscribe = null;
     }
     if (myRequestsList) myRequestsList.innerHTML = "";
+    currentClientProfile = null;
     closeMyRequests();
   }
 });

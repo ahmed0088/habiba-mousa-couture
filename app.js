@@ -152,6 +152,12 @@ function showRequestView() {
     locationMap.removeLayer(locationMarker);
   }
   locationMarker = null;
+
+  if (typeof currentClientProfile !== "undefined" && currentClientProfile) {
+    document.getElementById("clientName").value = currentClientProfile.name || "";
+    document.getElementById("clientPhone").value = currentClientProfile.phone || "";
+    document.getElementById("clientAddress").value = currentClientProfile.address || "";
+  }
 }
 
 detailRequestBtn.addEventListener("click", showRequestView);
@@ -257,6 +263,12 @@ function closeModal() {
 modalClose.addEventListener("click", closeModal);
 modalBackdrop.addEventListener("click", (e) => {
   if (e.target === modalBackdrop) closeModal();
+});
+
+const successBackdrop = document.getElementById("successBackdrop");
+document.getElementById("successCloseBtn")?.addEventListener("click", () => successBackdrop.classList.remove("open"));
+successBackdrop?.addEventListener("click", (e) => {
+  if (e.target === successBackdrop) successBackdrop.classList.remove("open");
 });
 document.addEventListener("keydown", (e) => {
   if (e.key !== "Escape") return;
@@ -469,10 +481,9 @@ requestForm.addEventListener("submit", async (e) => {
 
   try {
     await db.collection("requests").add(payload);
-    formStatus.className = "form-status success";
-    formStatus.textContent = t("submit_success");
     requestForm.reset();
-    setTimeout(closeModal, 2200);
+    closeModal();
+    document.getElementById("successBackdrop").classList.add("open");
   } catch (err) {
     console.error("Failed to submit request:", err);
     formStatus.className = "form-status error";
