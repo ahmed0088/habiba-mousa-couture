@@ -441,6 +441,14 @@ function detailRow(label, value) {
   return `<div><p style="margin:0; font-size:11px; text-transform:uppercase; letter-spacing:0.06em; color:var(--text-faint);">${escapeHtml(label)}</p><p style="margin:2px 0 0; font-weight:500;">${escapeHtml(value || "—")}</p></div>`;
 }
 
+function statusPillGroupHtml(id, currentStatus) {
+  const pills = STATUS_OPTIONS.map((s) => {
+    const active = s === currentStatus;
+    return `<button type="button" class="status-pill-btn status-${s}${active ? " active" : ""}" data-status="${s}" data-id="${id}">${escapeHtml(STATUS_LABELS[s])}</button>`;
+  }).join("");
+  return `<div class="status-pill-group">${pills}</div>`;
+}
+
 function openRequestDetail(id) {
   const r = requestsById[id];
   if (!r) return;
@@ -453,19 +461,37 @@ function openRequestDetail(id) {
 
   requestDetailBody.innerHTML = `
     ${photoHtml}
-    <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px 20px;">
+    ${statusPillGroupHtml(id, r.status)}
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px 20px; margin-top:18px;">
       ${detailRow("Client", r.clientName)}
       ${detailRow("Phone", r.clientPhone)}
       ${detailRow("Piece", r.productName + (r.productCode ? ` (${r.productCode})` : ""))}
       ${detailRow("Material", MATERIAL_LABELS[r.material] || r.material)}
       ${detailRow("Address", r.clientAddress)}
       ${detailRow("Needed by", r.preferredDate)}
-      ${detailRow("Status", STATUS_LABELS[r.status] || r.status)}
       ${detailRow("Received", formatDate(r.createdAt))}
     </div>
     ${r.clientLocationUrl ? `<p style="margin:16px 0 0;"><strong>Location:</strong> <a href="${escapeHtml(r.clientLocationUrl)}" target="_blank" rel="noopener">Open pinned location in Maps</a></p>` : ""}
     ${r.notes ? `<div style="margin-top:16px;">${detailRow("Notes", r.notes)}</div>` : ""}
   `;
+
+  requestDetailBody.querySelectorAll(".status-pill-btn").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      if (btn.classList.contains("active")) return;
+      const newStatus = btn.dataset.status;
+      try {
+        await db.collection("requests").doc(id).update({ status: newStatus });
+        logActivity("Changed request status", `${r.clientName} → ${newStatus}`);
+        requestDetailBody.querySelectorAll(".status-pill-btn").forEach((b) => {
+          b.classList.toggle("active", b === btn);
+        });
+      } catch (err) {
+        console.error("Failed to update status:", err);
+        alert("Couldn't update status. Please try again." + errSuffix(err));
+      }
+    });
+  });
+
   requestDetailBackdrop.classList.add("open");
 }
 

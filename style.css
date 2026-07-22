@@ -1107,6 +1107,35 @@ select.status-select.status-in_progress { background-color: #d8ece9; color: var(
 select.status-select.status-delivered { background-color: #e6e0d8; color: #665a52; }
 select.status-select.status-cancelled { background-color: #f6dcdc; color: #a13a3a; }
 
+.status-pill-group { display: flex; flex-wrap: wrap; gap: 8px; }
+.status-pill-btn {
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+  background: transparent;
+  border: 1.5px solid var(--line);
+  color: var(--text-faint);
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+.status-pill-btn:hover { border-color: var(--gold); color: var(--heading); }
+.status-pill-btn.active { cursor: default; }
+.status-pill-btn.status-new { border-color: #6a3f8f; color: #6a3f8f; }
+.status-pill-btn.status-contacted { border-color: #a5680f; color: #a5680f; }
+.status-pill-btn.status-confirmed { border-color: var(--emerald-deep); color: var(--emerald-deep); }
+.status-pill-btn.status-in_progress { border-color: var(--turquoise); color: var(--turquoise); }
+.status-pill-btn.status-delivered { border-color: #665a52; color: #665a52; }
+.status-pill-btn.status-cancelled { border-color: #a13a3a; color: #a13a3a; }
+.status-pill-btn.active.status-new { background: #ece0f2; }
+.status-pill-btn.active.status-contacted { background: #fbe8c9; }
+.status-pill-btn.active.status-confirmed { background: #e2ece2; }
+.status-pill-btn.active.status-in_progress { background: #d8ece9; }
+.status-pill-btn.active.status-delivered { background: #e6e0d8; }
+.status-pill-btn.active.status-cancelled { background: #f6dcdc; }
+
 .admin-card {
   background: var(--glass-surface);
   backdrop-filter: blur(14px) saturate(150%);
