@@ -147,6 +147,8 @@ const I18N = {
     admin_th_received: "تاريخ الاستلام",
     admin_th_address: "العنوان",
     admin_th_material: "القماش",
+    admin_section_customer: "بيانات العميلة",
+    admin_section_details: "تفاصيل إضافية",
     admin_requests_search_ph: "دوّري بالاسم، الرقم، أو القطعة...",
     admin_requests_empty: "لسه مفيش طلبات.",
 
@@ -484,6 +486,8 @@ const I18N = {
     admin_th_received: "Received",
     admin_th_address: "Address",
     admin_th_material: "Material",
+    admin_section_customer: "Customer Info",
+    admin_section_details: "Additional Details",
     admin_requests_search_ph: "Search by name, phone, piece...",
     admin_requests_empty: "No requests yet.",
 
