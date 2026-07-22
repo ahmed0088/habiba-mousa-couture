@@ -74,8 +74,9 @@ auth.onAuthStateChanged(async (user) => {
       return;
     }
     currentStaff = { uid: user.uid, ...staffDoc.data() };
-    document.getElementById("whoamiRequests").textContent =
-      `Signed in as ${currentStaff.name || currentStaff.email} (${currentStaff.role})`;
+    const whoamiText = `Signed in as ${currentStaff.name || currentStaff.email} (${currentStaff.role})`;
+    document.getElementById("whoamiRequests").textContent = whoamiText;
+    document.getElementById("whoamiDashboard").textContent = whoamiText;
 
     loginScreen.style.display = "none";
     adminShell.style.display = "flex";
@@ -90,7 +91,9 @@ auth.onAuthStateChanged(async (user) => {
     } else {
       document.querySelector('.admin-nav button[data-view="staff"]').style.display = "none";
       document.querySelector('.admin-nav button[data-view="activity"]').style.display = "none";
+      document.getElementById("dashboardActivityCard").style.display = "none";
     }
+    updateDashboardStats();
   } catch (err) {
     console.error("Staff lookup failed:", err);
     loginStatus.className = "form-status error";
@@ -105,7 +108,7 @@ document.querySelectorAll(".admin-nav button[data-view]").forEach((btn) => {
   btn.addEventListener("click", () => {
     document.querySelectorAll(".admin-nav button[data-view]").forEach(b => b.classList.remove("active"));
     btn.classList.add("active");
-    ["requests", "products", "collections", "settings", "staff", "activity"].forEach((v) => {
+    ["dashboard", "requests", "products", "collections", "settings", "staff", "activity"].forEach((v) => {
       document.getElementById(`view-${v}`).style.display = v === btn.dataset.view ? "block" : "none";
     });
   });
@@ -124,13 +127,20 @@ function loadActivityLog() {
   db.collection("activityLog").orderBy("createdAt", "desc").limit(100).onSnapshot((snapshot) => {
     const tbody = document.getElementById("activityTableBody");
     const empty = document.getElementById("activityEmpty");
+    const recentBox = document.getElementById("dashboardRecentActivity");
+    const recentEmpty = document.getElementById("dashboardActivityEmpty");
     tbody.innerHTML = "";
+    if (recentBox) recentBox.innerHTML = "";
+
     if (snapshot.empty) {
       empty.style.display = "block";
+      if (recentEmpty) recentEmpty.style.display = "block";
       return;
     }
     empty.style.display = "none";
-    snapshot.forEach((doc) => {
+    if (recentEmpty) recentEmpty.style.display = "none";
+
+    snapshot.forEach((doc, i) => {
       const a = doc.data();
       const tr = document.createElement("tr");
       tr.innerHTML = `
@@ -140,6 +150,13 @@ function loadActivityLog() {
         <td data-label="When">${formatDate(a.createdAt)}</td>
       `;
       tbody.appendChild(tr);
+
+      if (i < 5 && recentBox) {
+        const row = document.createElement("p");
+        row.style.cssText = "margin:0 0 8px; font-size:13.5px; border-bottom:1px solid var(--border-soft); padding-bottom:8px;";
+        row.innerHTML = `<strong>${escapeHtml(a.action)}</strong> ${escapeHtml(a.target)} — <span style="color:var(--text-faint);">${escapeHtml(a.actor)}, ${formatDate(a.createdAt)}</span>`;
+        recentBox.appendChild(row);
+      }
     });
   }, (err) => console.error("Activity log listener error:", err));
 }
@@ -213,6 +230,17 @@ function requestMatchesSearch(r, q) {
   if (!q) return true;
   const hay = `${r.clientName || ""} ${r.clientPhone || ""} ${r.productName || ""} ${r.productCode || ""} ${r.clientAddress || ""}`.toLowerCase();
   return hay.includes(q);
+}
+
+function updateDashboardStats() {
+  const newRequestsEl = document.getElementById("statNewRequests");
+  const totalRequestsEl = document.getElementById("statTotalRequests");
+  const activeProductsEl = document.getElementById("statActiveProducts");
+  const activeCollectionsEl = document.getElementById("statActiveCollections");
+  if (newRequestsEl) newRequestsEl.textContent = allRequests.filter(([, r]) => r.status === "new").length;
+  if (totalRequestsEl) totalRequestsEl.textContent = allRequests.length;
+  if (activeProductsEl) activeProductsEl.textContent = allProductsAdmin.filter(([, p]) => p.status === "active").length;
+  if (activeCollectionsEl) activeCollectionsEl.textContent = allCollections.filter(c => c.status === "active").length;
 }
 
 function renderRequestsTable() {
@@ -291,6 +319,7 @@ function loadRequests() {
     allRequests = snapshot.docs.map(doc => [doc.id, doc.data()]);
     requestsById = Object.fromEntries(allRequests);
     renderRequestsTable();
+    updateDashboardStats();
   }, (err) => console.error("Requests listener error:", err));
 }
 
@@ -468,6 +497,7 @@ function loadProducts() {
   db.collection("products").orderBy("createdAt", "desc").onSnapshot((snapshot) => {
     allProductsAdmin = snapshot.docs.map(doc => [doc.id, doc.data()]);
     renderProductsTable();
+    updateDashboardStats();
   }, (err) => console.error("Products listener error:", err));
 }
 
@@ -534,6 +564,7 @@ function loadCollections() {
   db.collection("collections").orderBy("createdAt", "desc").onSnapshot((snapshot) => {
     allCollections = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     populateCollectionSelect();
+    updateDashboardStats();
 
     const tbody = document.getElementById("collectionsTableBody");
     const empty = document.getElementById("collectionsEmpty");

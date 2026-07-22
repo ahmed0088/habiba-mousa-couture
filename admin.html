@@ -40,7 +40,8 @@
   <aside class="admin-sidebar">
     <a href="#" class="brand">Habiba <em>Admin</em></a>
     <nav class="admin-nav">
-      <button data-view="requests" class="active" data-i18n="admin_nav_requests">Requests</button>
+      <button data-view="dashboard" class="active" data-i18n="admin_nav_dashboard">Dashboard</button>
+      <button data-view="requests" data-i18n="admin_nav_requests">Requests</button>
       <button data-view="products" data-i18n="admin_nav_products">Products</button>
       <button data-view="collections" data-i18n="admin_nav_collections">Collections</button>
       <button data-view="settings" data-i18n="admin_nav_settings">Settings</button>
@@ -59,8 +60,39 @@
 
   <main class="admin-main">
 
+    <!-- Dashboard view -->
+    <section id="view-dashboard">
+      <div class="admin-topbar">
+        <h1 data-i18n="admin_dashboard_title">Dashboard</h1>
+        <span class="whoami" id="whoamiDashboard"></span>
+      </div>
+      <div class="stat-grid">
+        <div class="admin-card stat-tile">
+          <p class="stat-number" id="statNewRequests">—</p>
+          <p class="stat-label" data-i18n="admin_stat_new_requests">New Requests</p>
+        </div>
+        <div class="admin-card stat-tile">
+          <p class="stat-number" id="statTotalRequests">—</p>
+          <p class="stat-label" data-i18n="admin_stat_total_requests">Total Requests</p>
+        </div>
+        <div class="admin-card stat-tile">
+          <p class="stat-number" id="statActiveProducts">—</p>
+          <p class="stat-label" data-i18n="admin_stat_active_products">Active Products</p>
+        </div>
+        <div class="admin-card stat-tile">
+          <p class="stat-number" id="statActiveCollections">—</p>
+          <p class="stat-label" data-i18n="admin_stat_active_collections">Active Collections</p>
+        </div>
+      </div>
+      <div class="admin-card" id="dashboardActivityCard">
+        <h3 style="font-family:var(--font-display); margin-top:0;" data-i18n="admin_dashboard_recent">Recent Activity</h3>
+        <div id="dashboardRecentActivity"></div>
+        <p id="dashboardActivityEmpty" style="display:none; color:#8a8a86;" data-i18n="admin_activity_empty">No activity yet.</p>
+      </div>
+    </section>
+
     <!-- Requests view -->
-    <section id="view-requests">
+    <section id="view-requests" style="display:none;">
       <div class="admin-topbar">
         <h1 data-i18n="admin_requests_title">Inquiries &amp; Requests</h1>
         <span class="whoami" id="whoamiRequests"></span>

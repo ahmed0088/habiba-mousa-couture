@@ -172,7 +172,7 @@ function openModal(product) {
   detailCategory.textContent = product.category || t("piece_category_fallback");
   detailName.textContent = product.name;
   if (product.salePrice) {
-    detailPrice.innerHTML = `<span class="piece-price-original">${escapeHtml(formatPrice(product.priceRange) || "")}</span><span class="piece-price-sale">${escapeHtml(formatPrice(product.salePrice))}</span>`;
+    detailPrice.innerHTML = `<span class="piece-price-original"><bdi>${escapeHtml(formatPrice(product.priceRange) || "")}</bdi></span> <span class="piece-price-sale"><bdi>${escapeHtml(formatPrice(product.salePrice))}</bdi></span>`;
     detailPrice.style.display = "block";
   } else {
     detailPrice.textContent = formatPrice(product.priceRange) || "";
@@ -291,7 +291,7 @@ function renderGallery() {
     card.className = "piece-card";
     const onSale = Boolean(product.salePrice);
     const priceHtml = onSale
-      ? `<p class="piece-price"><span class="piece-price-original">${escapeHtml(formatPrice(product.priceRange) || "")}</span><span class="piece-price-sale">${escapeHtml(formatPrice(product.salePrice))}</span></p>`
+      ? `<p class="piece-price"><span class="piece-price-original"><bdi>${escapeHtml(formatPrice(product.priceRange) || "")}</bdi></span> <span class="piece-price-sale"><bdi>${escapeHtml(formatPrice(product.salePrice))}</bdi></span></p>`
       : (product.priceRange ? `<p class="piece-price">${escapeHtml(formatPrice(product.priceRange))}</p>` : "");
     card.innerHTML = `
       <div class="piece-media">

@@ -90,6 +90,13 @@ const I18N = {
     admin_nav_settings: "الإعدادات",
     admin_nav_staff: "الموظفين",
     admin_nav_activity: "السجل",
+    admin_nav_dashboard: "الرئيسية",
+    admin_dashboard_title: "لوحة التحكم",
+    admin_dashboard_recent: "آخر النشاطات",
+    admin_stat_new_requests: "طلبات جديدة",
+    admin_stat_total_requests: "إجمالي الطلبات",
+    admin_stat_active_products: "منتجات فعّالة",
+    admin_stat_active_collections: "كولكشنات فعّالة",
     admin_activity_title: "سجل النشاط",
     admin_activity_empty: "لسه مفيش نشاط.",
     admin_th_action: "الإجراء",
@@ -359,6 +366,13 @@ const I18N = {
     admin_nav_settings: "Settings",
     admin_nav_staff: "Staff",
     admin_nav_activity: "Activity",
+    admin_nav_dashboard: "Dashboard",
+    admin_dashboard_title: "Dashboard",
+    admin_dashboard_recent: "Recent Activity",
+    admin_stat_new_requests: "New Requests",
+    admin_stat_total_requests: "Total Requests",
+    admin_stat_active_products: "Active Products",
+    admin_stat_active_collections: "Active Collections",
     admin_activity_title: "Activity Log",
     admin_activity_empty: "No activity yet.",
     admin_th_action: "Action",
@@ -563,7 +577,14 @@ function getLang() {
 
 function t(key) {
   const lang = getLang();
-  return (I18N[lang] && I18N[lang][key]) || (I18N.en[key]) || key;
+  // Use explicit undefined-checks (not `||`) so an intentionally blank string
+  // (e.g. brand_suffix) is returned as-is instead of falling through to the
+  // English value or the raw key name.
+  const langVal = I18N[lang] ? I18N[lang][key] : undefined;
+  if (langVal !== undefined) return langVal;
+  const enVal = I18N.en[key];
+  if (enVal !== undefined) return enVal;
+  return key;
 }
 
 function applyLanguage(lang) {
