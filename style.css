@@ -999,6 +999,8 @@ button {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-3);
   margin-bottom: var(--space-4);
 }
 
@@ -1181,6 +1183,9 @@ select.status-select {
   .admin-sidebar.nav-open .admin-nav { display: flex; }
   .admin-sidebar.nav-open .admin-sidebar-footer { display: flex; }
 
+  .admin-topbar { flex-direction: column; align-items: flex-start; }
+  .admin-topbar .btn { width: 100%; text-align: center; }
+
   /* Responsive tables: each row becomes a stacked card instead of a wide
      scrolling table, so nothing needs horizontal scrolling on a phone. */
   .admin-card table, .admin-card thead, .admin-card tbody, .admin-card th, .admin-card td, .admin-card tr {
@@ -1209,6 +1214,17 @@ select.status-select {
     letter-spacing: 0.06em;
     color: var(--text-faint);
     margin-right: 12px;
+  }
+
+  /* The request-card thumbnail has no label to pair it with — give it its
+     own centered header treatment instead of the label/value row styling. */
+  .admin-card td.request-thumb-cell {
+    text-align: center;
+    padding-top: 0;
+  }
+  .admin-card td.request-thumb-cell .request-thumb,
+  .admin-card td.request-thumb-cell .request-thumb-empty {
+    margin: 0 auto;
   }
 }
 

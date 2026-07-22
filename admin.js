@@ -526,7 +526,7 @@ function renderRequestsTable() {
       : `<div class="request-thumb request-thumb-empty"></div>`;
 
     tr.innerHTML = `
-      <td data-label="">${thumbHtml}</td>
+      <td class="request-thumb-cell">${thumbHtml}</td>
       <td data-label="Client">${escapeHtml(r.clientName)}</td>
       <td data-label="Piece">${escapeHtml(r.productName || "—")}${r.productCode ? ` <span style="color:var(--text-faint); font-size:12px;">(${escapeHtml(r.productCode)})</span>` : ""}</td>
       <td data-label="Contact">${escapeHtml(r.clientPhone)}</td>
