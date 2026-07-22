@@ -527,16 +527,16 @@ function renderRequestsTable() {
 
     tr.innerHTML = `
       <td class="request-thumb-cell">${thumbHtml}</td>
-      <td data-label="Client">${escapeHtml(r.clientName)}</td>
+      <td class="request-client-cell" data-label="Client">${escapeHtml(r.clientName)}</td>
       <td data-label="Piece">${escapeHtml(r.productName || "—")}${r.productCode ? ` <span style="color:var(--text-faint); font-size:12px;">(${escapeHtml(r.productCode)})</span>` : ""}</td>
       <td data-label="Contact">${escapeHtml(r.clientPhone)}</td>
       <td data-label="Address" style="max-width:180px;">${escapeHtml(r.clientAddress || "—")}</td>
       <td data-label="Material">${escapeHtml(MATERIAL_LABELS[r.material] || "—")}</td>
       <td data-label="Needed By">${escapeHtml(r.preferredDate || "—")}</td>
       <td data-label="Notes" style="max-width:220px;">${escapeHtml(r.notes || "—")}</td>
-      <td data-label="Status"><select class="status-select" data-id="${id}">${optionsHtml}</select></td>
+      <td data-label="Status"><select class="status-select status-${r.status}" data-id="${id}">${optionsHtml}</select></td>
       <td data-label="Received">${formatDate(r.createdAt)}</td>
-      <td data-label="">
+      <td class="request-actions-cell" data-label="">
         <button class="icon-btn" data-view-request="${id}">View</button>
         <button class="icon-btn danger" data-delete-request="${id}">Delete</button>
       </td>

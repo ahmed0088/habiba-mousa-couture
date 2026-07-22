@@ -1089,12 +1089,23 @@ th { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: 
 tr:hover td { background: var(--row-hover); }
 
 select.status-select {
-  padding: 6px 8px;
-  border: 1px solid var(--input-border);
-  font-size: 13px;
-  background: var(--surface);
+  padding: 5px 10px;
+  border: none;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+  background-color: var(--surface);
   color: var(--charcoal);
 }
+select.status-select.status-new { background-color: #ece0f2; color: #6a3f8f; }
+select.status-select.status-contacted { background-color: #fbe8c9; color: #a5680f; }
+select.status-select.status-confirmed { background-color: #e2ece2; color: var(--emerald-deep); }
+select.status-select.status-in_progress { background-color: #d8ece9; color: var(--turquoise); }
+select.status-select.status-delivered { background-color: #e6e0d8; color: #665a52; }
+select.status-select.status-cancelled { background-color: #f6dcdc; color: #a13a3a; }
 
 .admin-card {
   background: var(--glass-surface);
@@ -1226,29 +1237,78 @@ select.status-select {
   .admin-card td.request-thumb-cell .request-thumb-empty {
     margin: 0 auto;
   }
+
+  /* Request cards get a redesigned mobile layout: thumbnail + name + status
+     read as a header, with the rest as supporting detail underneath instead
+     of one flat list of equally-weighted rows. Reordering via flex `order`
+     only touches the mobile card view — the desktop table's real columns
+     (and their DOM order) are untouched. */
+  #requestsTable tr { display: flex; flex-direction: column; }
+  #requestsTable td.request-thumb-cell { order: 1; }
+  #requestsTable td.request-client-cell { order: 2; }
+  #requestsTable td[data-label="Piece"] { order: 3; }
+  #requestsTable td[data-label="Status"] { order: 4; }
+  #requestsTable td[data-label="Contact"] { order: 5; }
+  #requestsTable td[data-label="Address"] { order: 6; }
+  #requestsTable td[data-label="Material"] { order: 7; }
+  #requestsTable td[data-label="Needed By"] { order: 8; }
+  #requestsTable td[data-label="Notes"] { order: 9; }
+  #requestsTable td[data-label="Received"] { order: 10; }
+  #requestsTable td.request-actions-cell { order: 11; }
+
+  #requestsTable td.request-client-cell {
+    text-align: center;
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--heading);
+  }
+  #requestsTable td.request-client-cell::before { float: none; display: block; margin-bottom: 2px; }
+  #requestsTable td[data-label="Piece"] {
+    text-align: center;
+    border-bottom: none;
+    padding-top: 0;
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+  #requestsTable td[data-label="Piece"]::before { display: none; }
+  #requestsTable td[data-label="Status"] {
+    text-align: center;
+    border-bottom: none;
+    padding-top: 4px;
+  }
+  #requestsTable td[data-label="Status"]::before { display: none; }
+
+  #requestsTable td.request-actions-cell {
+    text-align: center;
+    margin-top: 4px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border-soft);
+  }
 }
 
 .icon-btn {
-  background: none;
-  border: none;
-  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  background: var(--surface-muted);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
   color: var(--emerald-text);
-  text-decoration: underline;
-  padding: 0;
-  margin-right: 10px;
+  text-decoration: none;
+  padding: 6px 14px;
+  margin-right: 8px;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
-.icon-btn.danger { color: #a13a3a; }
+.icon-btn:hover { background: var(--emerald); color: var(--ivory); border-color: var(--emerald); }
+.icon-btn.danger { color: #a13a3a; border-color: rgba(161,58,58,0.35); }
+.icon-btn.danger:hover { background: #a13a3a; color: var(--ivory); border-color: #a13a3a; }
 
 .quick-sale-btn, #clearSaleBtn {
-  text-decoration: none;
-  border: 1px solid var(--line);
-  border-radius: 5px;
-  padding: 5px 10px;
   margin-right: 0;
-  font-weight: 600;
 }
-.quick-sale-btn:hover { background: var(--surface-muted); }
-#clearSaleBtn.icon-btn.danger { border-color: rgba(161,58,58,0.4); }
 
 /* ---------- Mobile nav toggle ---------- */
 
