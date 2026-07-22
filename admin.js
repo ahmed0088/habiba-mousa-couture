@@ -24,8 +24,10 @@ loginForm.addEventListener("submit", async (e) => {
 
   const email = document.getElementById("loginEmail").value.trim();
   const password = document.getElementById("loginPassword").value;
+  const remember = document.getElementById("loginRemember")?.checked !== false;
 
   try {
+    await auth.setPersistence(remember ? firebase.auth.Auth.Persistence.LOCAL : firebase.auth.Auth.Persistence.SESSION);
     await auth.signInWithEmailAndPassword(email, password);
     // onAuthStateChanged below handles the rest
   } catch (err) {
@@ -36,6 +38,17 @@ loginForm.addEventListener("submit", async (e) => {
     loginBtn.disabled = false;
     loginBtn.textContent = "Sign In";
   }
+});
+
+document.querySelectorAll(".password-toggle-btn").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    const input = document.getElementById(btn.dataset.target);
+    if (!input) return;
+    const show = input.type === "password";
+    input.type = show ? "text" : "password";
+    btn.textContent = show ? "\u{1F648}" : "\u{1F441}️";
+    btn.setAttribute("aria-label", show ? "Hide password" : "Show password");
+  });
 });
 
 logoutBtn.addEventListener("click", () => auth.signOut());

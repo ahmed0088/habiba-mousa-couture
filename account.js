@@ -155,6 +155,8 @@ signInForm?.addEventListener("submit", async (e) => {
   signInBtn.textContent = t("account_signin_btn_loading");
   signInStatus.className = "form-status";
   try {
+    const remember = document.getElementById("signInRemember")?.checked !== false;
+    await auth.setPersistence(remember ? firebase.auth.Auth.Persistence.LOCAL : firebase.auth.Auth.Persistence.SESSION);
     await auth.signInWithEmailAndPassword(
       document.getElementById("signInEmail").value.trim(),
       document.getElementById("signInPassword").value
@@ -169,6 +171,35 @@ signInForm?.addEventListener("submit", async (e) => {
     signInBtn.disabled = false;
     signInBtn.textContent = t("account_signin_btn");
   }
+});
+
+document.getElementById("signInForgotBtn")?.addEventListener("click", async () => {
+  const email = document.getElementById("signInEmail").value.trim();
+  if (!email) {
+    signInStatus.className = "form-status error";
+    signInStatus.textContent = t("account_forgot_password_need_email");
+    return;
+  }
+  try {
+    await auth.sendPasswordResetEmail(email);
+    signInStatus.className = "form-status success";
+    signInStatus.textContent = t("account_forgot_password_sent");
+  } catch (err) {
+    console.error("Failed to send password reset email:", err);
+    signInStatus.className = "form-status error";
+    signInStatus.textContent = t("account_forgot_password_error");
+  }
+});
+
+document.querySelectorAll(".password-toggle-btn").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    const input = document.getElementById(btn.dataset.target);
+    if (!input) return;
+    const show = input.type === "password";
+    input.type = show ? "text" : "password";
+    btn.textContent = show ? "\u{1F648}" : "\u{1F441}️";
+    btn.setAttribute("aria-label", t(show ? "password_hide_label" : "password_show_label"));
+  });
 });
 
 signUpForm?.addEventListener("submit", async (e) => {
@@ -338,19 +369,25 @@ function renderRequestGroup(container, titleKey, items, showCount, onShowMore) {
   }
 }
 
+let lastMyRequestsDocs = [];
+
 function renderMyRequests(docs) {
   if (!myRequestsList) return;
+  lastMyRequestsDocs = docs;
   myRequestsList.innerHTML = "";
 
-  if (docs.length === 0) {
+  const statusFilter = document.getElementById("myRequestsStatusFilter")?.value || "all";
+  const filtered = statusFilter === "all" ? docs : docs.filter(r => r.status === statusFilter);
+
+  if (filtered.length === 0) {
     myRequestsEmpty.style.display = "block";
-    myRequestsEmpty.textContent = t("my_requests_empty");
+    myRequestsEmpty.textContent = t(statusFilter === "all" ? "my_requests_empty" : "my_requests_empty_filtered");
     return;
   }
   myRequestsEmpty.style.display = "none";
 
-  const past = docs.filter(r => r.status === "delivered" || r.status === "cancelled");
-  const current = docs.filter(r => r.status !== "delivered" && r.status !== "cancelled");
+  const past = filtered.filter(r => r.status === "delivered" || r.status === "cancelled");
+  const current = filtered.filter(r => r.status !== "delivered" && r.status !== "cancelled");
 
   renderRequestGroup(myRequestsList, "my_requests_current", current, currentShowCount, () => {
     currentShowCount += REQUESTS_PAGE_SIZE;
@@ -361,6 +398,10 @@ function renderMyRequests(docs) {
     renderMyRequests(docs);
   });
 }
+
+document.getElementById("myRequestsStatusFilter")?.addEventListener("change", () => {
+  renderMyRequests(lastMyRequestsDocs);
+});
 
 function loadMyRequests(uid) {
   if (myRequestsUnsubscribe) myRequestsUnsubscribe();

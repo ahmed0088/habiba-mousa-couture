@@ -188,7 +188,7 @@ const I18N = {
 
     // Client account
     account_signin: "دخول",
-    account_my_requests: "طلباتي",
+    account_my_requests: "حسابي وطلباتي",
     account_signout: "تسجيل خروج",
     account_modal_title_signin: "دخول",
     account_modal_title_signup: "عمل حساب",
@@ -197,6 +197,13 @@ const I18N = {
     account_name: "اسمك",
     account_email: "الإيميل",
     account_password: "الباسورد",
+    account_remember_me: "تذكريني",
+    account_forgot_password: "نسيتِ كلمة المرور؟",
+    account_forgot_password_need_email: "اكتبي إيميلك فوق الأول.",
+    account_forgot_password_sent: "بعتنالك رابط لتغيير كلمة المرور على إيميلك.",
+    account_forgot_password_error: "معرفناش نبعت رابط تغيير الباسورد. جربي تاني.",
+    password_show_label: "إظهار كلمة المرور",
+    password_hide_label: "إخفاء كلمة المرور",
     account_signup_btn: "اعملي حساب",
     account_signup_btn_loading: "بيتعمل الحساب...",
     account_signin_btn: "دخول",
@@ -218,6 +225,7 @@ const I18N = {
     // My Requests (client-side tracking)
     my_requests_title: "طلباتي",
     my_requests_empty: "لسه مبعتيش أي طلب.",
+    my_requests_empty_filtered: "مفيش طلبات بالحالة دي.",
     my_requests_current: "الطلبات الحالية",
     my_requests_past: "طلبات سابقة",
     my_requests_show_more: "عرض المزيد",
@@ -500,7 +508,7 @@ const I18N = {
 
     // Client account
     account_signin: "Sign In",
-    account_my_requests: "My Requests",
+    account_my_requests: "My Account & Orders",
     account_signout: "Sign Out",
     account_modal_title_signin: "Sign In",
     account_modal_title_signup: "Create Account",
@@ -509,6 +517,13 @@ const I18N = {
     account_name: "Your name",
     account_email: "Email",
     account_password: "Password",
+    account_remember_me: "Keep me signed in",
+    account_forgot_password: "Forgot password?",
+    account_forgot_password_need_email: "Type your email above first.",
+    account_forgot_password_sent: "We've sent a password reset link to your email.",
+    account_forgot_password_error: "Couldn't send the reset link. Please try again.",
+    password_show_label: "Show password",
+    password_hide_label: "Hide password",
     account_signup_btn: "Create Account",
     account_signup_btn_loading: "Creating...",
     account_signin_btn: "Sign In",
@@ -530,6 +545,7 @@ const I18N = {
     // My Requests (client-side tracking)
     my_requests_title: "My Requests",
     my_requests_empty: "You haven't sent any requests yet.",
+    my_requests_empty_filtered: "No requests with this status.",
     my_requests_current: "Current Orders",
     my_requests_past: "Past Orders",
     my_requests_show_more: "Show more",

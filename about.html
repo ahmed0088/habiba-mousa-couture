@@ -104,15 +104,23 @@
       <h3 data-i18n="account_modal_title_signin">تسجيل الدخول</h3>
       <div class="field">
         <label for="signInEmail" data-i18n="account_email">البريد الإلكتروني</label>
-        <input type="email" id="signInEmail" required />
+        <input type="email" id="signInEmail" autocomplete="email" required />
       </div>
       <div class="field">
         <label for="signInPassword" data-i18n="account_password">كلمة المرور</label>
-        <input type="password" id="signInPassword" required />
+        <div class="password-input-wrap">
+          <input type="password" id="signInPassword" autocomplete="current-password" required />
+          <button type="button" class="password-toggle-btn" data-target="signInPassword" data-i18n-aria-label="password_show_label" aria-label="Show password">&#128065;</button>
+        </div>
+      </div>
+      <div class="field remember-field">
+        <input type="checkbox" id="signInRemember" checked />
+        <label for="signInRemember" data-i18n="account_remember_me">تذكريني</label>
       </div>
       <div class="submit-row">
         <button type="submit" class="btn btn-solid" id="signInBtn" data-i18n="account_signin_btn">تسجيل الدخول</button>
       </div>
+      <button type="button" class="btn-link" id="signInForgotBtn" data-i18n="account_forgot_password">نسيتِ كلمة المرور؟</button>
       <div class="form-status" id="signInStatus"></div>
     </form>
 
@@ -120,19 +128,22 @@
       <h3 data-i18n="account_modal_title_signup">إنشاء حساب</h3>
       <div class="field">
         <label for="signUpName" data-i18n="account_name">اسمكِ</label>
-        <input type="text" id="signUpName" required />
+        <input type="text" id="signUpName" autocomplete="name" required />
       </div>
       <div class="field">
         <label for="signUpPhone" data-i18n="account_phone">رقم الموبايل</label>
-        <input type="tel" id="signUpPhone" required />
+        <input type="tel" id="signUpPhone" autocomplete="tel" required />
       </div>
       <div class="field">
         <label for="signUpEmail" data-i18n="account_email">البريد الإلكتروني</label>
-        <input type="email" id="signUpEmail" required />
+        <input type="email" id="signUpEmail" autocomplete="email" required />
       </div>
       <div class="field">
         <label for="signUpPassword" data-i18n="account_password">كلمة المرور</label>
-        <input type="password" id="signUpPassword" required minlength="6" />
+        <div class="password-input-wrap">
+          <input type="password" id="signUpPassword" autocomplete="new-password" required minlength="6" />
+          <button type="button" class="password-toggle-btn" data-target="signUpPassword" data-i18n-aria-label="password_show_label" aria-label="Show password">&#128065;</button>
+        </div>
       </div>
       <div class="submit-row">
         <button type="submit" class="btn btn-solid" id="signUpBtn" data-i18n="account_signup_btn">إنشاء الحساب</button>
@@ -151,21 +162,32 @@
       <p class="form-note" data-i18n="my_account_intro">عدّلي بياناتك هنا عشان تتملى تلقائي في أي طلب جديد.</p>
       <div class="field">
         <label data-i18n="label_name" for="myAccountName">اسمكِ</label>
-        <input type="text"  id="myAccountName" />
+        <input type="text" id="myAccountName" autocomplete="name" />
       </div>
       <div class="field">
         <label data-i18n="label_phone" for="myAccountPhone">رقم الهاتف / واتساب</label>
-        <input type="tel"  id="myAccountPhone" />
+        <input type="tel" id="myAccountPhone" autocomplete="tel" />
       </div>
       <div class="field">
         <label data-i18n="label_address" for="myAccountAddress">العنوان (المحافظة، المدينة، الشارع)</label>
-        <input type="text"  id="myAccountAddress" />
+        <input type="text" id="myAccountAddress" autocomplete="street-address" />
       </div>
       <button type="button" class="btn btn-solid" id="myAccountSaveBtn" data-i18n="my_account_save">حفظ بياناتي</button>
       <div class="form-status" id="myAccountStatus"></div>
     </div>
     <hr class="my-account-divider" />
     <h3 data-i18n="my_requests_title">طلباتي</h3>
+    <div class="field" style="max-width:220px;">
+      <select id="myRequestsStatusFilter">
+        <option value="all" data-i18n="admin_status_filter_all">All Statuses</option>
+        <option value="new" data-i18n="status_new">New</option>
+        <option value="contacted" data-i18n="status_contacted">Contacted</option>
+        <option value="confirmed" data-i18n="status_confirmed">Confirmed</option>
+        <option value="in_progress" data-i18n="status_in_progress">In Progress</option>
+        <option value="delivered" data-i18n="status_delivered">Delivered</option>
+        <option value="cancelled" data-i18n="status_cancelled">Cancelled</option>
+      </select>
+    </div>
     <div id="myRequestsList"><!-- populated by account.js --></div>
     <div class="empty-state" id="myRequestsEmpty" style="display:none;" data-i18n="my_requests_empty"></div>
   </div>
@@ -180,7 +202,7 @@
     <form id="completeProfileForm">
       <div class="field">
         <label for="completeProfilePhone" data-i18n="account_phone">رقم الموبايل</label>
-        <input type="tel" id="completeProfilePhone" required />
+        <input type="tel" id="completeProfilePhone" autocomplete="tel" required />
       </div>
       <div class="submit-row">
         <button type="submit" class="btn btn-solid" id="completeProfileBtn" data-i18n="account_profile_save">حفظ</button>

@@ -22,11 +22,18 @@
     <form id="loginForm">
       <div class="field">
         <label for="loginEmail" data-i18n="admin_email">Email</label>
-        <input type="email" id="loginEmail" required />
+        <input type="email" id="loginEmail" autocomplete="email" required />
       </div>
       <div class="field">
         <label for="loginPassword" data-i18n="admin_password">Password</label>
-        <input type="password" id="loginPassword" required />
+        <div class="password-input-wrap">
+          <input type="password" id="loginPassword" autocomplete="current-password" required />
+          <button type="button" class="password-toggle-btn" data-target="loginPassword" aria-label="Show password">&#128065;</button>
+        </div>
+      </div>
+      <div class="field remember-field">
+        <input type="checkbox" id="loginRemember" checked />
+        <label for="loginRemember" data-i18n="account_remember_me">Keep me signed in</label>
       </div>
       <button type="submit" class="btn btn-solid btn-block" id="loginBtn" data-i18n="admin_signin">Sign In</button>
       <div class="form-status" id="loginStatus"></div>
