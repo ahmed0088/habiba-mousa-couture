@@ -752,13 +752,31 @@ button {
   position: fixed;
   inset: 0;
   background: rgba(28, 16, 19, 0.75);
-  display: none;
+  display: flex;
   align-items: center;
   justify-content: center;
   z-index: 100;
   padding: var(--space-2);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
 }
-.modal-backdrop.open { display: flex; }
+.modal-backdrop.open {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+.modal-backdrop .modal {
+  transform: translateY(16px) scale(0.97);
+  transition: transform 0.25s ease;
+}
+.modal-backdrop.open .modal {
+  transform: translateY(0) scale(1);
+}
+@media (prefers-reduced-motion: reduce) {
+  .modal-backdrop, .modal-backdrop .modal { transition: none; }
+}
 
 .modal.modal-wide { max-width: 680px; }
 
@@ -793,6 +811,8 @@ button {
   padding: var(--space-4);
   position: relative;
   border-top: 3px solid var(--gold);
+  border-radius: 20px;
+  box-shadow: 0 30px 70px rgba(10, 6, 7, 0.45), 0 8px 24px rgba(10, 6, 7, 0.25);
   scrollbar-width: thin;
   scrollbar-color: var(--line) transparent;
 }
@@ -805,12 +825,21 @@ button {
   position: absolute;
   top: var(--space-2);
   right: var(--space-2);
-  background: none;
-  border: none;
-  font-size: 22px;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-muted);
+  border: 1px solid var(--glass-border);
+  border-radius: 50%;
+  font-size: 20px;
   color: var(--charcoal);
   line-height: 1;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.15s ease;
 }
+.modal-close:hover { background: var(--gold); color: var(--ivory); transform: scale(1.06); }
 
 .modal h3 {
   font-family: var(--font-display);
