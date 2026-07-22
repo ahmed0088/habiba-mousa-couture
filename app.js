@@ -294,7 +294,7 @@ function openModal(product) {
     const detailDiscount = calcDiscountPercent(product.priceRange, product.salePrice);
     detailPrice.className = "piece-price piece-price-row";
     detailPrice.innerHTML = `<span class="piece-price-sale"><bdi>${escapeHtml(formatPrice(product.salePrice))}</bdi></span><span class="piece-price-original"><bdi>${escapeHtml(formatPrice(product.priceRange) || "")}</bdi></span>${detailDiscount ? `<span class="piece-price-off">-${detailDiscount}%</span>` : ""}`;
-    detailPrice.style.display = "block";
+    detailPrice.style.display = "";
   } else {
     detailPrice.className = "piece-price";
     detailPrice.textContent = formatPrice(product.priceRange) || "";
