@@ -69,8 +69,8 @@
       <button class="modal-close" id="myProfileClose" aria-label="Close">&times;</button>
       <h3 style="font-family:var(--font-display); margin-top:0;" data-i18n="admin_my_profile">Edit My Profile</h3>
       <div class="field">
-        <label data-i18n="admin_staff_name">Name</label>
-        <input type="text" id="myProfileName" />
+        <label data-i18n="admin_staff_name" for="myProfileName">Name</label>
+        <input type="text"  id="myProfileName" />
       </div>
       <div class="submit-row">
         <button class="btn btn-solid" id="myProfileSaveBtn" data-i18n="admin_save">Save</button>
@@ -174,32 +174,32 @@
         <input type="hidden" id="productDocId" />
         <div class="product-form-grid">
           <div class="field">
-            <label data-i18n="admin_p_name">Name</label>
-            <input type="text" id="pName" required />
+            <label data-i18n="admin_p_name" for="pName">Name</label>
+            <input type="text"  id="pName" required />
           </div>
           <div class="field">
-            <label>Product code</label>
-            <input type="text" id="pCode" placeholder="e.g. HM-1024" />
+            <label for="pCode">Product code</label>
+            <input type="text"  id="pCode" placeholder="e.g. HM-1024" />
           </div>
           <div class="field">
-            <label data-i18n="admin_p_category">Category</label>
-            <select id="pCategory">
+            <label data-i18n="admin_p_category" for="pCategory">Category</label>
+            <select  id="pCategory">
               <option value="">— Select a category —</option>
             </select>
           </div>
           <div class="field">
-            <label><span data-i18n="admin_p_collection_label">Collection</span> <span class="field-hint" data-i18n="admin_p_collection_hint">(optional, seasonal)</span></label>
-            <select id="pCollection">
+            <label for="pCollection"><span data-i18n="admin_p_collection_label">Collection</span> <span class="field-hint" data-i18n="admin_p_collection_hint">(optional, seasonal)</span></label>
+            <select  id="pCollection">
               <option value="">— No collection —</option>
             </select>
           </div>
           <div class="field">
-            <label data-i18n="admin_p_price">Price range</label>
-            <input type="text" id="pPrice" placeholder="e.g. 1,800 – 2,600 EGP" />
+            <label data-i18n="admin_p_price" for="pPrice">Price range</label>
+            <input type="text"  id="pPrice" placeholder="e.g. 1,800 – 2,600 EGP" />
           </div>
           <div class="field">
-            <label>Sale price (optional)</label>
-            <input type="text" id="pSalePrice" placeholder="e.g. 1,500 EGP — leave blank if not on sale" />
+            <label for="pSalePrice">Sale price (optional)</label>
+            <input type="text"  id="pSalePrice" placeholder="e.g. 1,500 EGP — leave blank if not on sale" />
             <div style="display:flex; gap:6px; margin-top:6px;">
               <button type="button" class="icon-btn quick-sale-btn" data-off="10">-10%</button>
               <button type="button" class="icon-btn quick-sale-btn" data-off="20">-20%</button>
@@ -209,20 +209,20 @@
             </div>
           </div>
           <div class="field">
-            <label data-i18n="admin_p_status">Status</label>
-            <select id="pStatus">
+            <label data-i18n="admin_p_status" for="pStatus">Status</label>
+            <select  id="pStatus">
               <option value="active" data-i18n="admin_p_status_active">Active — visible on site</option>
               <option value="archived" data-i18n="admin_p_status_archived">Archived — hidden</option>
             </select>
           </div>
         </div>
         <div class="field">
-          <label data-i18n="admin_p_description">Description</label>
-          <textarea id="pDescription"></textarea>
+          <label data-i18n="admin_p_description" for="pDescription">Description</label>
+          <textarea  id="pDescription"></textarea>
         </div>
         <div class="field">
-          <label data-i18n="admin_p_image">Image URLs</label>
-          <textarea id="pImages" placeholder="https://...&#10;https://..."></textarea>
+          <label data-i18n="admin_p_image" for="pImages">Image URLs</label>
+          <textarea  id="pImages" placeholder="https://...&#10;https://..."></textarea>
           <p class="form-note" data-i18n="admin_p_image_note">One image URL per line (e.g. from Firebase Storage or Instagram CDN link). The first line is used as the cover image; all lines feed the gallery on the product detail view.</p>
         </div>
         <div style="display:flex; gap:16px; align-items:flex-start; flex-wrap:wrap;">
@@ -231,8 +231,8 @@
             <p class="form-note" data-i18n="admin_p_image_preview_hint">Click to zoom</p>
           </div>
           <div class="field" style="max-width:260px; flex:1;">
-            <label>Thumbnail focus (fixes cropped photos)</label>
-            <select id="pImageFocus">
+            <label for="pImageFocus">Thumbnail focus (fixes cropped photos)</label>
+            <select  id="pImageFocus">
               <option value="top">Top (keep heads/faces)</option>
               <option value="center">Center</option>
               <option value="bottom">Bottom</option>
@@ -277,8 +277,8 @@
           <button class="modal-close" id="categoryFormClose" aria-label="Close">&times;</button>
           <h3 style="font-family:var(--font-display); margin-top:0;" data-i18n="admin_add_category">New Category</h3>
           <div class="field">
-            <label data-i18n="admin_category_name">Name</label>
-            <input type="text" id="categoryName" placeholder="e.g. Dress, Abaya, Pants" />
+            <label data-i18n="admin_category_name" for="categoryName">Name</label>
+            <input type="text"  id="categoryName" placeholder="e.g. Dress, Abaya, Pants" />
           </div>
           <div class="submit-row" style="display:flex; gap:10px;">
             <button class="btn btn-solid" id="saveCategoryBtn" data-i18n="admin_create_category">Create Category</button>
@@ -309,8 +309,8 @@
           <button class="modal-close" id="collectionFormClose" aria-label="Close">&times;</button>
           <h3 style="font-family:var(--font-display); margin-top:0;">New Collection</h3>
           <div class="field">
-            <label>Name</label>
-            <input type="text" id="collectionName" placeholder="e.g. Autumn 2026, Ramadan 2026" />
+            <label for="collectionName">Name</label>
+            <input type="text"  id="collectionName" placeholder="e.g. Autumn 2026, Ramadan 2026" />
           </div>
           <div class="submit-row" style="display:flex; gap:10px;">
             <button class="btn btn-solid" id="saveCollectionBtn">Create Collection</button>
@@ -342,36 +342,36 @@
         <summary>About / Hero</summary>
         <div class="product-form-grid">
           <div class="field">
-            <label>Hero tagline — Arabic</label>
-            <textarea id="setHeroTaglineAr" dir="rtl"></textarea>
+            <label for="setHeroTaglineAr">Hero tagline — Arabic</label>
+            <textarea  id="setHeroTaglineAr" dir="rtl"></textarea>
           </div>
           <div class="field">
-            <label>Hero tagline — English</label>
-            <textarea id="setHeroTaglineEn"></textarea>
+            <label for="setHeroTaglineEn">Hero tagline — English</label>
+            <textarea  id="setHeroTaglineEn"></textarea>
           </div>
           <div class="field">
-            <label>Turnaround time — Arabic</label>
-            <input type="text" id="setTurnaroundAr" dir="rtl" placeholder="غالبًا من أسبوع لأسبوعين" />
+            <label for="setTurnaroundAr">Turnaround time — Arabic</label>
+            <input type="text"  id="setTurnaroundAr" dir="rtl" placeholder="غالبًا من أسبوع لأسبوعين" />
           </div>
           <div class="field">
-            <label>Turnaround time — English</label>
-            <input type="text" id="setTurnaroundEn" placeholder="Typically 1–2 weeks" />
+            <label for="setTurnaroundEn">Turnaround time — English</label>
+            <input type="text"  id="setTurnaroundEn" placeholder="Typically 1–2 weeks" />
           </div>
           <div class="field">
-            <label>About intro — Arabic</label>
-            <textarea id="setAboutIntroAr" dir="rtl"></textarea>
+            <label for="setAboutIntroAr">About intro — Arabic</label>
+            <textarea  id="setAboutIntroAr" dir="rtl"></textarea>
           </div>
           <div class="field">
-            <label>About intro — English</label>
-            <textarea id="setAboutIntroEn"></textarea>
+            <label for="setAboutIntroEn">About intro — English</label>
+            <textarea  id="setAboutIntroEn"></textarea>
           </div>
           <div class="field">
-            <label>About story — Arabic</label>
-            <textarea id="setAboutStoryAr" dir="rtl"></textarea>
+            <label for="setAboutStoryAr">About story — Arabic</label>
+            <textarea  id="setAboutStoryAr" dir="rtl"></textarea>
           </div>
           <div class="field">
-            <label>About story — English</label>
-            <textarea id="setAboutStoryEn"></textarea>
+            <label for="setAboutStoryEn">About story — English</label>
+            <textarea  id="setAboutStoryEn"></textarea>
           </div>
         </div>
       </details>
@@ -381,68 +381,68 @@
         <p class="form-note">Leave blank to use the default step text shown below each field.</p>
         <div class="product-form-grid">
           <div class="field">
-            <label>Step 1 title — Arabic <span style="color:#999; font-weight:400;">(default: الطلب)</span></label>
-            <input type="text" id="setStep1TitleAr" dir="rtl" />
+            <label for="setStep1TitleAr">Step 1 title — Arabic <span style="color:#999; font-weight:400;">(default: الطلب)</span></label>
+            <input type="text"  id="setStep1TitleAr" dir="rtl" />
           </div>
           <div class="field">
-            <label>Step 1 title — English <span style="color:#999; font-weight:400;">(default: Request)</span></label>
-            <input type="text" id="setStep1TitleEn" />
+            <label for="setStep1TitleEn">Step 1 title — English <span style="color:#999; font-weight:400;">(default: Request)</span></label>
+            <input type="text"  id="setStep1TitleEn" />
           </div>
           <div class="field">
-            <label>Step 1 description — Arabic <span style="color:#999; font-weight:400;">(default: اختاري قطعة وقوليلنا اللي في بالك)</span></label>
-            <textarea id="setStep1DescAr" dir="rtl"></textarea>
+            <label for="setStep1DescAr">Step 1 description — Arabic <span style="color:#999; font-weight:400;">(default: اختاري قطعة وقوليلنا اللي في بالك)</span></label>
+            <textarea  id="setStep1DescAr" dir="rtl"></textarea>
           </div>
           <div class="field">
-            <label>Step 1 description — English <span style="color:#999; font-weight:400;">(default: Pick a piece and tell us what you have in mind)</span></label>
-            <textarea id="setStep1DescEn"></textarea>
+            <label for="setStep1DescEn">Step 1 description — English <span style="color:#999; font-weight:400;">(default: Pick a piece and tell us what you have in mind)</span></label>
+            <textarea  id="setStep1DescEn"></textarea>
           </div>
           <div class="field">
-            <label>Step 2 title — Arabic <span style="color:#999; font-weight:400;">(default: الاستشارة)</span></label>
-            <input type="text" id="setStep2TitleAr" dir="rtl" />
+            <label for="setStep2TitleAr">Step 2 title — Arabic <span style="color:#999; font-weight:400;">(default: الاستشارة)</span></label>
+            <input type="text"  id="setStep2TitleAr" dir="rtl" />
           </div>
           <div class="field">
-            <label>Step 2 title — English <span style="color:#999; font-weight:400;">(default: Consultation)</span></label>
-            <input type="text" id="setStep2TitleEn" />
+            <label for="setStep2TitleEn">Step 2 title — English <span style="color:#999; font-weight:400;">(default: Consultation)</span></label>
+            <input type="text"  id="setStep2TitleEn" />
           </div>
           <div class="field">
-            <label>Step 2 description — Arabic <span style="color:#999; font-weight:400;">(default: بنتفق على القماش والمقاس والسعر تليفون أو واتساب)</span></label>
-            <textarea id="setStep2DescAr" dir="rtl"></textarea>
+            <label for="setStep2DescAr">Step 2 description — Arabic <span style="color:#999; font-weight:400;">(default: بنتفق على القماش والمقاس والسعر تليفون أو واتساب)</span></label>
+            <textarea  id="setStep2DescAr" dir="rtl"></textarea>
           </div>
           <div class="field">
-            <label>Step 2 description — English <span style="color:#999; font-weight:400;">(default: We confirm fabric, sizing, and price by phone or WhatsApp)</span></label>
-            <textarea id="setStep2DescEn"></textarea>
+            <label for="setStep2DescEn">Step 2 description — English <span style="color:#999; font-weight:400;">(default: We confirm fabric, sizing, and price by phone or WhatsApp)</span></label>
+            <textarea  id="setStep2DescEn"></textarea>
           </div>
           <div class="field">
-            <label>Step 3 title — Arabic <span style="color:#999; font-weight:400;">(default: القياس)</span></label>
-            <input type="text" id="setStep3TitleAr" dir="rtl" />
+            <label for="setStep3TitleAr">Step 3 title — Arabic <span style="color:#999; font-weight:400;">(default: القياس)</span></label>
+            <input type="text"  id="setStep3TitleAr" dir="rtl" />
           </div>
           <div class="field">
-            <label>Step 3 title — English <span style="color:#999; font-weight:400;">(default: Fitting)</span></label>
-            <input type="text" id="setStep3TitleEn" />
+            <label for="setStep3TitleEn">Step 3 title — English <span style="color:#999; font-weight:400;">(default: Fitting)</span></label>
+            <input type="text"  id="setStep3TitleEn" />
           </div>
           <div class="field">
-            <label>Step 3 description — Arabic <span style="color:#999; font-weight:400;">(default: بنظبط التصميم على مقاسك)</span></label>
-            <textarea id="setStep3DescAr" dir="rtl"></textarea>
+            <label for="setStep3DescAr">Step 3 description — Arabic <span style="color:#999; font-weight:400;">(default: بنظبط التصميم على مقاسك)</span></label>
+            <textarea  id="setStep3DescAr" dir="rtl"></textarea>
           </div>
           <div class="field">
-            <label>Step 3 description — English <span style="color:#999; font-weight:400;">(default: Adjustments made to your measurements)</span></label>
-            <textarea id="setStep3DescEn"></textarea>
+            <label for="setStep3DescEn">Step 3 description — English <span style="color:#999; font-weight:400;">(default: Adjustments made to your measurements)</span></label>
+            <textarea  id="setStep3DescEn"></textarea>
           </div>
           <div class="field">
-            <label>Step 4 title — Arabic <span style="color:#999; font-weight:400;">(default: التسليم)</span></label>
-            <input type="text" id="setStep4TitleAr" dir="rtl" />
+            <label for="setStep4TitleAr">Step 4 title — Arabic <span style="color:#999; font-weight:400;">(default: التسليم)</span></label>
+            <input type="text"  id="setStep4TitleAr" dir="rtl" />
           </div>
           <div class="field">
-            <label>Step 4 title — English <span style="color:#999; font-weight:400;">(default: Delivery)</span></label>
-            <input type="text" id="setStep4TitleEn" />
+            <label for="setStep4TitleEn">Step 4 title — English <span style="color:#999; font-weight:400;">(default: Delivery)</span></label>
+            <input type="text"  id="setStep4TitleEn" />
           </div>
           <div class="field">
-            <label>Step 4 description — Arabic <span style="color:#999; font-weight:400;">(default: قطعتك جاهزة تستلميها أو تتشحن لك)</span></label>
-            <textarea id="setStep4DescAr" dir="rtl"></textarea>
+            <label for="setStep4DescAr">Step 4 description — Arabic <span style="color:#999; font-weight:400;">(default: قطعتك جاهزة تستلميها أو تتشحن لك)</span></label>
+            <textarea  id="setStep4DescAr" dir="rtl"></textarea>
           </div>
           <div class="field">
-            <label>Step 4 description — English <span style="color:#999; font-weight:400;">(default: Your piece, ready to collect or ship)</span></label>
-            <textarea id="setStep4DescEn"></textarea>
+            <label for="setStep4DescEn">Step 4 description — English <span style="color:#999; font-weight:400;">(default: Your piece, ready to collect or ship)</span></label>
+            <textarea  id="setStep4DescEn"></textarea>
           </div>
         </div>
       </details>
@@ -451,48 +451,48 @@
         <summary>Contact &amp; Maps</summary>
         <div class="product-form-grid">
           <div class="field">
-            <label>Phone</label>
-            <input type="text" id="setContactPhone" placeholder="+20 1xx xxx xxxx" />
+            <label for="setContactPhone">Phone</label>
+            <input type="text"  id="setContactPhone" placeholder="+20 1xx xxx xxxx" />
           </div>
           <div class="field">
-            <label>WhatsApp number (digits only, for the wa.me link)</label>
-            <input type="text" id="setContactWhatsapp" placeholder="20100xxxxxxx" />
+            <label for="setContactWhatsapp">WhatsApp number (digits only, for the wa.me link)</label>
+            <input type="text"  id="setContactWhatsapp" placeholder="20100xxxxxxx" />
           </div>
           <div class="field">
-            <label>Email</label>
-            <input type="email" id="setContactEmail" placeholder="hello@habibamousa.com" />
+            <label for="setContactEmail">Email</label>
+            <input type="email"  id="setContactEmail" placeholder="hello@habibamousa.com" />
           </div>
           <div class="field">
-            <label>Hours — Arabic</label>
-            <input type="text" id="setContactHoursAr" dir="rtl" />
+            <label for="setContactHoursAr">Hours — Arabic</label>
+            <input type="text"  id="setContactHoursAr" dir="rtl" />
           </div>
           <div class="field">
-            <label>Hours — English</label>
-            <input type="text" id="setContactHoursEn" />
+            <label for="setContactHoursEn">Hours — English</label>
+            <input type="text"  id="setContactHoursEn" />
           </div>
           <div class="field">
-            <label>Address — Arabic</label>
-            <input type="text" id="setAddressAr" dir="rtl" />
+            <label for="setAddressAr">Address — Arabic</label>
+            <input type="text"  id="setAddressAr" dir="rtl" />
           </div>
           <div class="field">
-            <label>Address — English</label>
-            <input type="text" id="setAddressEn" />
+            <label for="setAddressEn">Address — English</label>
+            <input type="text"  id="setAddressEn" />
           </div>
           <div class="field">
-            <label>Google Maps link</label>
-            <input type="url" id="setGoogleMapsUrl" placeholder="https://maps.google.com/..." />
+            <label for="setGoogleMapsUrl">Google Maps link</label>
+            <input type="url"  id="setGoogleMapsUrl" placeholder="https://maps.google.com/..." />
           </div>
           <div class="field">
-            <label>Waze link</label>
-            <input type="url" id="setWazeUrl" placeholder="https://waze.com/ul/..." />
+            <label for="setWazeUrl">Waze link</label>
+            <input type="url"  id="setWazeUrl" placeholder="https://waze.com/ul/..." />
           </div>
           <div class="field">
-            <label>Shop coordinates (lat,lng) — shows an embedded map on Contact Us</label>
-            <input type="text" id="setShopLatLng" placeholder="31.2001,29.9187" />
+            <label for="setShopLatLng">Shop coordinates (lat,lng) — shows an embedded map on Contact Us</label>
+            <input type="text"  id="setShopLatLng" placeholder="31.2001,29.9187" />
           </div>
           <div class="field">
-            <label>Logo image URL — replaces the "Habiba Mousa" text in the header when set</label>
-            <input type="url" id="setLogoUrl" placeholder="https://..." />
+            <label for="setLogoUrl">Logo image URL — replaces the "Habiba Mousa" text in the header when set</label>
+            <input type="url"  id="setLogoUrl" placeholder="https://..." />
           </div>
         </div>
       </details>
@@ -500,8 +500,8 @@
       <details class="admin-card settings-section" open>
         <summary>Deposit</summary>
         <div class="field" style="max-width:220px;">
-          <label>Deposit percentage</label>
-          <input type="number" id="setDepositPercent" min="0" max="100" placeholder="40" />
+          <label for="setDepositPercent">Deposit percentage</label>
+          <input type="number"  id="setDepositPercent" min="0" max="100" placeholder="40" />
         </div>
       </details>
 
@@ -531,17 +531,17 @@
           </p>
           <input type="hidden" id="staffEditUid" />
           <div class="field">
-            <label data-i18n="admin_staff_email">Staff email (must match their Firebase Auth login)</label>
-            <input type="email" id="staffEmail" list="staffEmailOptions" />
+            <label data-i18n="admin_staff_email" for="staffEmail">Staff email (must match their Firebase Auth login)</label>
+            <input type="email"  id="staffEmail" list="staffEmailOptions" />
             <datalist id="staffEmailOptions"></datalist>
           </div>
           <div class="field">
-            <label data-i18n="admin_staff_name">Name</label>
-            <input type="text" id="staffName" />
+            <label data-i18n="admin_staff_name" for="staffName">Name</label>
+            <input type="text"  id="staffName" />
           </div>
           <div class="field">
-            <label data-i18n="admin_staff_role">Role</label>
-            <select id="staffRole">
+            <label data-i18n="admin_staff_role" for="staffRole">Role</label>
+            <select  id="staffRole">
               <option value="staff" data-i18n="admin_staff_role_staff">Staff — manage requests &amp; products</option>
               <option value="admin" data-i18n="admin_staff_role_admin">Admin — full access</option>
             </select>

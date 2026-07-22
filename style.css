@@ -555,6 +555,52 @@ button {
 .my-requests-group-title:first-child { margin-top: 0; }
 .my-requests-more-btn { display: block; margin: 10px 0 4px; font-size: 13px; }
 
+/* ---------- Floating actions ---------- */
+
+.floating-actions {
+  position: fixed;
+  bottom: 24px;
+  inset-inline-end: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  z-index: 150;
+}
+.floating-whatsapp {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: #25d366;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.35);
+  transition: transform 0.2s ease;
+}
+.floating-whatsapp:hover { transform: scale(1.08); }
+.floating-whatsapp svg { width: 28px; height: 28px; fill: #fff; }
+.scroll-jump-btn {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: var(--ink);
+  color: var(--gold-soft);
+  border: 1px solid var(--gold);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.25);
+  transition: transform 0.2s ease;
+}
+.scroll-jump-btn:hover { transform: translateY(-2px); }
+@media (max-width: 700px) {
+  .floating-actions { bottom: 16px; inset-inline-end: 14px; }
+  .floating-whatsapp { width: 48px; height: 48px; }
+  .floating-whatsapp svg { width: 24px; height: 24px; }
+  .scroll-jump-btn { width: 38px; height: 38px; }
+}
+
 .gallery-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -647,6 +693,33 @@ button {
   50% { transform: scale(1.06); }
 }
 
+.piece-card-actions {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 3;
+}
+.piece-action-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(28,16,19,0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.2s ease, transform 0.15s ease;
+}
+.piece-action-btn:hover { background: rgba(28,16,19,0.75); transform: scale(1.08); }
+.piece-action-btn svg { width: 16px; height: 16px; fill: var(--ivory); }
+.piece-like-btn.liked svg { fill: #e2483e; }
+.piece-collection-tag { color: var(--text-faint); text-transform: none; letter-spacing: 0; font-size: 11px; }
+
 .empty-state {
   text-align: center;
   padding: var(--space-6) var(--space-3);
@@ -704,11 +777,12 @@ button {
   position: relative;
   border-top: 3px solid var(--gold);
   scrollbar-width: thin;
-  scrollbar-color: var(--gold) transparent;
+  scrollbar-color: var(--line) transparent;
 }
-.modal::-webkit-scrollbar { width: 6px; }
+.modal::-webkit-scrollbar { width: 4px; }
 .modal::-webkit-scrollbar-track { background: transparent; }
-.modal::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 3px; }
+.modal::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
+.modal::-webkit-scrollbar-thumb:hover { background: var(--gold); }
 
 .modal-close {
   position: absolute;

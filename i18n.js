@@ -59,6 +59,8 @@ const I18N = {
     footer_tagline: "حبيبه موسي — قطع مفصلة خصيصي ليكِ، حسب الطلب.",
     footer_contact_prefix: "عايزة تكلمينا على طول؟",
     footer_whatsapp: "راسلينا على واتساب",
+    scroll_jump_label: "انزلي لتحت",
+    scroll_top_label: "ارجعي لفوق",
     footer_staff: "دخول الموظفين",
 
     // Request modal
@@ -242,6 +244,9 @@ const I18N = {
     detail_img_prev: "الصورة اللي قبلها",
     detail_img_next: "الصورة اللي بعدها",
     sale_badge: "خصم",
+    like_label: "أضيفي للمفضلة",
+    share_label: "شاركي",
+    share_copied: "تم نسخ الرابط!",
 
     // Request form — address & material
     label_address: "العنوان (المحافظة، المدينة، الشارع)",
@@ -369,6 +374,8 @@ const I18N = {
     footer_tagline: "Habiba Mousa — bespoke pieces, made to order.",
     footer_contact_prefix: "Prefer to reach us directly?",
     footer_whatsapp: "Message on WhatsApp",
+    scroll_jump_label: "Scroll down",
+    scroll_top_label: "Scroll to top",
     footer_staff: "Staff Login",
 
     modal_title: "Request This Design",
@@ -549,6 +556,9 @@ const I18N = {
     detail_img_prev: "Previous image",
     detail_img_next: "Next image",
     sale_badge: "Sale",
+    like_label: "Add to favorites",
+    share_label: "Share",
+    share_copied: "Link copied!",
 
     // Request form — address & material
     label_address: "Address (Governorate, City, Street)",

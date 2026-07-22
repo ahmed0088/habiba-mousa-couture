@@ -42,6 +42,33 @@ const myAccountAddress = document.getElementById("myAccountAddress");
 const myAccountSaveBtn = document.getElementById("myAccountSaveBtn");
 const myAccountStatus = document.getElementById("myAccountStatus");
 
+// ---------- Floating scroll-jump + WhatsApp ----------
+
+const scrollJumpBtn = document.getElementById("scrollJumpBtn");
+
+function updateScrollJumpBtn() {
+  if (!scrollJumpBtn) return;
+  const scrolled = window.scrollY > 300;
+  scrollJumpBtn.textContent = scrolled ? "↑" : "↓";
+  scrollJumpBtn.setAttribute("aria-label", scrolled ? t("scroll_top_label") : t("scroll_jump_label"));
+  scrollJumpBtn.style.display = document.body.scrollHeight > window.innerHeight * 1.3 ? "flex" : "none";
+}
+
+window.addEventListener("scroll", updateScrollJumpBtn);
+window.addEventListener("resize", updateScrollJumpBtn);
+scrollJumpBtn?.addEventListener("click", () => {
+  if (window.scrollY > 300) {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  } else {
+    window.scrollBy({ top: window.innerHeight * 0.85, behavior: "smooth" });
+  }
+});
+updateScrollJumpBtn();
+window.addEventListener("load", updateScrollJumpBtn);
+// Gallery/products render asynchronously after Firestore data arrives, changing
+// page height well after the initial check — re-check once things settle.
+setTimeout(updateScrollJumpBtn, 1500);
+
 // ---------- Mobile nav toggle ----------
 
 const navToggle = document.getElementById("navToggle");

@@ -55,6 +55,44 @@ const lightboxNext = document.getElementById("lightboxNext");
 
 let allProducts = [];
 let allCollections = [];
+const LIKED_STORAGE_KEY = "hm_liked_products";
+let likedProducts = new Set(JSON.parse(localStorage.getItem(LIKED_STORAGE_KEY) || "[]"));
+
+function toggleLike(productId, btn) {
+  if (likedProducts.has(productId)) {
+    likedProducts.delete(productId);
+    btn.classList.remove("liked");
+  } else {
+    likedProducts.add(productId);
+    btn.classList.add("liked");
+  }
+  localStorage.setItem(LIKED_STORAGE_KEY, JSON.stringify([...likedProducts]));
+}
+
+function showToastPublic(message) {
+  let container = document.getElementById("toastContainer");
+  if (!container) {
+    container = document.createElement("div");
+    container.id = "toastContainer";
+    container.className = "toast-container";
+    document.body.appendChild(container);
+  }
+  const toast = document.createElement("div");
+  toast.className = "toast";
+  toast.textContent = message;
+  container.appendChild(toast);
+  setTimeout(() => toast.remove(), 3000);
+}
+
+function shareProduct(product) {
+  const url = `${location.origin}${location.pathname}?product=${product.id}`;
+  const shareData = { title: product.name, text: product.description || "", url };
+  if (navigator.share) {
+    navigator.share(shareData).catch(() => {});
+  } else if (navigator.clipboard) {
+    navigator.clipboard.writeText(url).then(() => showToastPublic(t("share_copied"))).catch(() => {});
+  }
+}
 let activeFilter = "all";
 let activeCollection = "all";
 let saleOnly = false;
@@ -388,21 +426,39 @@ function renderGallery() {
     const priceHtml = onSale
       ? `<p class="piece-price piece-price-row"><span class="piece-price-sale"><bdi>${escapeHtml(formatPrice(product.salePrice))}</bdi></span><span class="piece-price-original"><bdi>${escapeHtml(formatPrice(product.priceRange) || "")}</bdi></span></p>`
       : (product.priceRange ? `<p class="piece-price">${escapeHtml(formatPrice(product.priceRange))}</p>` : "");
+    const collectionName = product.collectionId ? allCollections.find(c => c.id === product.collectionId)?.name : null;
+    const isLiked = likedProducts.has(product.id);
     card.innerHTML = `
       <div class="piece-media">
         ${onSale ? `<span class="sale-badge">${discountPercent ? `-${discountPercent}%` : t("sale_badge")}</span>` : ""}
+        <div class="piece-card-actions">
+          <button type="button" class="piece-action-btn piece-like-btn${isLiked ? " liked" : ""}" aria-label="${escapeHtml(t("like_label"))}">
+            <svg viewBox="0 0 24 24"><path d="M12 21s-6.72-4.35-9.33-8.2C1 10.1 1.6 6.6 4.5 5a5 5 0 0 1 7.5 1.8A5 5 0 0 1 19.5 5c2.9 1.6 3.5 5.1 1.83 7.8C18.72 16.65 12 21 12 21Z"/></svg>
+          </button>
+          <button type="button" class="piece-action-btn piece-share-btn" aria-label="${escapeHtml(t("share_label"))}">
+            <svg viewBox="0 0 24 24"><path d="M18 8a3 3 0 1 0-2.83-4H15a3 3 0 0 0 .05 2.06L8.91 9.51a3 3 0 1 0 0 4.98l6.14 3.45A3 3 0 1 0 15.83 16l-6.14-3.45a3.04 3.04 0 0 0 0-1.1L15.83 8A2.99 2.99 0 0 0 18 8Z"/></svg>
+          </button>
+        </div>
         ${product.images && product.images[0]
           ? `<img src="${escapeHtml(product.images[0])}" alt="${escapeHtml(product.name)}" loading="lazy" style="object-position: center ${escapeHtml(product.imageFocus || "top")};" />`
           : `<span>${escapeHtml(product.name)}</span>`}
       </div>
       <div class="piece-body">
-        <p class="piece-eyebrow">${escapeHtml(product.category || t("piece_category_fallback"))}</p>
+        <p class="piece-eyebrow">${escapeHtml(product.category || t("piece_category_fallback"))}${collectionName ? ` <span class="piece-collection-tag">· ${escapeHtml(collectionName)}</span>` : ""}</p>
         <h3 class="piece-name">${escapeHtml(product.name)}</h3>
         <p class="piece-desc">${escapeHtml(product.description || "")}</p>
         ${priceHtml}
       </div>
     `;
     card.addEventListener("click", () => openModal(product));
+    card.querySelector(".piece-like-btn").addEventListener("click", (e) => {
+      e.stopPropagation();
+      toggleLike(product.id, e.currentTarget);
+    });
+    card.querySelector(".piece-share-btn").addEventListener("click", (e) => {
+      e.stopPropagation();
+      shareProduct(product);
+    });
     card.classList.add("reveal-hidden");
     galleryGrid.appendChild(card);
     galleryRevealObserver.observe(card);
@@ -429,6 +485,8 @@ function escapeHtml(str) {
   return div.innerHTML;
 }
 
+let deepLinkHandled = false;
+
 function loadProducts() {
   db.collection("products")
     .where("status", "==", "active")
@@ -438,6 +496,14 @@ function loadProducts() {
         loadFailed = false;
         allProducts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         refreshCollectionAndCategoryUI();
+
+        // A shared product link (?product=ID) opens straight to that piece's detail view.
+        if (!deepLinkHandled && allProducts.length > 0) {
+          deepLinkHandled = true;
+          const sharedId = new URLSearchParams(location.search).get("product");
+          const sharedProduct = sharedId ? allProducts.find(p => p.id === sharedId) : null;
+          if (sharedProduct) openModal(sharedProduct);
+        }
       },
       (err) => {
         console.error("Failed to load products:", err);

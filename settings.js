@@ -45,6 +45,11 @@ function applySettingsOverrides() {
     footerWhatsappLink.href = `https://wa.me/${s.contactWhatsapp.replace(/\D/g, "")}`;
   }
 
+  const floatingWhatsapp = document.getElementById("floatingWhatsapp");
+  if (floatingWhatsapp && s.contactWhatsapp) {
+    floatingWhatsapp.href = `https://wa.me/${s.contactWhatsapp.replace(/\D/g, "")}`;
+  }
+
   const emailLink = document.getElementById("contactEmailLink");
   if (emailLink && s.contactEmail) {
     emailLink.textContent = s.contactEmail;
