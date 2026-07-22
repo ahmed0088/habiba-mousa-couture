@@ -6,6 +6,7 @@
 // ================================
 
 let currentSettings = {};
+const DEFAULT_LOGO_SRC = document.getElementById("brandLogo")?.getAttribute("src");
 
 function setTextIfPresent(id, value) {
   const el = document.getElementById(id);
@@ -72,10 +73,9 @@ function applySettingsOverrides() {
   if (logoImg && brandText) {
     if (s.logoUrl) {
       logoImg.src = s.logoUrl;
-      logoImg.style.display = "block";
       brandText.style.display = "none";
     } else {
-      logoImg.style.display = "none";
+      logoImg.src = DEFAULT_LOGO_SRC;
       brandText.style.display = "inline";
     }
   }

@@ -12,6 +12,7 @@ const loginBtn = document.getElementById("loginBtn");
 const logoutBtn = document.getElementById("logoutBtn");
 
 let currentStaff = null; // { uid, name, email, role }
+const DEFAULT_LOGO_SRC = document.getElementById("brandLogo")?.getAttribute("src");
 
 // ---------- Auth ----------
 
@@ -433,6 +434,22 @@ function updateProductImagePreview() {
 
 document.getElementById("pImages")?.addEventListener("input", updateProductImagePreview);
 document.getElementById("pImageFocus")?.addEventListener("change", updateProductImagePreview);
+
+const imageLightbox = document.getElementById("imageLightbox");
+const lightboxImage = document.getElementById("lightboxImage");
+const lightboxClose = document.getElementById("lightboxClose");
+
+document.getElementById("pImagePreview")?.addEventListener("click", () => {
+  lightboxImage.src = document.getElementById("pImagePreview").src;
+  imageLightbox.classList.add("open");
+});
+lightboxClose?.addEventListener("click", () => imageLightbox.classList.remove("open"));
+imageLightbox?.addEventListener("click", (e) => {
+  if (e.target === imageLightbox) imageLightbox.classList.remove("open");
+});
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") imageLightbox?.classList.remove("open");
+});
 
 function resetProductForm() {
   productDocId.value = "";
@@ -940,10 +957,9 @@ function loadSettings() {
     if (logoImg && brandText) {
       if (data.logoUrl) {
         logoImg.src = data.logoUrl;
-        logoImg.style.display = "block";
         brandText.style.display = "none";
       } else {
-        logoImg.style.display = "none";
+        logoImg.src = DEFAULT_LOGO_SRC;
         brandText.style.display = "inline";
       }
     }

@@ -377,7 +377,19 @@ function renderGallery() {
 
   if (filtered.length === 0) {
     emptyState.style.display = "block";
-    emptyState.textContent = t("empty_state");
+    const filtersActive = activeCollection !== "all" || activeFilter !== "all" || saleOnly || Boolean(searchQuery);
+    if (filtersActive) {
+      emptyState.innerHTML = `<p>${escapeHtml(t("empty_state_filtered"))}</p><button type="button" class="btn-link" id="clearFiltersBtn">${escapeHtml(t("empty_state_clear"))}</button>`;
+      document.getElementById("clearFiltersBtn").addEventListener("click", () => {
+        activeCollection = "all";
+        activeFilter = "all";
+        saleOnly = false;
+        if (productSearchInput) productSearchInput.value = "";
+        refreshCollectionAndCategoryUI();
+      });
+    } else {
+      emptyState.textContent = t("empty_state");
+    }
     return;
   }
   emptyState.style.display = "none";

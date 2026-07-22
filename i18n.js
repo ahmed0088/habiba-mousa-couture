@@ -37,6 +37,8 @@ const I18N = {
     filter_group_categories: "النوع:",
     search_placeholder: "دوّري على قطعة...",
     empty_state: "بنجهز قطع جديدة للأتيليه — تابعينا هيبقى فيه كل حاجة حلوة قريب.",
+    empty_state_filtered: "مفيش قطع بالمواصفات دي دلوقتي.",
+    empty_state_clear: "امسحي الفلاتر",
     empty_state_error: "معلش، حصلت مشكلة في تحميل الكولكشن دلوقتي. جربي تاني بعد شوية.",
     piece_category_fallback: "قطعة",
 
@@ -146,6 +148,7 @@ const I18N = {
     admin_p_description: "الوصف",
     admin_p_image: "رابط الصورة",
     admin_p_image_note: "حطي رابط صورة مرفوعة (زي رابط من Firebase Storage أو إنستجرام). ممكن نضيف رفع مباشر للصور بعدين.",
+    admin_p_image_preview_hint: "دوسي للتكبير",
     admin_save_piece: "حفظ القطعة",
     admin_cancel: "إلغاء",
     admin_save: "حفظ",
@@ -343,6 +346,8 @@ const I18N = {
     filter_group_categories: "Type:",
     search_placeholder: "Search for a piece...",
     empty_state: "New pieces are being added to the atelier — check back soon.",
+    empty_state_filtered: "No pieces match this filter right now.",
+    empty_state_clear: "Clear filters",
     empty_state_error: "Unable to load the collection right now. Please check back shortly.",
     piece_category_fallback: "Piece",
 
@@ -447,6 +452,7 @@ const I18N = {
     admin_p_description: "Description",
     admin_p_image: "Image URL",
     admin_p_image_note: "Paste a hosted image link (e.g. from Firebase Storage or Instagram CDN link). Direct image upload can be added later.",
+    admin_p_image_preview_hint: "Click to zoom",
     admin_save_piece: "Save Piece",
     admin_cancel: "Cancel",
     admin_save: "Save",
