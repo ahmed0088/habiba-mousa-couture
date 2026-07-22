@@ -24,6 +24,15 @@ function formatPrice(value) {
   return /^[\d,.\s–-]+$/.test(value) ? `${value} EGP` : value;
 }
 
+// Best-effort % off for the sale badge — falls back to a plain "Sale" label
+// when either price isn't a clean number (e.g. a typed range like "1,800–2,600").
+function calcDiscountPercent(original, sale) {
+  const o = parseFloat(String(original || "").replace(/[^\d.]/g, ""));
+  const s = parseFloat(String(sale || "").replace(/[^\d.]/g, ""));
+  if (!o || !s || s >= o) return null;
+  return Math.round((1 - s / o) * 100);
+}
+
 const detailView = document.getElementById("detailView");
 const requestView = document.getElementById("requestView");
 const detailCarouselImage = document.getElementById("detailCarouselImage");
@@ -48,6 +57,7 @@ let allProducts = [];
 let allCollections = [];
 let activeFilter = "all";
 let activeCollection = "all";
+let saleOnly = false;
 let loadFailed = false;
 let currentProduct = null;
 let currentImageIndex = 0;
@@ -137,6 +147,11 @@ function showRequestView() {
   formStatus.textContent = "";
   document.getElementById("clientLocationUrl").value = "";
   document.getElementById("shareLocationStatus").textContent = "";
+  document.getElementById("locationMapWrap").style.display = "none";
+  if (locationMap && locationMarker) {
+    locationMap.removeLayer(locationMarker);
+  }
+  locationMarker = null;
 }
 
 detailRequestBtn.addEventListener("click", showRequestView);
@@ -163,6 +178,49 @@ document.getElementById("shareLocationBtn")?.addEventListener("click", () => {
     }
   );
 });
+
+// Map pin picker — a free (no API key) alternative to typing an address or
+// using one-tap geolocation, for clients who'd rather just point at their spot.
+let locationMap = null;
+let locationMarker = null;
+const ALEXANDRIA_COORDS = [31.2001, 29.9187];
+
+function setLocationPin(lat, lng) {
+  document.getElementById("clientLocationUrl").value = `https://maps.google.com/?q=${lat},${lng}`;
+  document.getElementById("shareLocationStatus").textContent = t("share_location_success");
+}
+
+function placeMapMarker(lat, lng) {
+  if (locationMarker) {
+    locationMarker.setLatLng([lat, lng]);
+  } else {
+    locationMarker = L.marker([lat, lng], { draggable: true }).addTo(locationMap);
+    locationMarker.on("dragend", () => {
+      const pos = locationMarker.getLatLng();
+      setLocationPin(pos.lat, pos.lng);
+    });
+  }
+  setLocationPin(lat, lng);
+}
+
+document.getElementById("pickMapLocationBtn")?.addEventListener("click", () => {
+  const wrap = document.getElementById("locationMapWrap");
+  if (wrap.style.display !== "none") {
+    wrap.style.display = "none";
+    return;
+  }
+  wrap.style.display = "block";
+  if (!locationMap) {
+    locationMap = L.map("locationMap").setView(ALEXANDRIA_COORDS, 12);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: "&copy; OpenStreetMap contributors",
+      maxZoom: 19
+    }).addTo(locationMap);
+    locationMap.on("click", (e) => placeMapMarker(e.latlng.lat, e.latlng.lng));
+  }
+  setTimeout(() => locationMap.invalidateSize(), 50);
+});
+
 backToDetailBtn.addEventListener("click", showDetailView);
 
 function openModal(product) {
@@ -172,9 +230,12 @@ function openModal(product) {
   detailCategory.textContent = product.category || t("piece_category_fallback");
   detailName.textContent = product.name;
   if (product.salePrice) {
-    detailPrice.innerHTML = `<span class="piece-price-original"><bdi>${escapeHtml(formatPrice(product.priceRange) || "")}</bdi></span> <span class="piece-price-sale"><bdi>${escapeHtml(formatPrice(product.salePrice))}</bdi></span>`;
+    const detailDiscount = calcDiscountPercent(product.priceRange, product.salePrice);
+    detailPrice.className = "piece-price piece-price-row";
+    detailPrice.innerHTML = `<span class="piece-price-sale"><bdi>${escapeHtml(formatPrice(product.salePrice))}</bdi></span><span class="piece-price-original"><bdi>${escapeHtml(formatPrice(product.priceRange) || "")}</bdi></span>${detailDiscount ? `<span class="piece-price-off">-${detailDiscount}%</span>` : ""}`;
     detailPrice.style.display = "block";
   } else {
+    detailPrice.className = "piece-price";
     detailPrice.textContent = formatPrice(product.priceRange) || "";
     detailPrice.style.display = product.priceRange ? "block" : "none";
   }
@@ -256,6 +317,15 @@ function renderCombinedFilters(categories) {
     });
     filterRow.appendChild(btn);
   });
+
+  const saleBtn = document.createElement("button");
+  saleBtn.className = "filter-chip filter-chip-sale" + (saleOnly ? " active" : "");
+  saleBtn.textContent = t("filter_sale");
+  saleBtn.addEventListener("click", () => {
+    saleOnly = !saleOnly;
+    refreshCollectionAndCategoryUI();
+  });
+  filterRow.appendChild(saleBtn);
 }
 
 function renderGallery() {
@@ -270,12 +340,14 @@ function renderGallery() {
     ? collectionFiltered
     : collectionFiltered.filter(p => p.category === activeFilter);
 
+  const saleFiltered = saleOnly ? categoryFiltered.filter(p => p.salePrice) : categoryFiltered;
+
   const searchQuery = (productSearchInput?.value || "").trim().toLowerCase();
   const filtered = searchQuery
-    ? categoryFiltered.filter(p =>
+    ? saleFiltered.filter(p =>
         `${p.name || ""} ${p.category || ""} ${p.description || ""}`.toLowerCase().includes(searchQuery)
       )
-    : categoryFiltered;
+    : saleFiltered;
 
   galleryGrid.innerHTML = "";
 
@@ -290,12 +362,13 @@ function renderGallery() {
     const card = document.createElement("div");
     card.className = "piece-card";
     const onSale = Boolean(product.salePrice);
+    const discountPercent = onSale ? calcDiscountPercent(product.priceRange, product.salePrice) : null;
     const priceHtml = onSale
-      ? `<p class="piece-price"><span class="piece-price-original"><bdi>${escapeHtml(formatPrice(product.priceRange) || "")}</bdi></span> <span class="piece-price-sale"><bdi>${escapeHtml(formatPrice(product.salePrice))}</bdi></span></p>`
+      ? `<p class="piece-price piece-price-row"><span class="piece-price-sale"><bdi>${escapeHtml(formatPrice(product.salePrice))}</bdi></span><span class="piece-price-original"><bdi>${escapeHtml(formatPrice(product.priceRange) || "")}</bdi></span></p>`
       : (product.priceRange ? `<p class="piece-price">${escapeHtml(formatPrice(product.priceRange))}</p>` : "");
     card.innerHTML = `
       <div class="piece-media">
-        ${onSale ? `<span class="sale-badge">${t("sale_badge")}</span>` : ""}
+        ${onSale ? `<span class="sale-badge">${discountPercent ? `-${discountPercent}%` : t("sale_badge")}</span>` : ""}
         ${product.images && product.images[0]
           ? `<img src="${escapeHtml(product.images[0])}" alt="${escapeHtml(product.name)}" loading="lazy" style="object-position: center ${escapeHtml(product.imageFocus || "top")};" />`
           : `<span>${escapeHtml(product.name)}</span>`}
@@ -423,3 +496,8 @@ productSearchInput?.addEventListener("input", renderGallery);
 
 loadProducts();
 loadCollections();
+
+document.querySelectorAll(".how-step").forEach((step) => {
+  step.classList.add("reveal-hidden");
+  galleryRevealObserver.observe(step);
+});

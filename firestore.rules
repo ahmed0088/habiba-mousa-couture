@@ -47,10 +47,11 @@ service cloud.firestore {
       allow read: if isStaff();
     }
 
-    // Append-only log of staff actions — any staff member can add an entry
-    // and read the history, but nothing can be edited or removed.
+    // Append-only log of staff actions — any staff member's actions get logged,
+    // but only admins can read the history back. Nothing can be edited or removed.
     match /activityLog/{docId} {
-      allow read, create: if isStaff();
+      allow create: if isStaff();
+      allow read: if isAdmin();
     }
 
     // Staff roster — only admins can manage it, staff can read it

@@ -54,6 +54,22 @@ navLinks?.querySelectorAll("a").forEach((a) => {
   });
 });
 
+document.addEventListener("click", (e) => {
+  if (!navLinks?.classList.contains("open")) return;
+  if (navLinks.contains(e.target) || navToggle?.contains(e.target)) return;
+  navLinks.classList.remove("open");
+  navToggle?.classList.remove("open");
+  navToggle?.setAttribute("aria-expanded", "false");
+});
+
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && navLinks?.classList.contains("open")) {
+    navLinks.classList.remove("open");
+    navToggle?.classList.remove("open");
+    navToggle?.setAttribute("aria-expanded", "false");
+  }
+});
+
 function escapeHtmlAccount(str) {
   const div = document.createElement("div");
   div.textContent = str == null ? "" : String(str);

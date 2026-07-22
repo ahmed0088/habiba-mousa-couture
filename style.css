@@ -306,15 +306,57 @@ button {
 .spec-card dt:first-child { margin-top: 0; }
 .spec-card dd { margin: 2px 0 0; font-family: var(--font-display); font-size: 18px; }
 
-/* .how-grid reuses .spec-card's shape on a LIGHT section background (unlike the dark hero),
-   so its text colors need to flip for readability — the ivory/gold-soft defaults above
-   are meant for the dark hero and were unreadable here. */
-.how-grid {
-  background: var(--surface);
-  color: var(--text-muted);
+.how-steps {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-3);
 }
-.how-grid dt { color: var(--emerald); }
-.how-grid dd { color: var(--heading); }
+.how-step {
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--border-soft, var(--line));
+  border-radius: 12px;
+  padding: var(--space-4) var(--space-3) var(--space-3);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+.how-step:hover { transform: translateY(-4px); box-shadow: 0 18px 34px -22px rgba(28,16,19,0.4); }
+.how-step-num {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--emerald), var(--ink));
+  color: var(--gold-soft);
+  font-family: var(--font-display);
+  font-size: 16px;
+  margin-bottom: var(--space-2);
+}
+.how-step h3 {
+  font-family: var(--font-display);
+  font-size: 17px;
+  margin: 0 0 6px;
+  color: var(--heading);
+}
+.how-step p { margin: 0; font-size: 13.5px; color: var(--text-muted); line-height: 1.5; }
+
+/* Connecting line between steps on wide screens, giving the row a "journey" feel */
+@media (min-width: 860px) {
+  .how-steps { position: relative; }
+  .how-step:not(:last-child)::after {
+    content: "";
+    position: absolute;
+    top: 34px;
+    inset-inline-end: calc(-1 * var(--space-3) / 2 - 1px);
+    width: var(--space-3);
+    height: 1px;
+    background: var(--line);
+  }
+}
+@media (max-width: 700px) {
+  .how-steps { grid-template-columns: 1fr; }
+}
 
 .btn {
   display: inline-block;
@@ -381,6 +423,20 @@ button {
   clip-path: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px);
 }
 .filter-chip.active { background: var(--ink); color: var(--gold-soft); border-color: var(--ink); }
+.filter-chip.filter-chip-sale {
+  margin-inline-start: auto;
+  border-color: #b8283a;
+  color: #b8283a;
+  font-weight: 700;
+}
+.filter-chip.filter-chip-sale.active { background: linear-gradient(135deg, #e2483e, #b8283a); color: #fff; border-color: #b8283a; }
+
+#locationMap {
+  height: 240px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  margin-top: 8px;
+}
 
 .gallery-grid {
   display: grid;
@@ -405,10 +461,10 @@ button {
   box-shadow: 0 2px 10px -6px rgba(28,16,19,0.25);
   transition: transform 0.25s ease, box-shadow 0.25s ease, opacity 0.5s ease;
 }
-.piece-card.reveal-hidden { opacity: 0; transform: translateY(18px); }
-.piece-card.reveal-visible { opacity: 1; }
+.piece-card.reveal-hidden, .how-step.reveal-hidden { opacity: 0; transform: translateY(18px); }
+.piece-card.reveal-visible, .how-step.reveal-visible { opacity: 1; transform: none; }
 @media (prefers-reduced-motion: reduce) {
-  .piece-card.reveal-hidden { opacity: 1; transform: none; }
+  .piece-card.reveal-hidden, .how-step.reveal-hidden { opacity: 1; transform: none; }
 }
 .piece-card:hover { transform: translateY(-4px); box-shadow: 0 18px 40px -20px rgba(28,16,19,0.4); }
 
@@ -438,8 +494,18 @@ button {
 .piece-name { font-family: var(--font-display); font-size: 20px; margin: 6px 0 8px; line-height: 1.25; }
 .piece-desc { font-size: 13.5px; color: var(--text-muted); margin: 0 0 10px; }
 .piece-price { font-size: 14px; color: var(--emerald); font-weight: 600; }
-.piece-price-original { font-size: 12px; color: var(--text-faint); text-decoration: line-through; margin-right: 6px; }
-.piece-price-sale { font-size: 13px; color: var(--emerald); font-weight: 600; }
+.piece-price-row { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.piece-price-original { font-size: 12.5px; color: var(--text-faint); text-decoration: line-through; }
+.piece-price-sale { font-size: 17px; color: #b8283a; font-weight: 700; }
+.piece-price-off {
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(135deg, #e2483e, #b8283a);
+  padding: 2px 7px;
+  border-radius: 4px;
+  letter-spacing: 0.02em;
+}
 
 .sale-badge {
   position: absolute;
@@ -830,13 +896,13 @@ select.status-select {
     top: 100%;
     left: 0;
     right: 0;
+    z-index: 45;
     flex-direction: column;
     align-items: flex-start;
     gap: var(--space-2);
-    background: var(--glass-surface);
-    backdrop-filter: blur(18px) saturate(160%);
-    -webkit-backdrop-filter: blur(18px) saturate(160%);
+    background: var(--surface);
     border-bottom: 1px solid var(--line);
+    box-shadow: 0 16px 30px -12px rgba(28,16,19,0.35);
     padding: var(--space-2) var(--space-3) var(--space-3);
     display: none;
   }

@@ -151,22 +151,29 @@
             <label data-i18n="admin_p_category">Category</label>
             <input type="text" id="pCategory" list="categoryOptions" placeholder="Pick a suggestion or type your own" />
             <datalist id="categoryOptions">
+              <option value="Dress"></option>
               <option value="Evening Gown"></option>
               <option value="Abaya"></option>
               <option value="Bridal"></option>
               <option value="Kaftan"></option>
               <option value="Cocktail"></option>
               <option value="Casual"></option>
-              <option value="Summer"></option>
-              <option value="Winter"></option>
+              <option value="Skirt"></option>
+              <option value="Pants"></option>
+              <option value="Shirt"></option>
+              <option value="T-Shirt"></option>
+              <option value="Jumpsuit"></option>
+              <option value="Blazer / Coat"></option>
               <option value="Made with Love"></option>
             </datalist>
+            <p class="form-note" data-i18n="admin_p_category_note">The type of garment — e.g. Dress, Abaya, Pants.</p>
           </div>
           <div class="field">
             <label>Collection</label>
             <select id="pCollection">
               <option value="">— No collection —</option>
             </select>
+            <p class="form-note" data-i18n="admin_p_collection_note">An optional seasonal or themed grouping — e.g. Winter 2026, Ramadan Edit — not a garment type.</p>
           </div>
           <div class="field">
             <label data-i18n="admin_p_price">Price range</label>
@@ -305,6 +312,75 @@
           <div class="field">
             <label>About story — English</label>
             <textarea id="setAboutStoryEn"></textarea>
+          </div>
+        </div>
+
+        <h3 style="font-family:var(--font-display); font-size:19px;">How It Works — 4 Steps</h3>
+        <p class="form-note" style="margin-top:-8px;">Leave blank to use the default step text shown below each field.</p>
+        <div class="product-form-grid">
+          <div class="field">
+            <label>Step 1 title — Arabic <span style="color:#999; font-weight:400;">(default: الطلب)</span></label>
+            <input type="text" id="setStep1TitleAr" dir="rtl" />
+          </div>
+          <div class="field">
+            <label>Step 1 title — English <span style="color:#999; font-weight:400;">(default: Request)</span></label>
+            <input type="text" id="setStep1TitleEn" />
+          </div>
+          <div class="field">
+            <label>Step 1 description — Arabic <span style="color:#999; font-weight:400;">(default: اختاري قطعة وقوليلنا اللي في بالك)</span></label>
+            <textarea id="setStep1DescAr" dir="rtl"></textarea>
+          </div>
+          <div class="field">
+            <label>Step 1 description — English <span style="color:#999; font-weight:400;">(default: Pick a piece and tell us what you have in mind)</span></label>
+            <textarea id="setStep1DescEn"></textarea>
+          </div>
+          <div class="field">
+            <label>Step 2 title — Arabic <span style="color:#999; font-weight:400;">(default: الاستشارة)</span></label>
+            <input type="text" id="setStep2TitleAr" dir="rtl" />
+          </div>
+          <div class="field">
+            <label>Step 2 title — English <span style="color:#999; font-weight:400;">(default: Consultation)</span></label>
+            <input type="text" id="setStep2TitleEn" />
+          </div>
+          <div class="field">
+            <label>Step 2 description — Arabic <span style="color:#999; font-weight:400;">(default: بنتفق على القماش والمقاس والسعر تليفون أو واتساب)</span></label>
+            <textarea id="setStep2DescAr" dir="rtl"></textarea>
+          </div>
+          <div class="field">
+            <label>Step 2 description — English <span style="color:#999; font-weight:400;">(default: We confirm fabric, sizing, and price by phone or WhatsApp)</span></label>
+            <textarea id="setStep2DescEn"></textarea>
+          </div>
+          <div class="field">
+            <label>Step 3 title — Arabic <span style="color:#999; font-weight:400;">(default: القياس)</span></label>
+            <input type="text" id="setStep3TitleAr" dir="rtl" />
+          </div>
+          <div class="field">
+            <label>Step 3 title — English <span style="color:#999; font-weight:400;">(default: Fitting)</span></label>
+            <input type="text" id="setStep3TitleEn" />
+          </div>
+          <div class="field">
+            <label>Step 3 description — Arabic <span style="color:#999; font-weight:400;">(default: بنظبط التصميم على مقاسك)</span></label>
+            <textarea id="setStep3DescAr" dir="rtl"></textarea>
+          </div>
+          <div class="field">
+            <label>Step 3 description — English <span style="color:#999; font-weight:400;">(default: Adjustments made to your measurements)</span></label>
+            <textarea id="setStep3DescEn"></textarea>
+          </div>
+          <div class="field">
+            <label>Step 4 title — Arabic <span style="color:#999; font-weight:400;">(default: التسليم)</span></label>
+            <input type="text" id="setStep4TitleAr" dir="rtl" />
+          </div>
+          <div class="field">
+            <label>Step 4 title — English <span style="color:#999; font-weight:400;">(default: Delivery)</span></label>
+            <input type="text" id="setStep4TitleEn" />
+          </div>
+          <div class="field">
+            <label>Step 4 description — Arabic <span style="color:#999; font-weight:400;">(default: قطعتك جاهزة تستلميها أو تتشحن لك)</span></label>
+            <textarea id="setStep4DescAr" dir="rtl"></textarea>
+          </div>
+          <div class="field">
+            <label>Step 4 description — English <span style="color:#999; font-weight:400;">(default: Your piece, ready to collect or ship)</span></label>
+            <textarea id="setStep4DescEn"></textarea>
           </div>
         </div>
 

@@ -20,6 +20,10 @@ function applySettingsOverrides() {
   setTextIfPresent("turnaroundText", s[`turnaround_${lang}`]);
   setTextIfPresent("aboutIntroText", s[`aboutIntro_${lang}`]);
   setTextIfPresent("aboutStoryText", s[`aboutStory_${lang}`]);
+  [1, 2, 3, 4].forEach((n) => {
+    setTextIfPresent(`step${n}TitleText`, s[`step${n}Title_${lang}`]);
+    setTextIfPresent(`step${n}DescText`, s[`step${n}Desc_${lang}`]);
+  });
   setTextIfPresent("contactHoursText", s[`contactHours_${lang}`]);
   setTextIfPresent("contactAddressText", s[`address_${lang}`]);
 

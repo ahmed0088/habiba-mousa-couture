@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=El+Messiri:wght@400;500;600;700&family=Jost:wght@400;500;600&family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
 </head>
 <body>
 
@@ -88,12 +89,28 @@
   <div class="container">
     <p class="eyebrow" data-i18n="how_eyebrow">كيف تتم العملية</p>
     <h2 class="section-title" style="margin-bottom: 24px;" data-i18n="how_title">من الطلب إلى الإطلالة</h2>
-    <dl class="spec-card how-grid">
-      <div><dt data-i18n="step1_title">١. الطلب</dt><dd data-i18n="step1_desc">اختاري قطعة وأخبرينا بما تتخيلينه</dd></div>
-      <div><dt data-i18n="step2_title">٢. الاستشارة</dt><dd data-i18n="step2_desc">نؤكد القماش والمقاس والسعر عبر الهاتف أو واتساب</dd></div>
-      <div><dt data-i18n="step3_title">٣. القياس</dt><dd data-i18n="step3_desc">تُجرى التعديلات حسب مقاساتكِ</dd></div>
-      <div><dt data-i18n="step4_title">٤. التسليم</dt><dd data-i18n="step4_desc">قطعتكِ جاهزة للاستلام أو الشحن</dd></div>
-    </dl>
+    <div class="how-steps">
+      <div class="how-step">
+        <span class="how-step-num">١</span>
+        <h3 id="step1TitleText" data-i18n="step1_title">الطلب</h3>
+        <p id="step1DescText" data-i18n="step1_desc">اختاري قطعة وأخبرينا بما تتخيلينه</p>
+      </div>
+      <div class="how-step">
+        <span class="how-step-num">٢</span>
+        <h3 id="step2TitleText" data-i18n="step2_title">الاستشارة</h3>
+        <p id="step2DescText" data-i18n="step2_desc">نؤكد القماش والمقاس والسعر عبر الهاتف أو واتساب</p>
+      </div>
+      <div class="how-step">
+        <span class="how-step-num">٣</span>
+        <h3 id="step3TitleText" data-i18n="step3_title">القياس</h3>
+        <p id="step3DescText" data-i18n="step3_desc">تُجرى التعديلات حسب مقاساتكِ</p>
+      </div>
+      <div class="how-step">
+        <span class="how-step-num">٤</span>
+        <h3 id="step4TitleText" data-i18n="step4_title">التسليم</h3>
+        <p id="step4DescText" data-i18n="step4_desc">قطعتكِ جاهزة للاستلام أو الشحن</p>
+      </div>
+    </div>
   </div>
 </section>
 
@@ -150,8 +167,16 @@
         <div class="field">
           <label for="clientAddress" data-i18n="label_address">العنوان (المحافظة، المدينة، الشارع)</label>
           <input type="text" id="clientAddress" />
-          <button type="button" class="btn-link" id="shareLocationBtn" data-i18n="share_location_btn">📍 شاركي موقعك</button>
+          <p class="form-note" data-i18n="location_optional_note">اختياري: اكتبي العنوان أو استخدمي أحد الخيارين تحت — الموقع مش لازم يتطابق مع اللي مكتوب فوق.</p>
+          <div style="display:flex; gap:14px; flex-wrap:wrap;">
+            <button type="button" class="btn-link" id="shareLocationBtn" data-i18n="share_location_btn">📍 شاركي موقعك</button>
+            <button type="button" class="btn-link" id="pickMapLocationBtn" data-i18n="pick_map_btn">🗺️ حددي دبوس على الخريطة</button>
+          </div>
           <span class="form-note" id="shareLocationStatus"></span>
+          <div id="locationMapWrap" style="display:none;">
+            <div id="locationMap"></div>
+            <p class="form-note" data-i18n="map_pin_hint">دوسي على الخريطة أو اسحبي الدبوس لتحديد موقعك بالظبط.</p>
+          </div>
           <input type="hidden" id="clientLocationUrl" />
         </div>
         <div class="field">
@@ -283,6 +308,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="firebase-config.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script src="i18n.js"></script>
 <script src="theme.js"></script>
 <script src="account.js"></script>
