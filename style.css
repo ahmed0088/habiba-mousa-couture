@@ -474,11 +474,18 @@ button {
 }
 .filter-chip.filter-chip-sale.active { background: linear-gradient(135deg, #e2483e, #b8283a); color: #fff; border-color: #b8283a; }
 
+/* Leaflet's own CSS puts its zoom controls/panes at z-index up to 1000, and since
+   .leaflet-container is position:relative with no z-index of its own, that value
+   escapes into the page's stacking context instead of staying scoped to the map —
+   letting the map float above modals (z-index 100). Giving the container an explicit
+   z-index establishes its own stacking context so Leaflet's internals stay contained. */
 #locationMap {
   height: 240px;
   border-radius: 8px;
   border: 1px solid var(--line);
   margin-top: 8px;
+  position: relative;
+  z-index: 0;
 }
 
 #shopLocationMap {
@@ -487,6 +494,8 @@ button {
   border-radius: 10px;
   border: 1px solid var(--line);
   margin-top: 20px;
+  position: relative;
+  z-index: 0;
 }
 
 .toast-container {
