@@ -307,6 +307,12 @@ function renderCombinedFilters(categories) {
   });
   filterRow.appendChild(allBtn);
 
+  if (allCollections.length > 0) {
+    const label = document.createElement("span");
+    label.className = "filter-group-label";
+    label.textContent = t("filter_group_collections");
+    filterRow.appendChild(label);
+  }
   allCollections.forEach((c) => {
     const btn = document.createElement("button");
     btn.className = "filter-chip" + (c.id === activeCollection ? " active" : "");
@@ -319,6 +325,12 @@ function renderCombinedFilters(categories) {
     filterRow.appendChild(btn);
   });
 
+  if (categories.length > 0) {
+    const label = document.createElement("span");
+    label.className = "filter-group-label";
+    label.textContent = t("filter_group_categories");
+    filterRow.appendChild(label);
+  }
   categories.forEach((cat) => {
     const btn = document.createElement("button");
     btn.className = "filter-chip" + (cat === activeFilter ? " active" : "");

@@ -169,14 +169,12 @@
             <select id="pCategory">
               <option value="">— Select a category —</option>
             </select>
-            <p class="form-note" data-i18n="admin_p_category_note">The type of garment — e.g. Dress, Abaya, Pants. Manage the list under the Categories tab.</p>
           </div>
           <div class="field">
-            <label>Collection</label>
+            <label><span data-i18n="admin_p_collection_label">Collection</span> <span class="field-hint" data-i18n="admin_p_collection_hint">(optional, seasonal)</span></label>
             <select id="pCollection">
               <option value="">— No collection —</option>
             </select>
-            <p class="form-note" data-i18n="admin_p_collection_note">An optional seasonal or themed grouping — e.g. Winter 2026, Ramadan Edit — not a garment type.</p>
           </div>
           <div class="field">
             <label data-i18n="admin_p_price">Price range</label>
@@ -313,8 +311,8 @@
         <h1>Site Settings</h1>
       </div>
       <div class="admin-card">
-        <p style="font-size:14px; color:#555;">
-          These fields feed the public site live — no code changes or redeploy needed. Leave a field blank to fall back to the site's default copy.
+        <p class="form-note">
+          Live on the site immediately — leave a field blank to keep the default text.
         </p>
 
         <h3 style="font-family:var(--font-display); font-size:19px;">About / Hero</h3>
