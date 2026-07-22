@@ -104,6 +104,7 @@
         <table>
           <thead>
             <tr>
+              <th></th>
               <th data-i18n="admin_th_client">Client</th>
               <th data-i18n="admin_th_piece2">Piece</th>
               <th data-i18n="admin_th_contact">Contact</th>
@@ -132,7 +133,9 @@
         <input type="text" id="productsSearch" data-i18n-placeholder="admin_products_search_ph" placeholder="Search by name, code, category..." />
       </div>
 
-      <div class="admin-card" id="productFormCard" style="display:none;">
+      <div class="modal-backdrop" id="productFormBackdrop">
+      <div class="modal modal-wide">
+        <button class="modal-close" id="productFormClose" aria-label="Close">&times;</button>
         <h3 style="font-family:var(--font-display); margin-top:0;" id="productFormTitle" data-i18n="admin_new_piece">New Piece</h3>
         <input type="hidden" id="productDocId" />
         <div class="product-form-grid">
@@ -210,6 +213,7 @@
           <button class="btn" id="cancelProductBtn" style="border-color:#cfc7b4; color:var(--charcoal);" data-i18n="admin_cancel">Cancel</button>
         </div>
         <div class="form-status" id="productFormStatus"></div>
+      </div>
       </div>
 
       <div class="admin-card" style="overflow-x:auto;">

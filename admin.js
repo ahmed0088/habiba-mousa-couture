@@ -263,7 +263,15 @@ function renderRequestsTable() {
       s => `<option value="${s}" ${r.status === s ? "selected" : ""}>${STATUS_LABELS[s]}</option>`
     ).join("");
 
+    const product = r.productId ? allProductsAdmin.find(([id]) => id === r.productId) : null;
+    const thumbSrc = product && product[1].images && product[1].images[0] ? product[1].images[0] : "";
+    const thumbFocus = product && product[1].imageFocus ? product[1].imageFocus : "top";
+    const thumbHtml = thumbSrc
+      ? `<img class="request-thumb" src="${escapeHtml(thumbSrc)}" alt="${escapeHtml(r.productName || "")}" style="object-position: center ${escapeHtml(thumbFocus)};" loading="lazy" />`
+      : `<div class="request-thumb request-thumb-empty"></div>`;
+
     tr.innerHTML = `
+      <td data-label="">${thumbHtml}</td>
       <td data-label="Client">${escapeHtml(r.clientName)}</td>
       <td data-label="Piece">${escapeHtml(r.productName || "—")}${r.productCode ? ` <span style="color:var(--text-faint); font-size:12px;">(${escapeHtml(r.productCode)})</span>` : ""}</td>
       <td data-label="Contact">${escapeHtml(r.clientPhone)}</td>
@@ -326,12 +334,21 @@ function loadRequests() {
 // ---------- Products ----------
 
 const newProductBtn = document.getElementById("newProductBtn");
-const productFormCard = document.getElementById("productFormCard");
+const productFormBackdrop = document.getElementById("productFormBackdrop");
+const productFormClose = document.getElementById("productFormClose");
 const productFormTitle = document.getElementById("productFormTitle");
 const productDocId = document.getElementById("productDocId");
 const saveProductBtn = document.getElementById("saveProductBtn");
 const cancelProductBtn = document.getElementById("cancelProductBtn");
 const productFormStatus = document.getElementById("productFormStatus");
+
+function openProductForm() {
+  productFormBackdrop.classList.add("open");
+}
+
+function closeProductForm() {
+  productFormBackdrop.classList.remove("open");
+}
 
 function resetProductForm() {
   productDocId.value = "";
@@ -352,11 +369,19 @@ function resetProductForm() {
 newProductBtn.addEventListener("click", () => {
   resetProductForm();
   productFormTitle.textContent = "New Piece";
-  productFormCard.style.display = "block";
+  openProductForm();
 });
 
 cancelProductBtn.addEventListener("click", () => {
-  productFormCard.style.display = "none";
+  closeProductForm();
+});
+
+productFormClose?.addEventListener("click", () => {
+  closeProductForm();
+});
+
+productFormBackdrop?.addEventListener("click", (e) => {
+  if (e.target === productFormBackdrop) closeProductForm();
 });
 
 saveProductBtn.addEventListener("click", async () => {
@@ -393,7 +418,7 @@ saveProductBtn.addEventListener("click", async () => {
       await db.collection("products").add(data);
       logActivity("Created product", data.name);
     }
-    productFormCard.style.display = "none";
+    closeProductForm();
   } catch (err) {
     console.error("Failed to save product:", err);
     productFormStatus.className = "form-status error";
@@ -471,8 +496,7 @@ function renderProductsTable() {
         document.getElementById("pImages").value = (p.images || []).join("\n");
         document.getElementById("pImageFocus").value = p.imageFocus || "top";
         productFormTitle.textContent = "Edit Piece";
-        productFormCard.style.display = "block";
-        productFormCard.scrollIntoView({ behavior: "smooth" });
+        openProductForm();
       });
     });
 
@@ -497,6 +521,7 @@ function loadProducts() {
   db.collection("products").orderBy("createdAt", "desc").onSnapshot((snapshot) => {
     allProductsAdmin = snapshot.docs.map(doc => [doc.id, doc.data()]);
     renderProductsTable();
+    renderRequestsTable();
     updateDashboardStats();
   }, (err) => console.error("Products listener error:", err));
 }

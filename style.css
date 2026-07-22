@@ -484,6 +484,27 @@ button {
 }
 .modal-backdrop.open { display: flex; }
 
+.modal.modal-wide { max-width: 680px; }
+
+.request-thumb {
+  width: 48px;
+  height: 64px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid var(--glass-border);
+  display: block;
+}
+.request-thumb-empty {
+  background: var(--surface);
+  border: 1px dashed var(--glass-border);
+}
+@media (max-width: 700px) {
+  .request-thumb, .request-thumb-empty {
+    width: 56px;
+    height: 74px;
+  }
+}
+
 .modal {
   background: var(--glass-surface);
   backdrop-filter: blur(18px) saturate(160%);
