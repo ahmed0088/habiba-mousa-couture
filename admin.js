@@ -158,6 +158,14 @@ auth.onAuthStateChanged(async (user) => {
 
 // ---------- Nav ----------
 
+const adminSidebar = document.querySelector(".admin-sidebar");
+const adminNavToggle = document.getElementById("adminNavToggle");
+adminNavToggle?.addEventListener("click", () => {
+  const open = adminSidebar.classList.toggle("nav-open");
+  adminNavToggle.classList.toggle("open", open);
+  adminNavToggle.setAttribute("aria-expanded", String(open));
+});
+
 document.querySelectorAll(".admin-nav button[data-view]").forEach((btn) => {
   btn.addEventListener("click", () => {
     document.querySelectorAll(".admin-nav button[data-view]").forEach(b => b.classList.remove("active"));
@@ -165,6 +173,9 @@ document.querySelectorAll(".admin-nav button[data-view]").forEach((btn) => {
     ["dashboard", "requests", "products", "categories", "collections", "settings", "staff", "activity"].forEach((v) => {
       document.getElementById(`view-${v}`).style.display = v === btn.dataset.view ? "block" : "none";
     });
+    adminSidebar.classList.remove("nav-open");
+    adminNavToggle?.classList.remove("open");
+    adminNavToggle?.setAttribute("aria-expanded", "false");
   });
 });
 

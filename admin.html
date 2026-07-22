@@ -49,26 +49,33 @@
 <!-- Admin shell -->
 <div class="admin-shell" id="adminShell" style="display:none;">
   <aside class="admin-sidebar">
-    <a href="#" class="brand"><img id="brandLogo" class="brand-logo" alt="Habiba Mousa" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Ccircle cx='20' cy='20' r='19' fill='%231c1013' stroke='%23c9973f' stroke-width='1.2'/%3E%3Cpath d='M12 28V19a8 9 0 0 1 16 0v9' fill='none' stroke='%23c9973f' stroke-width='1.6' stroke-linecap='round'/%3E%3Cpath d='M20 10l2.2 4.5L20 19l-2.2-4.5z' fill='%23e3c179'/%3E%3C/svg%3E" /><span id="brandText">Habiba <em>Admin</em></span></a>
-    <nav class="admin-nav">
-      <button data-view="dashboard" class="active" data-i18n="admin_nav_dashboard">Dashboard</button>
-      <button data-view="requests" data-i18n="admin_nav_requests">Requests</button>
-      <button data-view="products" data-i18n="admin_nav_products">Products</button>
-      <button data-view="categories" data-i18n="admin_nav_categories">Categories</button>
-      <button data-view="collections" data-i18n="admin_nav_collections">Collections</button>
-      <button data-view="settings" data-i18n="admin_nav_settings">Settings</button>
-      <button data-view="staff" data-i18n="admin_nav_staff">Staff</button>
-      <button data-view="activity" data-i18n="admin_nav_activity">Activity</button>
+    <div class="admin-sidebar-header">
+      <a href="#" class="brand"><img id="brandLogo" class="brand-logo" alt="Habiba Mousa" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Ccircle cx='20' cy='20' r='19' fill='%231c1013' stroke='%23c9973f' stroke-width='1.2'/%3E%3Cpath d='M12 28V19a8 9 0 0 1 16 0v9' fill='none' stroke='%23c9973f' stroke-width='1.6' stroke-linecap='round'/%3E%3Cpath d='M20 10l2.2 4.5L20 19l-2.2-4.5z' fill='%23e3c179'/%3E%3C/svg%3E" /><span id="brandText">Habiba <em>Admin</em></span></a>
+      <button type="button" class="admin-nav-toggle" id="adminNavToggle" aria-label="Menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+    <nav class="admin-nav" id="adminNav">
+      <button data-view="dashboard" class="active"><span class="admin-nav-icon" aria-hidden="true">📊</span><span data-i18n="admin_nav_dashboard">Dashboard</span></button>
+      <button data-view="requests"><span class="admin-nav-icon" aria-hidden="true">📥</span><span data-i18n="admin_nav_requests">Requests</span></button>
+      <button data-view="products"><span class="admin-nav-icon" aria-hidden="true">👗</span><span data-i18n="admin_nav_products">Products</span></button>
+      <button data-view="categories"><span class="admin-nav-icon" aria-hidden="true">🏷️</span><span data-i18n="admin_nav_categories">Categories</span></button>
+      <button data-view="collections"><span class="admin-nav-icon" aria-hidden="true">📚</span><span data-i18n="admin_nav_collections">Collections</span></button>
+      <button data-view="settings"><span class="admin-nav-icon" aria-hidden="true">⚙️</span><span data-i18n="admin_nav_settings">Settings</span></button>
+      <button data-view="staff"><span class="admin-nav-icon" aria-hidden="true">👥</span><span data-i18n="admin_nav_staff">Staff</span></button>
+      <button data-view="activity"><span class="admin-nav-icon" aria-hidden="true">🕒</span><span data-i18n="admin_nav_activity">Activity</span></button>
     </nav>
-    <div class="lang-toggle" aria-label="Language / اللغة" style="margin-top:32px;">
-      <button type="button" data-lang="ar">AR</button>
-      <button type="button" data-lang="en">EN</button>
+    <div class="admin-sidebar-footer" id="adminSidebarFooter">
+      <div class="lang-toggle" aria-label="Language / اللغة">
+        <button type="button" data-lang="ar">AR</button>
+        <button type="button" data-lang="en">EN</button>
+      </div>
+      <div class="admin-sidebar-actions">
+        <button id="logoutBtn" class="btn admin-signout-btn" data-i18n="admin_signout">Sign Out →</button>
+        <button type="button" class="theme-toggle" aria-label="Toggle theme">🌙</button>
+      </div>
+      <button type="button" id="myProfileBtn" class="btn-link admin-edit-profile-btn" data-i18n="admin_my_profile">✎ Edit My Profile</button>
     </div>
-    <div style="margin-top:16px; display:flex; align-items:center; gap:10px;">
-      <button id="logoutBtn" class="btn" style="background:rgba(243,239,230,0.12); border-color:rgba(243,239,230,0.5); color:var(--ivory); font-size:13px; padding:8px 16px;" data-i18n="admin_signout">Sign Out →</button>
-      <button type="button" class="theme-toggle" aria-label="Toggle theme">🌙</button>
-    </div>
-    <button type="button" id="myProfileBtn" class="btn-link" style="margin-top:12px; color:rgba(243,239,230,0.75); font-size:12.5px;" data-i18n="admin_my_profile">✎ Edit My Profile</button>
   </aside>
 
   <div class="modal-backdrop" id="myProfileBackdrop">

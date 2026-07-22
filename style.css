@@ -924,6 +924,34 @@ button {
 .admin-sidebar .brand { color: var(--ivory); font-size: 20px; }
 .admin-sidebar .brand em { color: var(--gold-soft); }
 
+.admin-sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+.admin-nav-toggle {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  width: 34px;
+  height: 34px;
+  background: none;
+  border: none;
+  padding: 0;
+  flex-shrink: 0;
+}
+.admin-nav-toggle span {
+  display: block;
+  height: 2px;
+  background: var(--ivory);
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+.admin-nav-toggle.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+.admin-nav-toggle.open span:nth-child(2) { opacity: 0; }
+.admin-nav-toggle.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
 .admin-nav {
   margin-top: var(--space-5);
   display: flex;
@@ -931,16 +959,39 @@ button {
   gap: 4px;
 }
 .admin-nav button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   text-align: left;
   background: none;
   border: none;
+  border-radius: 8px;
   color: rgba(247,239,224,0.7);
   padding: 10px 12px;
   font-size: 14px;
   letter-spacing: 0.03em;
 }
+.admin-nav-icon { width: 18px; font-size: 15px; text-align: center; flex-shrink: 0; }
 .admin-nav button.active { background: rgba(201,151,63,0.16); color: var(--gold-soft); }
-.admin-nav button:hover { color: var(--ivory); }
+.admin-nav button:hover { color: var(--ivory); background: rgba(247,239,224,0.06); }
+
+.admin-sidebar-footer {
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid rgba(201,151,63,0.18);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.admin-sidebar-actions { display: flex; align-items: center; gap: 10px; }
+.admin-signout-btn {
+  background: rgba(243,239,230,0.12);
+  border-color: rgba(243,239,230,0.5);
+  color: var(--ivory);
+  font-size: 13px;
+  padding: 8px 16px;
+}
+.admin-edit-profile-btn { color: rgba(243,239,230,0.75); font-size: 12.5px; }
 
 .admin-main { flex: 1; padding: var(--space-4); max-width: 1100px; }
 
@@ -1123,6 +1174,12 @@ select.status-select {
   .admin-shell { flex-direction: column; }
   .admin-sidebar { width: 100%; }
   .product-form-grid { grid-template-columns: 1fr; }
+
+  .admin-nav-toggle { display: flex; }
+  .admin-nav, .admin-sidebar-footer { display: none; }
+  .admin-nav { margin-top: var(--space-3); }
+  .admin-sidebar.nav-open .admin-nav { display: flex; }
+  .admin-sidebar.nav-open .admin-sidebar-footer { display: flex; }
 
   /* Responsive tables: each row becomes a stacked card instead of a wide
      scrolling table, so nothing needs horizontal scrolling on a phone. */
