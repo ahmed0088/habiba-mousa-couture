@@ -352,9 +352,11 @@ function renderGallery() {
 
   const searchQuery = (productSearchInput?.value || "").trim().toLowerCase();
   const filtered = searchQuery
-    ? saleFiltered.filter(p =>
-        `${p.name || ""} ${p.category || ""} ${p.description || ""}`.toLowerCase().includes(searchQuery)
-      )
+    ? saleFiltered.filter(p => {
+        const collectionName = allCollections.find(c => c.id === p.collectionId)?.name || "";
+        return `${p.name || ""} ${p.category || ""} ${p.description || ""} ${collectionName} ${p.productCode || ""}`
+          .toLowerCase().includes(searchQuery);
+      })
     : saleFiltered;
 
   galleryGrid.innerHTML = "";

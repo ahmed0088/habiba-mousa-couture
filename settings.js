@@ -71,7 +71,7 @@ function applySettingsOverrides() {
     }
   }
 
-  applyShopLocationMap(s.shopLatLng);
+  applyShopLocationMap(s.shopLatLng || extractLatLngFromUrl(s.wazeUrl) || extractLatLngFromUrl(s.googleMapsUrl));
 
   const logoImg = document.getElementById("brandLogo");
   const brandText = document.getElementById("brandText");
@@ -105,6 +105,16 @@ document.addEventListener("langchange", applySettingsOverrides);
 // Only present on contact.html; renders a free (Leaflet/OpenStreetMap, no API key)
 // static map with a marker at the owner-set coordinates, replacing the plain link buttons.
 let shopLocationMap = null;
+// Best-effort fallback: the owner may not have filled in the dedicated
+// coordinates field, but often already pasted a Waze or Google Maps link that
+// has a lat,lng pair embedded in it — reuse that instead of showing nothing.
+function extractLatLngFromUrl(url) {
+  if (!url) return null;
+  const decoded = decodeURIComponent(url);
+  const match = decoded.match(/(-?\d{1,3}\.\d+)\s*,\s*(-?\d{1,3}\.\d+)/);
+  return match ? `${match[1]},${match[2]}` : null;
+}
+
 function applyShopLocationMap(latLngRaw) {
   const container = document.getElementById("shopLocationMap");
   if (!container || typeof L === "undefined") return;

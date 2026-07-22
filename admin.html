@@ -334,12 +334,12 @@
       <div class="admin-topbar">
         <h1>Site Settings</h1>
       </div>
-      <div class="admin-card">
-        <p class="form-note">
-          Live on the site immediately — leave a field blank to keep the default text.
-        </p>
+      <p class="form-note">
+        Live on the site immediately — leave a field blank to keep the default text.
+      </p>
 
-        <h3 style="font-family:var(--font-display); font-size:19px;">About / Hero</h3>
+      <details class="admin-card settings-section" open>
+        <summary>About / Hero</summary>
         <div class="product-form-grid">
           <div class="field">
             <label>Hero tagline — Arabic</label>
@@ -374,9 +374,11 @@
             <textarea id="setAboutStoryEn"></textarea>
           </div>
         </div>
+      </details>
 
-        <h3 style="font-family:var(--font-display); font-size:19px;">How It Works — 4 Steps</h3>
-        <p class="form-note" style="margin-top:-8px;">Leave blank to use the default step text shown below each field.</p>
+      <details class="admin-card settings-section">
+        <summary>How It Works — 4 Steps</summary>
+        <p class="form-note">Leave blank to use the default step text shown below each field.</p>
         <div class="product-form-grid">
           <div class="field">
             <label>Step 1 title — Arabic <span style="color:#999; font-weight:400;">(default: الطلب)</span></label>
@@ -443,8 +445,10 @@
             <textarea id="setStep4DescEn"></textarea>
           </div>
         </div>
+      </details>
 
-        <h3 style="font-family:var(--font-display); font-size:19px;">Contact &amp; Maps</h3>
+      <details class="admin-card settings-section" open>
+        <summary>Contact &amp; Maps</summary>
         <div class="product-form-grid">
           <div class="field">
             <label>Phone</label>
@@ -491,13 +495,17 @@
             <input type="url" id="setLogoUrl" placeholder="https://..." />
           </div>
         </div>
+      </details>
 
-        <h3 style="font-family:var(--font-display); font-size:19px;">Deposit</h3>
+      <details class="admin-card settings-section" open>
+        <summary>Deposit</summary>
         <div class="field" style="max-width:220px;">
           <label>Deposit percentage</label>
           <input type="number" id="setDepositPercent" min="0" max="100" placeholder="40" />
         </div>
+      </details>
 
+      <div class="admin-card">
         <div class="submit-row">
           <button class="btn btn-solid" id="saveSettingsBtn">Save Settings</button>
         </div>

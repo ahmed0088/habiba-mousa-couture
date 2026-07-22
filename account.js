@@ -261,15 +261,54 @@ const STATUS_KEY_MAP = {
   cancelled: "status_cancelled"
 };
 
+let productsCacheForRequests = {};
+db.collection("products").get().then((snap) => {
+  snap.docs.forEach((doc) => { productsCacheForRequests[doc.id] = doc.data(); });
+}).catch((err) => console.error("Failed to load product photos for My Requests:", err));
+
 function renderRequestRow(r) {
   const row = document.createElement("div");
   row.className = "my-request-row";
+  const product = r.productId ? productsCacheForRequests[r.productId] : null;
+  const thumbSrc = product && product.images && product.images[0] ? product.images[0] : "";
+  const thumbFocus = product && product.imageFocus ? product.imageFocus : "top";
+  const thumbHtml = thumbSrc
+    ? `<img class="my-request-thumb" src="${escapeHtmlAccount(thumbSrc)}" alt="" style="object-position: center ${escapeHtmlAccount(thumbFocus)};" loading="lazy" />`
+    : `<div class="my-request-thumb-empty"></div>`;
   row.innerHTML = `
+    ${thumbHtml}
     <div class="my-request-piece">${escapeHtmlAccount(r.productName || "—")}</div>
-    <span class="status-pill status-${escapeHtmlAccount(r.status)}">${escapeHtmlAccount(t(STATUS_KEY_MAP[r.status] || r.status))}</span>
-    <div class="my-request-date">${formatDateAccount(r.createdAt)}</div>
+    <div class="my-request-meta">
+      <span class="status-pill status-${escapeHtmlAccount(r.status)}">${escapeHtmlAccount(t(STATUS_KEY_MAP[r.status] || r.status))}</span>
+      <div class="my-request-date">${formatDateAccount(r.createdAt)}</div>
+    </div>
   `;
   return row;
+}
+
+// Requests render newest-first from Firestore already; only a slice is shown at a time
+// so a client with hundreds of orders doesn't dump them all into the DOM at once.
+const REQUESTS_PAGE_SIZE = 8;
+let currentShowCount = REQUESTS_PAGE_SIZE;
+let pastShowCount = REQUESTS_PAGE_SIZE;
+
+function renderRequestGroup(container, titleKey, items, showCount, onShowMore) {
+  if (items.length === 0) return;
+  const heading = document.createElement("p");
+  heading.className = "my-requests-group-title";
+  heading.textContent = t(titleKey);
+  container.appendChild(heading);
+
+  items.slice(0, showCount).forEach(r => container.appendChild(renderRequestRow(r)));
+
+  if (items.length > showCount) {
+    const moreBtn = document.createElement("button");
+    moreBtn.type = "button";
+    moreBtn.className = "btn-link my-requests-more-btn";
+    moreBtn.textContent = `${t("my_requests_show_more")} (${items.length - showCount})`;
+    moreBtn.addEventListener("click", onShowMore);
+    container.appendChild(moreBtn);
+  }
 }
 
 function renderMyRequests(docs) {
@@ -286,21 +325,14 @@ function renderMyRequests(docs) {
   const past = docs.filter(r => r.status === "delivered" || r.status === "cancelled");
   const current = docs.filter(r => r.status !== "delivered" && r.status !== "cancelled");
 
-  if (current.length > 0) {
-    const heading = document.createElement("p");
-    heading.className = "my-requests-group-title";
-    heading.textContent = t("my_requests_current");
-    myRequestsList.appendChild(heading);
-    current.forEach(r => myRequestsList.appendChild(renderRequestRow(r)));
-  }
-
-  if (past.length > 0) {
-    const heading = document.createElement("p");
-    heading.className = "my-requests-group-title";
-    heading.textContent = t("my_requests_past");
-    myRequestsList.appendChild(heading);
-    past.forEach(r => myRequestsList.appendChild(renderRequestRow(r)));
-  }
+  renderRequestGroup(myRequestsList, "my_requests_current", current, currentShowCount, () => {
+    currentShowCount += REQUESTS_PAGE_SIZE;
+    renderMyRequests(docs);
+  });
+  renderRequestGroup(myRequestsList, "my_requests_past", past, pastShowCount, () => {
+    pastShowCount += REQUESTS_PAGE_SIZE;
+    renderMyRequests(docs);
+  });
 }
 
 function loadMyRequests(uid) {
