@@ -303,11 +303,7 @@ modalBackdrop.addEventListener("click", (e) => {
   if (e.target === modalBackdrop) closeModal();
 });
 
-const successBackdrop = document.getElementById("successBackdrop");
-document.getElementById("successCloseBtn")?.addEventListener("click", () => successBackdrop.classList.remove("open"));
-successBackdrop?.addEventListener("click", (e) => {
-  if (e.target === successBackdrop) successBackdrop.classList.remove("open");
-});
+// successBackdrop open/close is handled generically in account.js (shared across all pages)
 document.addEventListener("keydown", (e) => {
   if (e.key !== "Escape") return;
   if (imageLightbox.classList.contains("open")) {
@@ -559,7 +555,7 @@ requestForm.addEventListener("submit", async (e) => {
     await db.collection("requests").add(payload);
     requestForm.reset();
     closeModal();
-    document.getElementById("successBackdrop").classList.add("open");
+    showSuccessPopup("submit_success_title", "submit_success");
   } catch (err) {
     console.error("Failed to submit request:", err);
     formStatus.className = "form-status error";

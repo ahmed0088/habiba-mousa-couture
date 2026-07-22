@@ -930,6 +930,54 @@ button {
 }
 .whoami { font-size: 13px; color: var(--text-faint); }
 
+/* ---------- Activity Log ---------- */
+
+.activity-filters {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  margin-bottom: var(--space-2);
+}
+.activity-filters .field { max-width: 200px; margin-bottom: 0; }
+
+.activity-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border-soft);
+}
+.activity-row:last-child { border-bottom: none; }
+.activity-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--surface-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+.activity-thumb {
+  width: 36px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: 5px;
+  border: 1px solid var(--line);
+  flex-shrink: 0;
+}
+.activity-body { flex: 1; min-width: 0; }
+.activity-action { font-weight: 600; color: var(--heading); font-size: 14px; }
+.activity-target { font-size: 13.5px; color: var(--text-muted); margin-top: 1px; }
+.activity-meta { font-size: 12px; color: var(--text-faint); margin-top: 3px; }
+.activity-row-actions { display: flex; gap: 10px; flex-shrink: 0; }
+@media (max-width: 700px) {
+  .activity-row { flex-wrap: wrap; }
+  .activity-body { flex-basis: 100%; order: 3; }
+}
+
 .status-pill {
   display: inline-block;
   font-size: 11px;

@@ -183,53 +183,198 @@ function showToast(message, type) {
   setTimeout(() => toast.remove(), 5000);
 }
 
-function logActivity(action, target) {
-  db.collection("activityLog").add({
+function logActivity(action, target, extra) {
+  const entry = {
     action,
     target: target || "",
     actor: (currentStaff && (currentStaff.name || currentStaff.email)) || "unknown",
     createdAt: firebase.firestore.FieldValue.serverTimestamp()
-  }).catch((err) => {
+  };
+  if (extra && extra.imageUrl) entry.imageUrl = extra.imageUrl;
+  if (extra && extra.snapshotCollection && extra.snapshotData) {
+    entry.snapshotCollection = extra.snapshotCollection;
+    entry.snapshotId = extra.snapshotId || null;
+    entry.snapshotData = extra.snapshotData;
+  }
+  db.collection("activityLog").add(entry).catch((err) => {
     console.error("Failed to log activity:", err);
     showToast("Couldn't save to the activity log — the live Firestore rules may be out of date." + errSuffix(err), "error");
   });
 }
 
-function loadActivityLog() {
-  db.collection("activityLog").orderBy("createdAt", "desc").limit(100).onSnapshot((snapshot) => {
-    const tbody = document.getElementById("activityTableBody");
-    const empty = document.getElementById("activityEmpty");
-    const recentBox = document.getElementById("dashboardRecentActivity");
-    const recentEmpty = document.getElementById("dashboardActivityEmpty");
-    tbody.innerHTML = "";
-    if (recentBox) recentBox.innerHTML = "";
+let allActivityLog = [];
+let activityShowCount = 20;
+const ACTIVITY_PAGE_SIZE = 20;
 
-    if (snapshot.empty) {
-      empty.style.display = "block";
-      if (recentEmpty) recentEmpty.style.display = "block";
-      return;
+function activityIconFor(action) {
+  if (/^Deleted/.test(action)) return "🗑️";
+  if (/^Created|^Invited/.test(action)) return "➕";
+  if (/^Updated/.test(action)) return "✏️";
+  if (/^Changed/.test(action)) return "🔄";
+  if (/^Removed/.test(action)) return "👤";
+  if (/^Restored/.test(action)) return "↩️";
+  return "•";
+}
+
+function populateActivityFilters() {
+  const actionFilter = document.getElementById("activityActionFilter");
+  const actorFilter = document.getElementById("activityActorFilter");
+  if (!actionFilter || !actorFilter) return;
+  const currentAction = actionFilter.value;
+  const currentActor = actorFilter.value;
+
+  const actions = [...new Set(allActivityLog.map(a => a.action))].sort();
+  const actors = [...new Set(allActivityLog.map(a => a.actor))].sort();
+
+  actionFilter.innerHTML = `<option value="all">${t("admin_activity_filter_all_actions")}</option>` +
+    actions.map(a => `<option value="${escapeHtml(a)}">${escapeHtml(a)}</option>`).join("");
+  actorFilter.innerHTML = `<option value="all">${t("admin_activity_filter_all_staff")}</option>` +
+    actors.map(a => `<option value="${escapeHtml(a)}">${escapeHtml(a)}</option>`).join("");
+
+  actionFilter.value = currentAction || "all";
+  actorFilter.value = currentActor || "all";
+}
+
+function renderActivityLog() {
+  const feed = document.getElementById("activityFeed");
+  const empty = document.getElementById("activityEmpty");
+  const showMoreBtn = document.getElementById("activityShowMoreBtn");
+  const recentBox = document.getElementById("dashboardRecentActivity");
+  const recentEmpty = document.getElementById("dashboardActivityEmpty");
+  if (!feed) return;
+
+  const actionFilter = document.getElementById("activityActionFilter")?.value || "all";
+  const actorFilter = document.getElementById("activityActorFilter")?.value || "all";
+  const dateFrom = document.getElementById("activityDateFrom")?.value;
+  const dateTo = document.getElementById("activityDateTo")?.value;
+
+  const filtered = allActivityLog.filter((a) => {
+    if (actionFilter !== "all" && a.action !== actionFilter) return false;
+    if (actorFilter !== "all" && a.actor !== actorFilter) return false;
+    if ((dateFrom || dateTo) && a.createdAt) {
+      const d = a.createdAt.toDate ? a.createdAt.toDate() : new Date(a.createdAt);
+      if (dateFrom && d < new Date(dateFrom)) return false;
+      if (dateTo && d > new Date(dateTo + "T23:59:59")) return false;
     }
-    empty.style.display = "none";
-    if (recentEmpty) recentEmpty.style.display = "none";
+    return true;
+  });
 
-    snapshot.forEach((doc, i) => {
-      const a = doc.data();
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td data-label="Action">${escapeHtml(a.action)}</td>
-        <td data-label="Details">${escapeHtml(a.target)}</td>
-        <td data-label="By">${escapeHtml(a.actor)}</td>
-        <td data-label="When">${formatDate(a.createdAt)}</td>
-      `;
-      tbody.appendChild(tr);
+  feed.innerHTML = "";
+  if (recentBox) recentBox.innerHTML = "";
 
-      if (i < 5 && recentBox) {
-        const row = document.createElement("p");
-        row.style.cssText = "margin:0 0 8px; font-size:13.5px; border-bottom:1px solid var(--border-soft); padding-bottom:8px;";
-        row.innerHTML = `<strong>${escapeHtml(a.action)}</strong> ${escapeHtml(a.target)} — <span style="color:var(--text-faint);">${escapeHtml(a.actor)}, ${formatDate(a.createdAt)}</span>`;
-        recentBox.appendChild(row);
+  if (filtered.length === 0) {
+    empty.style.display = "block";
+    if (recentEmpty) recentEmpty.style.display = "block";
+    if (showMoreBtn) showMoreBtn.style.display = "none";
+    return;
+  }
+  empty.style.display = "none";
+  if (recentEmpty) recentEmpty.style.display = "none";
+
+  filtered.slice(0, activityShowCount).forEach((a) => {
+    const row = document.createElement("div");
+    row.className = "activity-row";
+    const thumbHtml = a.imageUrl
+      ? `<img class="activity-thumb" src="${escapeHtml(a.imageUrl)}" alt="" loading="lazy" />`
+      : `<div class="activity-icon">${activityIconFor(a.action)}</div>`;
+    const canRestore = /^Deleted/.test(a.action) && a.snapshotCollection && a.snapshotData;
+    row.innerHTML = `
+      ${thumbHtml}
+      <div class="activity-body">
+        <div class="activity-action">${escapeHtml(a.action)}</div>
+        <div class="activity-target">${escapeHtml(a.target || "—")}</div>
+        <div class="activity-meta">${escapeHtml(a.actor)} · ${formatDate(a.createdAt)}</div>
+      </div>
+      <div class="activity-row-actions">
+        ${canRestore ? `<button class="icon-btn" data-restore-log="${a.id}">${escapeHtml(t("admin_activity_restore"))}</button>` : ""}
+        <button class="icon-btn danger" data-delete-log="${a.id}">${escapeHtml(t("admin_activity_delete"))}</button>
+      </div>
+    `;
+    feed.appendChild(row);
+  });
+
+  filtered.slice(0, 5).forEach((a) => {
+    if (!recentBox) return;
+    const p = document.createElement("p");
+    p.style.cssText = "margin:0 0 8px; font-size:13.5px; border-bottom:1px solid var(--border-soft); padding-bottom:8px;";
+    p.innerHTML = `<strong>${escapeHtml(a.action)}</strong> ${escapeHtml(a.target)} — <span style="color:var(--text-faint);">${escapeHtml(a.actor)}, ${formatDate(a.createdAt)}</span>`;
+    recentBox.appendChild(p);
+  });
+
+  if (showMoreBtn) {
+    if (filtered.length > activityShowCount) {
+      showMoreBtn.style.display = "block";
+      showMoreBtn.textContent = `${t("my_requests_show_more")} (${filtered.length - activityShowCount})`;
+    } else {
+      showMoreBtn.style.display = "none";
+    }
+  }
+
+  feed.querySelectorAll("[data-delete-log]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      if (!confirm(t("admin_activity_delete_confirm"))) return;
+      try {
+        await db.collection("activityLog").doc(btn.dataset.deleteLog).delete();
+      } catch (err) {
+        console.error("Failed to delete activity log entry:", err);
+        alert("Couldn't delete this entry." + errSuffix(err));
       }
     });
+  });
+
+  feed.querySelectorAll("[data-restore-log]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const entry = allActivityLog.find(a => a.id === btn.dataset.restoreLog);
+      if (!entry) return;
+      if (!confirm(t("admin_activity_restore_confirm"))) return;
+      try {
+        const { id, ...cleanData } = entry.snapshotData;
+        const targetCollection = db.collection(entry.snapshotCollection);
+        if (entry.snapshotId) {
+          await targetCollection.doc(entry.snapshotId).set(cleanData);
+        } else {
+          await targetCollection.add(cleanData);
+        }
+        logActivity(`Restored ${entry.snapshotCollection.slice(0, -1)}`, entry.target || "");
+        showToast(t("admin_activity_restored"));
+      } catch (err) {
+        console.error("Failed to restore item:", err);
+        showToast(t("admin_activity_restore_error") + errSuffix(err), "error");
+      }
+    });
+  });
+}
+
+["activityActionFilter", "activityActorFilter", "activityDateFrom", "activityDateTo"].forEach((id) => {
+  document.getElementById(id)?.addEventListener("change", () => {
+    activityShowCount = ACTIVITY_PAGE_SIZE;
+    renderActivityLog();
+  });
+});
+
+document.getElementById("activityFilterClearBtn")?.addEventListener("click", () => {
+  const actionFilter = document.getElementById("activityActionFilter");
+  const actorFilter = document.getElementById("activityActorFilter");
+  const dateFrom = document.getElementById("activityDateFrom");
+  const dateTo = document.getElementById("activityDateTo");
+  if (actionFilter) actionFilter.value = "all";
+  if (actorFilter) actorFilter.value = "all";
+  if (dateFrom) dateFrom.value = "";
+  if (dateTo) dateTo.value = "";
+  activityShowCount = ACTIVITY_PAGE_SIZE;
+  renderActivityLog();
+});
+
+document.getElementById("activityShowMoreBtn")?.addEventListener("click", () => {
+  activityShowCount += ACTIVITY_PAGE_SIZE;
+  renderActivityLog();
+});
+
+function loadActivityLog() {
+  db.collection("activityLog").orderBy("createdAt", "desc").limit(300).onSnapshot((snapshot) => {
+    allActivityLog = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    populateActivityFilters();
+    renderActivityLog();
   }, (err) => {
     console.error("Activity log listener error:", err);
     const empty = document.getElementById("activityEmpty");
@@ -394,11 +539,15 @@ function renderRequestsTable() {
 
   tbody.querySelectorAll("[data-delete-request]").forEach((btn) => {
     btn.addEventListener("click", async () => {
-      if (!confirm("Delete this request permanently? This can't be undone.")) return;
+      if (!confirm("Delete this request? You can restore it later from the Activity Log if needed.")) return;
       const r = requestsById[btn.dataset.deleteRequest];
       try {
         await db.collection("requests").doc(btn.dataset.deleteRequest).delete();
-        logActivity("Deleted request", r ? r.clientName : "");
+        logActivity("Deleted request", r ? r.clientName : "", {
+          snapshotCollection: "requests",
+          snapshotId: btn.dataset.deleteRequest,
+          snapshotData: r || null
+        });
       } catch (err) {
         console.error("Failed to delete request:", err);
         alert("Couldn't delete this request. Please try again." + errSuffix(err));
@@ -636,11 +785,16 @@ function renderProductsTable() {
 
   tbody.querySelectorAll("[data-delete]").forEach((btn) => {
     btn.addEventListener("click", async () => {
-      if (!confirm("Remove this piece from the catalog? This can't be undone.")) return;
+      if (!confirm("Remove this piece from the catalog? You can restore it later from the Activity Log if needed.")) return;
       const entry = allProductsAdmin.find(([id]) => id === btn.dataset.delete);
       try {
         await db.collection("products").doc(btn.dataset.delete).delete();
-        logActivity("Deleted product", entry ? entry[1].name : "");
+        logActivity("Deleted product", entry ? entry[1].name : "", {
+          imageUrl: entry && entry[1].images ? entry[1].images[0] : null,
+          snapshotCollection: "products",
+          snapshotId: btn.dataset.delete,
+          snapshotData: entry ? entry[1] : null
+        });
       } catch (err) {
         console.error("Failed to delete product:", err);
         alert("Couldn't delete this piece. Please try again." + errSuffix(err));
@@ -796,7 +950,11 @@ function loadCategories() {
         const category = allCategories.find(c => c.id === btn.dataset.deleteCategory);
         try {
           await db.collection("categories").doc(btn.dataset.deleteCategory).delete();
-          logActivity("Deleted category", category ? category.name : "");
+          logActivity("Deleted category", category ? category.name : "", {
+            snapshotCollection: "categories",
+            snapshotId: btn.dataset.deleteCategory,
+            snapshotData: category || null
+          });
         } catch (err) {
           console.error("Failed to delete category:", err);
           alert("Couldn't delete this category. Please try again." + errSuffix(err));
@@ -918,7 +1076,11 @@ function loadCollections() {
         const collection = allCollections.find(c => c.id === btn.dataset.deleteCollection);
         try {
           await db.collection("collections").doc(btn.dataset.deleteCollection).delete();
-          logActivity("Deleted collection", collection ? collection.name : "");
+          logActivity("Deleted collection", collection ? collection.name : "", {
+            snapshotCollection: "collections",
+            snapshotId: btn.dataset.deleteCollection,
+            snapshotData: collection || null
+          });
         } catch (err) {
           console.error("Failed to delete collection:", err);
           alert("Couldn't delete this collection. Please try again." + errSuffix(err));

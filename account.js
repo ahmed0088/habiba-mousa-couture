@@ -5,6 +5,27 @@
 // Tracking: requests where clientUid == the signed-in user's uid.
 // ================================
 
+// ---------- Shared animated success popup (used for sign-in and request submission) ----------
+
+const successBackdrop = document.getElementById("successBackdrop");
+
+function showSuccessPopup(titleKey, messageKey) {
+  if (!successBackdrop) return;
+  const titleEl = document.getElementById("successTitle");
+  const msgEl = document.getElementById("successMessage");
+  if (titleEl) titleEl.textContent = t(titleKey);
+  if (msgEl) msgEl.textContent = t(messageKey);
+  // CSS animations only play once per DOM node — clone the SVG so it replays each time.
+  const oldSvg = successBackdrop.querySelector(".success-check");
+  if (oldSvg) oldSvg.parentNode.replaceChild(oldSvg.cloneNode(true), oldSvg);
+  successBackdrop.classList.add("open");
+}
+
+document.getElementById("successCloseBtn")?.addEventListener("click", () => successBackdrop?.classList.remove("open"));
+successBackdrop?.addEventListener("click", (e) => {
+  if (e.target === successBackdrop) successBackdrop.classList.remove("open");
+});
+
 const accountSignInBtn = document.getElementById("accountSignInBtn");
 const accountSignedIn = document.getElementById("accountSignedIn");
 const myRequestsBtn = document.getElementById("myRequestsBtn");
@@ -163,6 +184,7 @@ signInForm?.addEventListener("submit", async (e) => {
     );
     signInForm.reset();
     closeAccountModal();
+    showSuccessPopup("account_signin_success_title", "account_signin_success_message");
   } catch (err) {
     console.error("Sign in failed:", err);
     signInStatus.className = "form-status error";
@@ -223,6 +245,7 @@ signUpForm?.addEventListener("submit", async (e) => {
     });
     signUpForm.reset();
     closeAccountModal();
+    showSuccessPopup("account_signup_success_title", "account_signup_success_message");
   } catch (err) {
     console.error("Sign up failed:", err);
     signUpStatus.className = "form-status error";
@@ -240,6 +263,7 @@ googleSignInBtn?.addEventListener("click", async () => {
     const provider = new firebase.auth.GoogleAuthProvider();
     await auth.signInWithPopup(provider);
     closeAccountModal();
+    showSuccessPopup("account_signin_success_title", "account_signin_success_message");
   } catch (err) {
     console.error("Google sign in failed:", err);
     signInStatus.className = "form-status error";

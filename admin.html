@@ -9,7 +9,7 @@
 <title>Admin — Habiba Mousa</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=El+Messiri:wght@400;500;600;700&family=Jost:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=2" />
+<link rel="stylesheet" href="style.css?v=3" />
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Ccircle cx='20' cy='20' r='19' fill='%231c1013' stroke='%23c9973f' stroke-width='1.2'/%3E%3Cpath d='M12 28V19a8 9 0 0 1 16 0v9' fill='none' stroke='%23c9973f' stroke-width='1.6' stroke-linecap='round'/%3E%3Cpath d='M20 10l2.2 4.5L20 19l-2.2-4.5z' fill='%23e3c179'/%3E%3C/svg%3E" />
 </head>
 <body class="admin-body">
@@ -574,12 +574,35 @@
       <div class="admin-topbar">
         <h1 data-i18n="admin_activity_title">Activity Log</h1>
       </div>
-      <div class="admin-card" style="overflow-x:auto;">
-        <table>
-          <thead><tr><th data-i18n="admin_th_action">Action</th><th data-i18n="admin_th_target">Details</th><th data-i18n="admin_th_by">By</th><th data-i18n="admin_th_when">When</th></tr></thead>
-          <tbody id="activityTableBody"></tbody>
-        </table>
+
+      <div class="activity-filters">
+        <div class="field">
+          <label data-i18n="admin_activity_filter_action">Action</label>
+          <select id="activityActionFilter">
+            <option value="all" data-i18n="admin_activity_filter_all_actions">All Actions</option>
+          </select>
+        </div>
+        <div class="field">
+          <label data-i18n="admin_activity_filter_actor">Staff Member</label>
+          <select id="activityActorFilter">
+            <option value="all" data-i18n="admin_activity_filter_all_staff">All Staff</option>
+          </select>
+        </div>
+        <div class="field">
+          <label data-i18n="admin_activity_filter_from">From</label>
+          <input type="date" id="activityDateFrom" />
+        </div>
+        <div class="field">
+          <label data-i18n="admin_activity_filter_to">To</label>
+          <input type="date" id="activityDateTo" />
+        </div>
+        <button class="btn" type="button" id="activityFilterClearBtn" data-i18n="admin_activity_filter_clear">Clear Filters</button>
+      </div>
+
+      <div class="admin-card">
+        <div id="activityFeed"></div>
         <p id="activityEmpty" style="display:none; color:#8a8a86; padding: 20px 0;" data-i18n="admin_activity_empty">No activity yet.</p>
+        <button type="button" class="btn-link" id="activityShowMoreBtn" style="display:none; margin-top:10px;" data-i18n="my_requests_show_more">Show more</button>
       </div>
     </section>
 
@@ -604,9 +627,9 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-<script src="firebase-config.js?v=2"></script>
-<script src="i18n.js?v=2"></script>
-<script src="theme.js?v=2"></script>
-<script src="admin.js?v=2"></script>
+<script src="firebase-config.js?v=3"></script>
+<script src="i18n.js?v=3"></script>
+<script src="theme.js?v=3"></script>
+<script src="admin.js?v=3"></script>
 </body>
 </html>
