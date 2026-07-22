@@ -615,12 +615,16 @@ function loadProducts() {
 // ---------- Categories ----------
 
 const newCategoryBtn = document.getElementById("newCategoryBtn");
-const categoryFormCard = document.getElementById("categoryFormCard");
+const categoryFormBackdrop = document.getElementById("categoryFormBackdrop");
+const categoryFormClose = document.getElementById("categoryFormClose");
 const categoryNameInput = document.getElementById("categoryName");
 const saveCategoryBtn = document.getElementById("saveCategoryBtn");
 const cancelCategoryBtn = document.getElementById("cancelCategoryBtn");
 const categoryFormStatus = document.getElementById("categoryFormStatus");
 const pCategorySelect = document.getElementById("pCategory");
+
+function openCategoryForm() { categoryFormBackdrop.classList.add("open"); }
+function closeCategoryForm() { categoryFormBackdrop.classList.remove("open"); }
 
 let allCategories = [];
 let hasSeededCategories = false;
@@ -634,11 +638,13 @@ newCategoryBtn.addEventListener("click", () => {
   categoryNameInput.value = "";
   categoryFormStatus.className = "form-status";
   categoryFormStatus.textContent = "";
-  categoryFormCard.style.display = "block";
+  openCategoryForm();
 });
 
-cancelCategoryBtn.addEventListener("click", () => {
-  categoryFormCard.style.display = "none";
+cancelCategoryBtn.addEventListener("click", closeCategoryForm);
+categoryFormClose?.addEventListener("click", closeCategoryForm);
+categoryFormBackdrop?.addEventListener("click", (e) => {
+  if (e.target === categoryFormBackdrop) closeCategoryForm();
 });
 
 saveCategoryBtn.addEventListener("click", async () => {
@@ -657,7 +663,7 @@ saveCategoryBtn.addEventListener("click", async () => {
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
     logActivity("Created category", name);
-    categoryFormCard.style.display = "none";
+    closeCategoryForm();
   } catch (err) {
     console.error("Failed to save category:", err);
     categoryFormStatus.className = "form-status error";
@@ -755,7 +761,8 @@ function loadCategories() {
 // ---------- Collections ----------
 
 const newCollectionBtn = document.getElementById("newCollectionBtn");
-const collectionFormCard = document.getElementById("collectionFormCard");
+const collectionFormBackdrop = document.getElementById("collectionFormBackdrop");
+const collectionFormClose = document.getElementById("collectionFormClose");
 const collectionNameInput = document.getElementById("collectionName");
 const saveCollectionBtn = document.getElementById("saveCollectionBtn");
 const cancelCollectionBtn = document.getElementById("cancelCollectionBtn");
@@ -764,15 +771,20 @@ const pCollectionSelect = document.getElementById("pCollection");
 
 let allCollections = [];
 
+function openCollectionForm() { collectionFormBackdrop.classList.add("open"); }
+function closeCollectionForm() { collectionFormBackdrop.classList.remove("open"); }
+
 newCollectionBtn.addEventListener("click", () => {
   collectionNameInput.value = "";
   collectionFormStatus.className = "form-status";
   collectionFormStatus.textContent = "";
-  collectionFormCard.style.display = "block";
+  openCollectionForm();
 });
 
-cancelCollectionBtn.addEventListener("click", () => {
-  collectionFormCard.style.display = "none";
+cancelCollectionBtn.addEventListener("click", closeCollectionForm);
+collectionFormClose?.addEventListener("click", closeCollectionForm);
+collectionFormBackdrop?.addEventListener("click", (e) => {
+  if (e.target === collectionFormBackdrop) closeCollectionForm();
 });
 
 saveCollectionBtn.addEventListener("click", async () => {
@@ -791,7 +803,7 @@ saveCollectionBtn.addEventListener("click", async () => {
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
     logActivity("Created collection", name);
-    collectionFormCard.style.display = "none";
+    closeCollectionForm();
   } catch (err) {
     console.error("Failed to save collection:", err);
     collectionFormStatus.className = "form-status error";

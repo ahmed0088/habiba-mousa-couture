@@ -2,6 +2,9 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8" />
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+<meta http-equiv="Pragma" content="no-cache" />
+<meta http-equiv="Expires" content="0" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Admin — Habiba Mousa</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -254,17 +257,20 @@
       </div>
       <p class="form-note" data-i18n="admin_categories_intro">Garment types clients can filter by — e.g. Dress, Abaya, Pants. Keep this list distinct from Collections (seasonal drops).</p>
 
-      <div class="admin-card" id="categoryFormCard" style="display:none;">
-        <h3 style="font-family:var(--font-display); margin-top:0;" data-i18n="admin_add_category">New Category</h3>
-        <div class="field">
-          <label data-i18n="admin_category_name">Name</label>
-          <input type="text" id="categoryName" placeholder="e.g. Dress, Abaya, Pants" />
+      <div class="modal-backdrop" id="categoryFormBackdrop">
+        <div class="modal">
+          <button class="modal-close" id="categoryFormClose" aria-label="Close">&times;</button>
+          <h3 style="font-family:var(--font-display); margin-top:0;" data-i18n="admin_add_category">New Category</h3>
+          <div class="field">
+            <label data-i18n="admin_category_name">Name</label>
+            <input type="text" id="categoryName" placeholder="e.g. Dress, Abaya, Pants" />
+          </div>
+          <div class="submit-row" style="display:flex; gap:10px;">
+            <button class="btn btn-solid" id="saveCategoryBtn" data-i18n="admin_create_category">Create Category</button>
+            <button class="btn" id="cancelCategoryBtn" style="border-color:#cfc7b4; color:var(--charcoal);" data-i18n="admin_cancel">Cancel</button>
+          </div>
+          <div class="form-status" id="categoryFormStatus"></div>
         </div>
-        <div class="submit-row" style="display:flex; gap:10px;">
-          <button class="btn btn-solid" id="saveCategoryBtn" data-i18n="admin_create_category">Create Category</button>
-          <button class="btn" id="cancelCategoryBtn" style="border-color:#cfc7b4; color:var(--charcoal);" data-i18n="admin_cancel">Cancel</button>
-        </div>
-        <div class="form-status" id="categoryFormStatus"></div>
       </div>
 
       <div class="admin-card" style="overflow-x:auto;">
@@ -283,17 +289,20 @@
         <button class="btn btn-solid" id="newCollectionBtn">+ New Collection</button>
       </div>
 
-      <div class="admin-card" id="collectionFormCard" style="display:none;">
-        <h3 style="font-family:var(--font-display); margin-top:0;">New Collection</h3>
-        <div class="field">
-          <label>Name</label>
-          <input type="text" id="collectionName" placeholder="e.g. Autumn 2026, Ramadan 2026" />
+      <div class="modal-backdrop" id="collectionFormBackdrop">
+        <div class="modal">
+          <button class="modal-close" id="collectionFormClose" aria-label="Close">&times;</button>
+          <h3 style="font-family:var(--font-display); margin-top:0;">New Collection</h3>
+          <div class="field">
+            <label>Name</label>
+            <input type="text" id="collectionName" placeholder="e.g. Autumn 2026, Ramadan 2026" />
+          </div>
+          <div class="submit-row" style="display:flex; gap:10px;">
+            <button class="btn btn-solid" id="saveCollectionBtn">Create Collection</button>
+            <button class="btn" id="cancelCollectionBtn" style="border-color:#cfc7b4; color:var(--charcoal);">Cancel</button>
+          </div>
+          <div class="form-status" id="collectionFormStatus"></div>
         </div>
-        <div class="submit-row" style="display:flex; gap:10px;">
-          <button class="btn btn-solid" id="saveCollectionBtn">Create Collection</button>
-          <button class="btn" id="cancelCollectionBtn" style="border-color:#cfc7b4; color:var(--charcoal);">Cancel</button>
-        </div>
-        <div class="form-status" id="collectionFormStatus"></div>
       </div>
 
       <div class="admin-card" style="overflow-x:auto;">
