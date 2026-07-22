@@ -84,11 +84,28 @@ function showToastPublic(message) {
   setTimeout(() => toast.remove(), 3000);
 }
 
-function shareProduct(product) {
+async function shareProduct(product) {
   const url = `${location.origin}${location.pathname}?product=${product.id}`;
-  const shareData = { title: product.name, text: product.description || "", url };
+  const priceText = product.salePrice
+    ? formatPrice(product.salePrice)
+    : (product.priceRange ? formatPrice(product.priceRange) : "");
+  const text = `${product.name}${priceText ? " — " + priceText : ""}`;
+  const imageUrl = product.images && product.images[0];
+
+  if (imageUrl && navigator.canShare) {
+    try {
+      const response = await fetch(imageUrl);
+      const blob = await response.blob();
+      const file = new File([blob], "product.jpg", { type: blob.type || "image/jpeg" });
+      if (navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], title: product.name, text: `${text}\n${url}` });
+        return;
+      }
+    } catch (e) { /* fall through to link share below */ }
+  }
+
   if (navigator.share) {
-    navigator.share(shareData).catch(() => {});
+    navigator.share({ title: product.name, text, url }).catch(() => {});
   } else if (navigator.clipboard) {
     navigator.clipboard.writeText(url).then(() => showToastPublic(t("share_copied"))).catch(() => {});
   }
