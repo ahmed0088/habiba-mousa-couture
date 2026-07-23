@@ -886,6 +886,43 @@ function initLanguageToggle() {
     btn.addEventListener("click", () => applyLanguage(btn.getAttribute("data-lang")));
   });
   applyLanguage(getLang());
+  maybeShowLangSuggestionBanner();
+}
+
+const LANG_BANNER_DISMISSED_KEY = "hmc_lang_banner_dismissed";
+
+// Arabic is the default for every visitor, but a browser set to English is a
+// strong signal the person can't read Arabic — so offer a one-time, easily
+// dismissed switch instead of forcing them to find the AR/EN toggle. Never
+// shown once the visitor has made an explicit language choice (toggle click,
+// or already dismissed/accepted this suggestion) or on the staff admin panel.
+function maybeShowLangSuggestionBanner() {
+  if (document.body.classList.contains("admin-body")) return;
+  if (localStorage.getItem(LANG_KEY) !== null) return;
+  if (localStorage.getItem(LANG_BANNER_DISMISSED_KEY) === "1") return;
+  const browserLang = (navigator.language || navigator.userLanguage || "").toLowerCase();
+  if (!browserLang || browserLang.startsWith("ar")) return;
+
+  const banner = document.createElement("div");
+  banner.className = "lang-suggest-banner";
+  banner.innerHTML = `
+    <span>Looks like your browser is set to English — view this site in English?</span>
+    <span class="lang-suggest-actions">
+      <button type="button" class="lang-suggest-switch">Switch to English</button>
+      <button type="button" class="lang-suggest-dismiss" aria-label="Dismiss">&times;</button>
+    </span>
+  `;
+  document.body.prepend(banner);
+
+  banner.querySelector(".lang-suggest-switch").addEventListener("click", () => {
+    localStorage.setItem(LANG_BANNER_DISMISSED_KEY, "1");
+    applyLanguage("en");
+    banner.remove();
+  });
+  banner.querySelector(".lang-suggest-dismiss").addEventListener("click", () => {
+    localStorage.setItem(LANG_BANNER_DISMISSED_KEY, "1");
+    banner.remove();
+  });
 }
 
 document.addEventListener("DOMContentLoaded", initLanguageToggle);
