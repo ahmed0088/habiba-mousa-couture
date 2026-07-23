@@ -10,7 +10,7 @@
 <title>Admin — Habiba Mousa</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=El+Messiri:wght@400;500;600;700&family=Jost:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=14" />
+<link rel="stylesheet" href="style.css?v=16" />
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Ccircle cx='20' cy='20' r='19' fill='%231c1013' stroke='%23c9973f' stroke-width='1.2'/%3E%3Ccircle cx='20' cy='20' r='15.5' fill='none' stroke='%23c9973f' stroke-width='0.6' stroke-dasharray='1.2 1.8' opacity='0.6'/%3E%3Cg fill='none' stroke='%23e3c179' stroke-width='1.1'%3E%3Cellipse cx='20' cy='13' rx='2.6' ry='6.3'/%3E%3Cellipse cx='20' cy='13' rx='2.6' ry='6.3' transform='rotate(72 20 20)'/%3E%3Cellipse cx='20' cy='13' rx='2.6' ry='6.3' transform='rotate(144 20 20)'/%3E%3Cellipse cx='20' cy='13' rx='2.6' ry='6.3' transform='rotate(216 20 20)'/%3E%3Cellipse cx='20' cy='13' rx='2.6' ry='6.3' transform='rotate(288 20 20)'/%3E%3C/g%3E%3Ccircle cx='20' cy='20' r='2.1' fill='%23c9973f'/%3E%3C/svg%3E" />
 </head>
 <body class="admin-body">
@@ -138,7 +138,10 @@
     <!-- Requests view -->
     <section id="view-requests" style="display:none;">
       <div class="admin-topbar">
-        <h1 data-i18n="admin_requests_title">Inquiries &amp; Requests</h1>
+        <div style="display:flex; align-items:center; gap:10px;">
+          <button type="button" class="btn-link admin-back-btn" id="requestsBackBtn" style="display:none;">← <span data-i18n="admin_back_to_dashboard">Dashboard</span></button>
+          <h1 data-i18n="admin_requests_title">Inquiries &amp; Requests</h1>
+        </div>
         <span class="whoami" id="whoamiRequests"></span>
       </div>
       <div style="display:flex; gap:14px; flex-wrap:wrap; align-items:flex-end;">
@@ -170,7 +173,10 @@
     <!-- Products view -->
     <section id="view-products" style="display:none;">
       <div class="admin-topbar">
-        <h1 data-i18n="admin_products_title">Product Catalog</h1>
+        <div style="display:flex; align-items:center; gap:10px;">
+          <button type="button" class="btn-link admin-back-btn" id="productsBackBtn" style="display:none;">← <span data-i18n="admin_back_to_dashboard">Dashboard</span></button>
+          <h1 data-i18n="admin_products_title">Product Catalog</h1>
+        </div>
         <button class="btn btn-solid" id="newProductBtn" data-i18n="admin_add_piece">+ Add Piece</button>
       </div>
       <div class="field" style="max-width:320px;">
@@ -327,7 +333,10 @@
     <!-- Collections view -->
     <section id="view-collections" style="display:none;">
       <div class="admin-topbar">
-        <h1>Collections</h1>
+        <div style="display:flex; align-items:center; gap:10px;">
+          <button type="button" class="btn-link admin-back-btn" id="collectionsBackBtn" style="display:none;">← <span data-i18n="admin_back_to_dashboard">Dashboard</span></button>
+          <h1>Collections</h1>
+        </div>
         <button class="btn btn-solid" id="newCollectionBtn">+ New Collection</button>
       </div>
 
@@ -532,6 +541,15 @@
         </div>
       </details>
 
+      <details class="admin-card settings-section" open>
+        <summary data-i18n="admin_settings_inventory">Inventory</summary>
+        <div class="field" style="max-width:280px;">
+          <label for="setLowStockThreshold" data-i18n="admin_settings_low_stock_threshold">Low stock threshold</label>
+          <input type="number" id="setLowStockThreshold" min="0" placeholder="3" />
+          <p class="form-note" data-i18n="admin_settings_low_stock_note">Pieces at or below this stock count get a low-stock badge. Set to 0 to turn the low-stock warnings off entirely.</p>
+        </div>
+      </details>
+
       <div class="admin-card">
         <div class="submit-row">
           <button class="btn btn-solid" id="saveSettingsBtn">Save Settings</button>
@@ -648,9 +666,9 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-<script src="firebase-config.js?v=14"></script>
-<script src="i18n.js?v=14"></script>
-<script src="theme.js?v=14"></script>
-<script src="admin.js?v=14"></script>
+<script src="firebase-config.js?v=16"></script>
+<script src="i18n.js?v=16"></script>
+<script src="theme.js?v=16"></script>
+<script src="admin.js?v=16"></script>
 </body>
 </html>

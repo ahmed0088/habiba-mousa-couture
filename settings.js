@@ -95,6 +95,12 @@ function applySettingsOverrides() {
     const percent = s.depositPercent != null ? s.depositPercent : 40;
     depositEl.textContent = t("terms_deposit_body").replace("{percent}", percent);
   }
+
+  // Low-stock threshold lives in site settings too; re-render the gallery
+  // (if present on this page) so a changed threshold shows up without reload.
+  if (typeof renderGallery === "function" && typeof allProducts !== "undefined" && allProducts.length) {
+    renderGallery();
+  }
 }
 
 db.collection("settings").doc("site").onSnapshot(

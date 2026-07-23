@@ -166,10 +166,14 @@ adminNavToggle?.addEventListener("click", () => {
   adminNavToggle.setAttribute("aria-expanded", String(open));
 });
 
-function switchAdminView(view) {
+function switchAdminView(view, showBackBtn) {
   document.querySelectorAll(".admin-nav button[data-view]").forEach(b => b.classList.toggle("active", b.dataset.view === view));
   ["dashboard", "requests", "products", "categories", "collections", "settings", "staff", "activity"].forEach((v) => {
     document.getElementById(`view-${v}`).style.display = v === view ? "block" : "none";
+  });
+  ["requests", "products", "collections"].forEach((v) => {
+    const btn = document.getElementById(`${v}BackBtn`);
+    if (btn) btn.style.display = (showBackBtn && v === view) ? "inline-flex" : "none";
   });
   adminSidebar.classList.remove("nav-open");
   adminNavToggle?.classList.remove("open");
@@ -179,6 +183,17 @@ function switchAdminView(view) {
 document.querySelectorAll(".admin-nav button[data-view]").forEach((btn) => {
   btn.addEventListener("click", () => switchAdminView(btn.dataset.view));
 });
+
+document.getElementById("requestsBackBtn")?.addEventListener("click", () => {
+  requestsQuickFilter = null;
+  if (requestsStatusFilter) requestsStatusFilter.value = "all";
+  switchAdminView("dashboard");
+});
+document.getElementById("productsBackBtn")?.addEventListener("click", () => {
+  productsQuickFilter = null;
+  switchAdminView("dashboard");
+});
+document.getElementById("collectionsBackBtn")?.addEventListener("click", () => switchAdminView("dashboard"));
 
 function showToast(message, type) {
   let container = document.getElementById("toastContainer");
@@ -585,6 +600,10 @@ function requestMatchesSearch(r, q) {
   return hay.includes(q);
 }
 
+// Owner-configurable in Settings → Inventory; 0 turns low-stock badges off
+// entirely (Sold Out still always shows, since that's a separate state).
+let adminLowStockThreshold = 3;
+
 function updateDashboardStats() {
   const newRequestsEl = document.getElementById("statNewRequests");
   const totalRequestsEl = document.getElementById("statTotalRequests");
@@ -598,16 +617,12 @@ function updateDashboardStats() {
   if (activeCollectionsEl) activeCollectionsEl.textContent = allCollections.filter(c => c.status === "active").length;
   if (multiOrdersEl) multiOrdersEl.textContent = new Set(allRequests.map(([, r]) => r.cartId).filter(Boolean)).size;
   if (lowStockEl) {
-    lowStockEl.textContent = allProductsAdmin.filter(([, p]) => {
-      if (p.availability !== "ready_stock" || p.status !== "active") return false;
-      const totalStock = (p.variants || []).reduce((sum, v) => sum + (v.stock || 0), 0);
-      return totalStock <= 3;
-    }).length;
+    lowStockEl.textContent = allProductsAdmin.filter(([, p]) => productIsLowStock(p)).length;
   }
 }
 
 function jumpToRequestsView(status, quickFilter, toastKey) {
-  switchAdminView("requests");
+  switchAdminView("requests", true);
   if (requestsStatusFilter) requestsStatusFilter.value = status;
   requestsQuickFilter = quickFilter;
   renderRequestsTable();
@@ -615,7 +630,7 @@ function jumpToRequestsView(status, quickFilter, toastKey) {
 }
 
 function jumpToProductsView(quickFilter, toastKey) {
-  switchAdminView("products");
+  switchAdminView("products", true);
   productsQuickFilter = quickFilter;
   renderProductsTable();
   showToast(t(toastKey));
@@ -626,7 +641,7 @@ const STAT_TILE_HANDLERS = {
   statTileTotalRequests: () => jumpToRequestsView("all", null, "admin_stat_total_requests_desc"),
   statTileActiveProducts: () => jumpToProductsView("active", "admin_stat_active_products_desc"),
   statTileActiveCollections: () => {
-    switchAdminView("collections");
+    switchAdminView("collections", true);
     showToast(t("admin_stat_active_collections_desc"));
   },
   statTileMultiItemOrders: () => jumpToRequestsView("all", "multi", "admin_stat_multi_orders_desc"),
@@ -967,9 +982,10 @@ function productMatchesSearch(p, q) {
 }
 
 function productIsLowStock(p) {
+  if (adminLowStockThreshold <= 0) return false;
   if (p.availability !== "ready_stock" || p.status !== "active") return false;
   const totalStock = (p.variants || []).reduce((sum, v) => sum + (v.stock || 0), 0);
-  return totalStock <= 3;
+  return totalStock > 0 && totalStock <= adminLowStockThreshold;
 }
 
 function renderProductsTable() {
@@ -1000,7 +1016,7 @@ function renderProductsTable() {
     const stockBadge = p.availability === "ready_stock"
       ? totalStock === 0
         ? ` <span class="sold-out-badge">Sold Out</span>`
-        : totalStock <= 3
+        : (adminLowStockThreshold > 0 && totalStock <= adminLowStockThreshold)
           ? ` <span class="low-stock-badge">Only ${totalStock} left</span>`
           : ` <span class="ready-badge">Ready Stock</span>`
       : "";
@@ -1423,6 +1439,14 @@ function loadSettings() {
         brandText.style.display = "inline";
       }
     }
+
+    const lowStockEl = document.getElementById("setLowStockThreshold");
+    if (document.activeElement !== lowStockEl) {
+      lowStockEl.value = data.lowStockThreshold != null ? data.lowStockThreshold : 3;
+    }
+    adminLowStockThreshold = data.lowStockThreshold != null && data.lowStockThreshold !== "" ? Number(data.lowStockThreshold) : 3;
+    updateDashboardStats();
+    renderProductsTable();
   }, (err) => console.error("Settings listener error:", err));
 }
 
@@ -1433,6 +1457,8 @@ saveSettingsBtn.addEventListener("click", async () => {
   });
   const depositRaw = document.getElementById("setDepositPercent").value;
   data.depositPercent = depositRaw === "" ? 40 : Number(depositRaw);
+  const lowStockRaw = document.getElementById("setLowStockThreshold").value;
+  data.lowStockThreshold = lowStockRaw === "" ? 3 : Math.max(0, Number(lowStockRaw));
 
   saveSettingsBtn.disabled = true;
   settingsFormStatus.className = "form-status";

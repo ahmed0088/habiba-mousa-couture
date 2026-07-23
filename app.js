@@ -144,12 +144,15 @@ function addToCart(item) {
 // default — the shopper can still remove/adjust size/color from the cart, or
 // open the piece normally to pick a specific one before ordering. The
 // quantity itself comes from the stepper right on the card.
-function quickAddToCart(product, quantity) {
+function quickAddToCart(product, quantity, size, color) {
   const qty = Math.max(1, quantity || 1);
   if (product.availability === "ready_stock") {
-    const variant = firstAddableVariant(product);
+    const variant = (size || color)
+      ? (product.variants || []).find(v => (v.size || null) === (size || null) && (v.color || null) === (color || null))
+      : firstAddableVariant(product);
     if (!variant) return;
     const available = getAvailableToAdd(product, variant.size || null, variant.color || null);
+    if (available <= 0) return;
     addToCart({
       productId: product.id,
       orderType: "ready_stock",
@@ -564,11 +567,87 @@ function getAvailableToAdd(product, size, color) {
   return Math.max(0, getVariantStock(product, size, color) - getCartQtyForVariant(product.id, size, color));
 }
 
+// Owner-configurable in Admin → Settings → Inventory; 0 turns the low-stock
+// badge off entirely (a genuinely sold-out item still shows Sold Out).
+function getLowStockThreshold() {
+  const v = typeof currentSettings !== "undefined" ? currentSettings.lowStockThreshold : null;
+  return v == null || v === "" ? 3 : Number(v);
+}
+
 // The variant quick-add would pick automatically (first one with anything
 // left to add), or null if every variant is either out of stock or already
 // fully reserved in the cart.
 function firstAddableVariant(product) {
   return (product.variants || []).find(v => getAvailableToAdd(product, v.size || null, v.color || null) > 0) || null;
+}
+
+function addableVariantsFor(product) {
+  return (product.variants || []).filter(v => getAvailableToAdd(product, v.size || null, v.color || null) > 0);
+}
+
+// Gallery-card quick-add size/color picker — only needed when a piece has
+// more than one addable size or color; a single combo is just shown as a
+// label so shoppers can still see it without opening the full detail view.
+function buildQuickVariantHtml(product) {
+  const addable = addableVariantsFor(product);
+  const allSizes = [...new Set(addable.filter(v => v.size).map(v => v.size))];
+  const allColors = [...new Set(addable.filter(v => v.color).map(v => v.color))];
+  const showSizeSelect = allSizes.length > 1;
+  const showColorSelect = allColors.length > 1;
+  if (!showSizeSelect && !showColorSelect) {
+    const label = [allSizes[0], allColors[0]].filter(Boolean).join(" · ");
+    return label ? `<span class="piece-quick-variant-label">${escapeHtml(label)}</span>` : "";
+  }
+  const sizePart = showSizeSelect
+    ? `<select class="piece-quick-size" aria-label="${escapeHtml(t("label_size"))}">${allSizes.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join("")}</select>`
+    : (allSizes[0] ? `<span class="piece-quick-variant-label">${escapeHtml(allSizes[0])}</span>` : "");
+  const colorPart = showColorSelect
+    ? `<select class="piece-quick-color" aria-label="${escapeHtml(t("label_color"))}"></select>`
+    : (allColors[0] ? `<span class="piece-quick-variant-label">${escapeHtml(allColors[0])}</span>` : "");
+  return `<div class="piece-quick-variant-row">${sizePart}${colorPart}</div>`;
+}
+
+// Wires the selects built above (if any) to an internal {size, color} state,
+// cascading color options to whatever the chosen size still has in stock.
+function setupCardVariantPicker(card, product, onChange) {
+  const addable = addableVariantsFor(product);
+  const allSizes = [...new Set(addable.filter(v => v.size).map(v => v.size))];
+  const state = { size: allSizes[0] || null, color: null };
+  const sizeSel = card.querySelector(".piece-quick-size");
+  const colorSel = card.querySelector(".piece-quick-color");
+
+  function colorsForSize(size) {
+    return [...new Set(addable.filter(v => v.color && (!size || v.size === size)).map(v => v.color))];
+  }
+
+  function refreshColors() {
+    const colors = colorsForSize(state.size);
+    if (colorSel) {
+      colorSel.innerHTML = colors.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("");
+      state.color = colors[0] || null;
+      colorSel.value = state.color || "";
+    } else {
+      state.color = colors[0] || null;
+    }
+  }
+
+  if (sizeSel) {
+    sizeSel.addEventListener("click", (e) => e.stopPropagation());
+    sizeSel.addEventListener("change", () => {
+      state.size = sizeSel.value;
+      refreshColors();
+      onChange();
+    });
+  }
+  if (colorSel) {
+    colorSel.addEventListener("click", (e) => e.stopPropagation());
+    colorSel.addEventListener("change", () => {
+      state.color = colorSel.value;
+      onChange();
+    });
+  }
+  refreshColors();
+  return state;
 }
 
 function populateOrderQuantity(maxQty) {
@@ -850,7 +929,8 @@ function renderGallery() {
       ? (product.variants || []).reduce((sum, v) => sum + getAvailableToAdd(product, v.size || null, v.color || null), 0)
       : 0;
     const isFullyReserved = isReady && !isSoldOut && remainingToAdd <= 0;
-    const isLowStock = isReady && remainingToAdd > 0 && remainingToAdd <= 3;
+    const lowStockThreshold = getLowStockThreshold();
+    const isLowStock = isReady && lowStockThreshold > 0 && remainingToAdd > 0 && remainingToAdd <= lowStockThreshold;
     const canQuickAdd = !isSoldOut && !isFullyReserved;
     const badgeHtml = isSoldOut
       ? `<span class="sold-out-badge">${escapeHtml(t("sold_out_label"))}</span>`
@@ -882,6 +962,7 @@ function renderGallery() {
           ${priceHtml}
           ${canQuickAdd ? `
             <div class="piece-quickcart-row">
+              ${isReady ? buildQuickVariantHtml(product) : ""}
               <div class="piece-qty-stepper">
                 <button type="button" class="piece-qty-btn" data-qty-down aria-label="-">−</button>
                 <span class="piece-qty-value">1</span>
@@ -903,21 +984,27 @@ function renderGallery() {
       shareProduct(product);
     });
     if (canQuickAdd) {
-      const quickMaxQty = isReady
-        ? Math.max(1, getAvailableToAdd(product, firstAddableVariant(product)?.size || null, firstAddableVariant(product)?.color || null) || 1)
-        : 10;
       const qtyValueEl = card.querySelector(".piece-qty-value");
+      let variantState = { size: null, color: null };
+      const getQuickMaxQty = () => isReady
+        ? Math.max(1, getAvailableToAdd(product, variantState.size, variantState.color) || 1)
+        : 10;
+      if (isReady) {
+        variantState = setupCardVariantPicker(card, product, () => {
+          qtyValueEl.textContent = Math.min(parseInt(qtyValueEl.textContent, 10), getQuickMaxQty()) || 1;
+        });
+      }
       card.querySelector("[data-qty-down]").addEventListener("click", (e) => {
         e.stopPropagation();
         qtyValueEl.textContent = Math.max(1, parseInt(qtyValueEl.textContent, 10) - 1);
       });
       card.querySelector("[data-qty-up]").addEventListener("click", (e) => {
         e.stopPropagation();
-        qtyValueEl.textContent = Math.min(quickMaxQty, parseInt(qtyValueEl.textContent, 10) + 1);
+        qtyValueEl.textContent = Math.min(getQuickMaxQty(), parseInt(qtyValueEl.textContent, 10) + 1);
       });
       card.querySelector(".piece-quickcart-btn").addEventListener("click", (e) => {
         e.stopPropagation();
-        quickAddToCart(product, parseInt(qtyValueEl.textContent, 10));
+        quickAddToCart(product, parseInt(qtyValueEl.textContent, 10), variantState.size, variantState.color);
         qtyValueEl.textContent = "1";
       });
     }
