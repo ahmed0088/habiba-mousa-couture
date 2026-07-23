@@ -1549,6 +1549,17 @@ select.status-select.status-cancelled { background-color: #f6dcdc; color: #a13a3
   padding: 3px 10px;
 }
 
+.variant-breakdown { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
+.variant-chip {
+  font-size: 11px;
+  color: var(--text-faint);
+  background: var(--surface-muted);
+  border-radius: 6px;
+  padding: 2px 8px;
+  white-space: nowrap;
+}
+.variant-chip-empty { text-decoration: line-through; opacity: 0.6; }
+
 /* Requests admin view: a card-per-request feed (not a table), so it reflows
    at any width instead of ever needing horizontal scroll. */
 .request-row {

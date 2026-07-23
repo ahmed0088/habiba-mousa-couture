@@ -1004,9 +1004,16 @@ function renderProductsTable() {
           ? ` <span class="low-stock-badge">Only ${totalStock} left</span>`
           : ` <span class="ready-badge">Ready Stock</span>`
       : "";
+    const variantBreakdown = p.availability === "ready_stock" && (p.variants || []).length > 0
+      ? `<div class="variant-breakdown">${p.variants.map((v) => {
+          const label = [v.size, v.color].filter(Boolean).join(" / ") || "—";
+          const stock = v.stock || 0;
+          return `<span class="variant-chip${stock === 0 ? " variant-chip-empty" : ""}">${escapeHtml(label)}: ${stock}</span>`;
+        }).join("")}</div>`
+      : "";
     tr.innerHTML = `
       <td data-label="Code">${escapeHtml(p.productCode || "—")}</td>
-      <td data-label="Piece">${escapeHtml(p.name)}${stockBadge}</td>
+      <td data-label="Piece">${escapeHtml(p.name)}${stockBadge}${variantBreakdown}</td>
       <td data-label="Category">${escapeHtml(p.category || "—")}</td>
       <td data-label="Price">${p.salePrice ? `${escapeHtml(p.priceRange || "—")} → <strong>${escapeHtml(p.salePrice)}</strong> (Sale)` : escapeHtml(p.priceRange || "—")}</td>
       <td data-label="Status"><span class="status-pill status-${p.status === "active" ? "confirmed" : "delivered"}">${escapeHtml(p.status)}</span></td>
