@@ -366,7 +366,7 @@ function renderRequestRow(r, suppressCartTag) {
     ${thumbHtml}
     <div class="my-request-piece">
       ${tagsHtml ? `<div class="my-request-tags">${tagsHtml}</div>` : ""}
-      <div class="my-request-name">${escapeHtmlAccount(r.productName || "—")}</div>
+      <div class="my-request-name">${escapeHtmlAccount(r.requestType === "custom_design" ? t("custom_design_badge") : (r.productName || "—"))}</div>
       ${(r.recipientName || r.recipientAddress) ? `<div class="my-request-recipient">${escapeHtmlAccount([r.recipientName, r.recipientAddress].filter(Boolean).join(" · "))}</div>` : ""}
     </div>
     <div class="my-request-meta">

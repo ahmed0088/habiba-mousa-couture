@@ -24,7 +24,7 @@
 <meta name="twitter:image" content="https://habibamousa.com/og-image.png" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=El+Messiri:wght@400;500;600;700&family=Jost:wght@400;500;600&family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=33" />
+<link rel="stylesheet" href="style.css?v=34" />
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Ccircle cx='20' cy='20' r='19' fill='%231c1013' stroke='%23c9973f' stroke-width='1.2'/%3E%3Ccircle cx='20' cy='20' r='15.5' fill='none' stroke='%23c9973f' stroke-width='0.6' stroke-dasharray='1.2 1.8' opacity='0.6'/%3E%3Cg fill='none' stroke='%23e3c179' stroke-width='1.1'%3E%3Cellipse cx='20' cy='13' rx='2.6' ry='6.3'/%3E%3Cellipse cx='20' cy='13' rx='2.6' ry='6.3' transform='rotate(72 20 20)'/%3E%3Cellipse cx='20' cy='13' rx='2.6' ry='6.3' transform='rotate(144 20 20)'/%3E%3Cellipse cx='20' cy='13' rx='2.6' ry='6.3' transform='rotate(216 20 20)'/%3E%3Cellipse cx='20' cy='13' rx='2.6' ry='6.3' transform='rotate(288 20 20)'/%3E%3C/g%3E%3Ccircle cx='20' cy='20' r='2.1' fill='%23c9973f'/%3E%3C/svg%3E" />
 </head>
@@ -72,7 +72,10 @@
       <p class="eyebrow" data-i18n="hero_eyebrow">حسب الطلب — دبي والقاهرة</p>
       <h1 class="hero-title" data-i18n-html="hero_title_html">كل قطعة <em>تبدأ</em><br/>بطلب، لا برف عرض.</h1>
       <p class="hero-sub" id="heroSub" data-i18n="hero_sub">اتفرجي على الكولكشن، اختاري التصميم اللي عجبك، وابعتيلنا تفاصيلك. هنكلمك بنفسنا نأكد المقاس والقماش والميعاد.</p>
-      <a href="#collection" class="btn btn-solid" data-i18n="btn_view_collection">استعرضي المجموعة</a>
+      <div class="hero-actions-row">
+        <a href="#collection" class="btn btn-solid" data-i18n="btn_view_collection">استعرضي المجموعة</a>
+        <button type="button" class="btn-link" id="customDesignBtn" data-i18n="custom_design_cta_btn">✎ عندك تصميم في بالك؟ قوليلنا عليه</button>
+      </div>
     </div>
     <dl class="spec-card">
       <dt data-i18n="spec_process_label">المراحل</dt>
@@ -197,10 +200,16 @@
 
     <div id="requestView" style="display:none;">
       <button type="button" class="back-link" id="backToDetailBtn" data-i18n="detail_back">→ عودة</button>
-      <h3 data-i18n="modal_title">اطلبي هذا التصميم</h3>
+      <h3 data-i18n="modal_title" id="requestViewTitle">اطلبي هذا التصميم</h3>
+      <h3 data-i18n="custom_design_modal_title" id="requestViewTitleCustom" style="display:none;">قوليلنا عن التصميم اللي في بالك</h3>
       <p class="modal-piece-name" id="modalPieceName"></p>
       <form id="requestForm">
         <input type="hidden" id="productId" />
+        <div class="field" id="customDesignFieldWrap" style="display:none;">
+          <label for="customDesignDescription" data-i18n="custom_design_label">وصف التصميم</label>
+          <textarea id="customDesignDescription" data-i18n-placeholder="custom_design_placeholder" placeholder="زي: فستان سهرة طويل لونه أحمر، مفتوح من الضهر، حسيتي بيه في صورة شفتيها... قوليلنا أي تفاصيل"></textarea>
+          <p class="form-note" data-i18n="custom_design_note">هنشوف نقدر ننفذه ولا لأ، وهنكلمك على طول نأكد التفاصيل.</p>
+        </div>
         <div class="field">
           <label for="clientName" data-i18n="label_name">اسمكِ</label>
           <input type="text" id="clientName" required />
@@ -494,12 +503,12 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-<script src="firebase-config.js?v=33"></script>
+<script src="firebase-config.js?v=34"></script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-<script src="i18n.js?v=33"></script>
-<script src="theme.js?v=33"></script>
-<script src="account.js?v=33"></script>
-<script src="settings.js?v=33"></script>
-<script src="app.js?v=33"></script>
+<script src="i18n.js?v=34"></script>
+<script src="theme.js?v=34"></script>
+<script src="account.js?v=34"></script>
+<script src="settings.js?v=34"></script>
+<script src="app.js?v=34"></script>
 </body>
 </html>

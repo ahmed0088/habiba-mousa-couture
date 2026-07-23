@@ -554,6 +554,7 @@ function cartSiblingsHtml(currentId, r) {
 function openRequestDetail(id) {
   const r = requestsById[id];
   if (!r) return;
+  const isCustomDesign = r.requestType === "custom_design";
   const product = r.productId ? allProductsAdmin.find(([pid]) => pid === r.productId) : null;
   const thumbSrc = product && product[1].images && product[1].images[0] ? product[1].images[0] : "";
   const thumbFocus = product && product[1].imageFocus ? product[1].imageFocus : "top";
@@ -567,11 +568,12 @@ function openRequestDetail(id) {
     <div class="submit-row" style="margin-top:14px;">
       <button type="button" class="icon-btn" id="requestDetailCopyBtn">📋 ${escapeHtml(t("admin_copy_shipping_btn"))}</button>
     </div>
+    ${isCustomDesign ? `<div style="margin-top:16px;">${detailRow(t("custom_design_label"), r.designDescription || "—")}</div>` : ""}
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px 20px; margin-top:18px;">
       ${detailRow("Order #", r.orderNumber, true)}
       ${detailRow("Client", r.clientName, true)}
       ${detailRow("Phone", r.clientPhone, true)}
-      ${detailRow("Piece", r.productName + (r.productCode ? ` (${r.productCode})` : ""))}
+      ${detailRow("Piece", isCustomDesign ? t("custom_design_badge") : r.productName + (r.productCode ? ` (${r.productCode})` : ""))}
       ${detailRow("Material", MATERIAL_LABELS[r.material] || r.material)}
       ${detailRow("Address", r.clientAddress, true)}
       ${detailRow("Needed by", r.preferredDate)}
@@ -620,7 +622,7 @@ function openRequestDetail(id) {
       try {
         await db.collection("requests").doc(id).update({ status: newStatus });
         if (newStatus === "delivered") {
-          logActivity("Marked request as delivered", `${r.clientName} — ${r.productName || ""}`);
+          logActivity("Marked request as delivered", `${r.clientName} — ${r.requestType === "custom_design" ? "custom design" : (r.productName || "")}`);
         } else {
           logActivity("Changed request status", `${r.clientName} → ${newStatus}`);
         }
@@ -673,6 +675,7 @@ function requestMatchesSearch(r, q) {
   const hay = [
     r.orderNumber, r.clientName, r.clientPhone, r.clientAddress,
     r.productName, r.productCode, r.notes, r.preferredDate,
+    r.designDescription,
     MATERIAL_LABELS[r.material] || r.material,
     STATUS_LABELS[r.status] || r.status,
     r.selectedSize, r.selectedColor
@@ -781,12 +784,16 @@ function renderRequestsTable() {
       s => `<option value="${s}" ${r.status === s ? "selected" : ""}>${STATUS_LABELS[s]}</option>`
     ).join("");
 
+    const isCustomDesign = r.requestType === "custom_design";
     const product = r.productId ? allProductsAdmin.find(([pid]) => pid === r.productId) : null;
     const thumbSrc = product && product[1].images && product[1].images[0] ? product[1].images[0] : "";
     const thumbFocus = product && product[1].imageFocus ? product[1].imageFocus : "top";
     const thumbHtml = thumbSrc
       ? `<img class="request-thumb" src="${escapeHtml(thumbSrc)}" alt="${escapeHtml(r.productName || "")}" style="object-position: center ${escapeHtml(thumbFocus)};" loading="lazy" />`
-      : `<div class="request-thumb request-thumb-empty"></div>`;
+      : `<div class="request-thumb request-thumb-empty">${isCustomDesign ? "🎨" : ""}</div>`;
+    const pieceLabelHtml = isCustomDesign
+      ? escapeHtml(t("custom_design_badge"))
+      : `${escapeHtml(r.productName || "—")}${r.productCode ? ` <span class="request-row-code">(${escapeHtml(r.productCode)})</span>` : ""}`;
 
     const copyHint = escapeHtml(t("admin_copy_click_hint"));
     const copyableSpan = (value, tag, extraClass) => value
@@ -815,13 +822,14 @@ function renderRequestsTable() {
         <div class="request-row-header-main">
           ${r.orderNumber ? `<span class="request-order-number">#${escapeHtml(r.orderNumber)}</span>` : ""}
           <span class="request-row-name copyable-field" data-copy-value="${escapeHtml(r.clientName)}" title="${copyHint}">${escapeHtml(r.clientName)}</span>
-          <span class="request-row-piece">${escapeHtml(r.productName || "—")}${r.productCode ? ` <span class="request-row-code">(${escapeHtml(r.productCode)})</span>` : ""}</span>
+          <span class="request-row-piece${isCustomDesign ? " request-row-piece-custom" : ""}">${pieceLabelHtml}</span>
         </div>
         <select class="status-select status-${r.status}" data-id="${id}">${optionsHtml}</select>
         <span class="request-row-date">${formatDate(r.createdAt)}</span>
         <button type="button" class="request-expand-btn" aria-label="Expand" aria-expanded="${isExpanded}">▾</button>
       </div>
       <div class="request-row-details">
+        ${isCustomDesign && r.designDescription ? `<div class="request-row-notes"><strong>${escapeHtml(t("custom_design_label"))}:</strong> ${escapeHtml(r.designDescription)}</div>` : ""}
         ${recipientHtml}
         ${metaParts.length ? `<div class="request-row-meta">${metaParts.join("")}</div>` : ""}
         ${r.notes ? `<div class="request-row-notes">${escapeHtml(r.notes)}</div>` : ""}
@@ -950,7 +958,7 @@ function renderRequestsTable() {
         await db.collection("requests").doc(sel.dataset.id).update({ status: sel.value });
         const rr = requestsById[sel.dataset.id];
         if (sel.value === "delivered") {
-          logActivity("Marked request as delivered", `${rr ? rr.clientName : ""} — ${rr ? (rr.productName || "") : ""}`);
+          logActivity("Marked request as delivered", `${rr ? rr.clientName : ""} — ${rr ? (rr.requestType === "custom_design" ? "custom design" : (rr.productName || "")) : ""}`);
         } else {
           logActivity("Changed request status", `${rr ? rr.clientName : ""} → ${sel.value}`);
         }

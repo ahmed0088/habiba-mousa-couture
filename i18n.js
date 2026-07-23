@@ -85,6 +85,14 @@ const I18N = {
     submit_success_close: "تمام",
     submit_error: "حصلت مشكلة وإحنا بنبعت الطلب. جربي تاني أو كلمينا على واتساب.",
 
+    // Custom design request (client's own idea, not from the catalog)
+    custom_design_cta_btn: "✎ عندك تصميم في بالك؟ قوليلنا عليه",
+    custom_design_modal_title: "قوليلنا عن التصميم اللي في بالك",
+    custom_design_label: "وصف التصميم",
+    custom_design_placeholder: "زي: فستان سهرة طويل لونه أحمر، مفتوح من الضهر، حسيتي بيه في صورة شفتيها... قوليلنا أي تفاصيل",
+    custom_design_note: "هنشوف نقدر ننفذه ولا لأ، وهنكلمك على طول نأكد التفاصيل.",
+    custom_design_badge: "🎨 تصميم خاص",
+
     // Cart
     cart_label: "عربة التسوق",
     cart_add_btn: "🛍 ضيفي للعربة",
@@ -497,6 +505,14 @@ const I18N = {
     account_signup_success_message: "Welcome to Habiba Mousa.",
     submit_success_close: "Got it",
     submit_error: "Something went wrong sending your request. Please try again or reach us on WhatsApp.",
+
+    // Custom design request (client's own idea, not from the catalog)
+    custom_design_cta_btn: "✎ Have a design in mind? Tell us",
+    custom_design_modal_title: "Tell us about your design idea",
+    custom_design_label: "Describe your design",
+    custom_design_placeholder: "e.g. a long red evening dress, open back, inspired by a photo you saw... share any details",
+    custom_design_note: "We'll see if we can make it, then follow up personally to confirm the details.",
+    custom_design_badge: "🎨 Custom design idea",
 
     // Cart
     cart_label: "Cart",

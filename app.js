@@ -16,6 +16,11 @@ const requestForm = document.getElementById("requestForm");
 const productIdField = document.getElementById("productId");
 const formStatus = document.getElementById("formStatus");
 const submitBtn = document.getElementById("submitBtn");
+const requestViewTitle = document.getElementById("requestViewTitle");
+const requestViewTitleCustom = document.getElementById("requestViewTitleCustom");
+const customDesignFieldWrap = document.getElementById("customDesignFieldWrap");
+const customDesignDescriptionField = document.getElementById("customDesignDescription");
+const customDesignBtn = document.getElementById("customDesignBtn");
 
 // If a price was typed as bare digits (no currency letters), assume EGP so it's
 // never shown as an unexplained bare number like "800".
@@ -500,8 +505,10 @@ function showDetailView() {
 function showRequestView() {
   detailView.style.display = "none";
   requestView.style.display = "block";
-  modalPieceName.textContent = currentProduct.name;
-  productIdField.value = currentProduct.id;
+  if (currentProduct) {
+    modalPieceName.textContent = currentProduct.name;
+    productIdField.value = currentProduct.id;
+  }
   formStatus.className = "form-status";
   formStatus.textContent = "";
   document.getElementById("clientLocationUrl").value = "";
@@ -522,6 +529,27 @@ function showRequestView() {
 }
 
 detailRequestBtn.addEventListener("click", showRequestView);
+
+// "Have a design in mind?" — same request form/collection as a catalog piece,
+// just with no product attached and a required description of the idea up
+// front instead of a piece name, so staff can review and reach out if it's
+// something they can make.
+function openCustomDesignModal() {
+  currentProduct = null;
+  requestForm.reset();
+  productIdField.value = "";
+  document.getElementById("recipientFieldsWrap").style.display = "none";
+  modalPieceName.style.display = "none";
+  requestViewTitle.style.display = "none";
+  requestViewTitleCustom.style.display = "";
+  backToDetailBtn.style.display = "none";
+  customDesignFieldWrap.style.display = "block";
+  customDesignDescriptionField.required = true;
+
+  showRequestView();
+  modalBackdrop.classList.add("open");
+}
+customDesignBtn?.addEventListener("click", openCustomDesignModal);
 
 document.getElementById("shipToOtherToggle")?.addEventListener("change", (e) => {
   document.getElementById("recipientFieldsWrap").style.display = e.target.checked ? "block" : "none";
@@ -776,6 +804,13 @@ function setupVariantSelectors(product) {
 function openModal(product) {
   currentProduct = product;
   currentImageIndex = 0;
+
+  modalPieceName.style.display = "";
+  requestViewTitle.style.display = "";
+  requestViewTitleCustom.style.display = "none";
+  backToDetailBtn.style.display = "";
+  customDesignFieldWrap.style.display = "none";
+  customDesignDescriptionField.required = false;
 
   detailCategory.textContent = product.category || t("piece_category_fallback");
   detailName.textContent = product.name;
@@ -1194,6 +1229,11 @@ requestForm.addEventListener("submit", async (e) => {
     payload.selectedSize = document.getElementById("orderSize").value || null;
     payload.selectedColor = document.getElementById("orderColor").value || null;
     payload.quantity = parseInt(document.getElementById("orderQuantity").value, 10) || 1;
+  }
+
+  if (!currentProduct) {
+    payload.requestType = "custom_design";
+    payload.designDescription = customDesignDescriptionField.value.trim();
   }
 
   if (document.getElementById("shipToOtherToggle").checked) {
