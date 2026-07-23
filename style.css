@@ -1846,7 +1846,7 @@ select.status-select.status-cancelled { background-color: #f6dcdc; color: #a13a3
   cursor: pointer;
 }
 .btn-link:hover { color: var(--emerald-text); }
-.admin-back-btn { align-items: center; gap: 4px; font-size: 13px; letter-spacing: 0.03em; text-transform: none; color: var(--text-faint); }
+.admin-back-btn { align-items: center; gap: 4px; font-size: 13px; letter-spacing: 0.03em; text-transform: none; color: var(--text-faint); margin-bottom: 6px; }
 .admin-back-btn:hover { color: var(--gold); }
 
 .account-nav {
