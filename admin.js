@@ -492,17 +492,63 @@ const requestDetailBackdrop = document.getElementById("requestDetailBackdrop");
 const requestDetailClose = document.getElementById("requestDetailClose");
 const requestDetailBody = document.getElementById("requestDetailBody");
 
+// Best-effort single number out of a typed price string like "1,800 – 2,600
+// EGP" or "1,500 EGP" — takes the first number found, same heuristic already
+// used by the quick-sale-percent buttons above.
+function extractFirstPrice(str) {
+  if (!str) return null;
+  const m = String(str).match(/[\d,]+(\.\d+)?/);
+  if (!m) return null;
+  const n = parseFloat(m[0].replace(/,/g, ""));
+  return (isNaN(n) || n <= 0) ? null : n;
+}
+
+function getSuggestedPriceForRequest(r) {
+  if (!r.productId) return null;
+  const product = allProductsAdmin.find(([pid]) => pid === r.productId);
+  if (!product) return null;
+  return extractFirstPrice(product[1].salePrice) || extractFirstPrice(product[1].priceRange);
+}
+
 // Nothing else in this app ever records the real agreed price, so the only
 // way the "amount collected" average has a chance of staying up to date is
 // to ask right at the moment an order goes to delivered — otherwise staff
 // have to remember to come back and type it into the detail view later,
 // which is easy to forget (and did get forgotten, per user report).
-function maybeAskForAmount(newStatus, currentAmount) {
-  if (newStatus !== "delivered" || (typeof currentAmount === "number" && currentAmount > 0)) return {};
-  const raw = window.prompt(t("admin_amount_collected_prompt"));
+//
+// A multi-item cart order writes one requests doc per piece, so this asks
+// ONCE for the order's combined total (suggesting the sum of the pieces'
+// catalog prices as a starting point, editable) and applies it to every
+// piece in that order — entering it while marking any one piece delivered
+// covers the rest, instead of asking per piece.
+function maybeAskForAmount(newStatus, r) {
+  if (newStatus !== "delivered" || (typeof r.finalAmount === "number" && r.finalAmount > 0)) return {};
+  const siblings = r.cartId ? allRequests.filter(([, sib]) => sib.cartId === r.cartId) : [[null, r]];
+  const suggested = siblings.reduce((sum, [, sib]) => sum + (getSuggestedPriceForRequest(sib) || 0), 0);
+  const raw = window.prompt(t("admin_amount_collected_prompt"), suggested > 0 ? String(Math.round(suggested)) : "");
   if (raw == null || raw.trim() === "") return {};
   const parsed = parseFloat(raw);
-  return (isNaN(parsed) || parsed <= 0) ? {} : { finalAmount: parsed };
+  if (isNaN(parsed) || parsed <= 0) return {};
+  return { finalAmount: parsed, siblingIds: siblings.map(([sid]) => sid).filter(Boolean) };
+}
+
+// Shared by both places a request's status can change (detail-view pills and
+// the row's own status dropdown) so a cart order's amount always lands on
+// every sibling piece in one atomic write, not just the one being edited.
+async function updateRequestStatus(id, r, newStatus) {
+  const amountResult = maybeAskForAmount(newStatus, r);
+  const batch = db.batch();
+  const mainUpdate = { status: newStatus };
+  if (amountResult.finalAmount != null) mainUpdate.finalAmount = amountResult.finalAmount;
+  batch.update(db.collection("requests").doc(id), mainUpdate);
+  if (amountResult.finalAmount != null && amountResult.siblingIds) {
+    amountResult.siblingIds.forEach((sid) => {
+      if (sid !== id) batch.update(db.collection("requests").doc(sid), { finalAmount: amountResult.finalAmount });
+    });
+  }
+  await batch.commit();
+  if (amountResult.finalAmount != null && r) r.finalAmount = amountResult.finalAmount;
+  return amountResult;
 }
 
 function detailRow(label, value, copyable) {
@@ -623,7 +669,13 @@ function openRequestDetail(id) {
     const parsed = raw === "" ? null : parseFloat(raw);
     const amount = (parsed === null || isNaN(parsed)) ? null : parsed;
     try {
-      await db.collection("requests").doc(id).update({ finalAmount: amount });
+      // A multi-item order's amount is one combined total for the whole
+      // order, not per piece — write it to every sibling so it stays in
+      // sync no matter which piece staff happen to be looking at.
+      const siblingIds = r.cartId ? allRequests.filter(([, sib]) => sib.cartId === r.cartId).map(([sid]) => sid) : [id];
+      const batch = db.batch();
+      siblingIds.forEach((sid) => batch.update(db.collection("requests").doc(sid), { finalAmount: amount }));
+      await batch.commit();
       r.finalAmount = amount;
       logActivity("Updated amount collected", `${r.clientName} — ${amount != null ? amount + " EGP" : "—"}`);
       showToast(t("admin_amount_saved"));
@@ -655,13 +707,11 @@ function openRequestDetail(id) {
     btn.addEventListener("click", async () => {
       if (btn.classList.contains("active")) return;
       const newStatus = btn.dataset.status;
-      const amountUpdate = maybeAskForAmount(newStatus, r.finalAmount);
       try {
-        await db.collection("requests").doc(id).update({ status: newStatus, ...amountUpdate });
-        if (amountUpdate.finalAmount != null) {
-          r.finalAmount = amountUpdate.finalAmount;
+        const amountResult = await updateRequestStatus(id, r, newStatus);
+        if (amountResult.finalAmount != null) {
           const amountInput = document.getElementById("requestAmountInput");
-          if (amountInput) amountInput.value = amountUpdate.finalAmount;
+          if (amountInput) amountInput.value = amountResult.finalAmount;
         }
         if (newStatus === "delivered") {
           logActivity("Marked request as delivered", `${r.clientName} — ${r.requestType === "custom_design" ? "custom design" : (r.productName || "")}`);
@@ -747,10 +797,19 @@ function updateDashboardStats() {
   }
   if (avgAmountEl) {
     // Only delivered orders with a real amount typed in count toward the
-    // average — everything else has no confirmed money collected yet.
-    const amounts = allRequests
-      .filter(([, r]) => r.status === "delivered" && typeof r.finalAmount === "number" && r.finalAmount > 0)
-      .map(([, r]) => r.finalAmount);
+    // average — everything else has no confirmed money collected yet. A
+    // multi-item order shares one combined total across all its sibling
+    // docs, so each cartId is only counted once, not once per piece.
+    const seenCartIds = new Set();
+    const amounts = [];
+    allRequests.forEach(([, r]) => {
+      if (r.status !== "delivered" || typeof r.finalAmount !== "number" || r.finalAmount <= 0) return;
+      if (r.cartId) {
+        if (seenCartIds.has(r.cartId)) return;
+        seenCartIds.add(r.cartId);
+      }
+      amounts.push(r.finalAmount);
+    });
     avgAmountEl.textContent = amounts.length
       ? `${Math.round(amounts.reduce((sum, a) => sum + a, 0) / amounts.length).toLocaleString()} EGP`
       : "—";
@@ -860,7 +919,7 @@ function renderRequestsTable() {
       r.material ? `<span>🧵 ${escapeHtml(MATERIAL_LABELS[r.material] || r.material)}</span>` : "",
       r.preferredDate ? `<span>📅 ${escapeHtml(r.preferredDate)}</span>` : "",
       r.orderType === "ready_stock" ? `<span>📦 ${escapeHtml([r.selectedSize, r.selectedColor].filter(Boolean).join(" / ") || "Ready Stock")} × ${r.quantity || 1}</span>` : "",
-      (typeof r.finalAmount === "number" && r.finalAmount > 0) ? `<span>💰 ${escapeHtml(r.finalAmount.toLocaleString())} EGP</span>` : ""
+      (typeof r.finalAmount === "number" && r.finalAmount > 0) ? `<span>💰 ${escapeHtml(r.finalAmount.toLocaleString())} EGP${r.cartId ? ` (${escapeHtml(t("admin_amount_order_total_suffix"))})` : ""}</span>` : ""
     ].filter(Boolean);
 
     const recipientHtml = (r.recipientName || r.recipientAddress)
@@ -945,8 +1004,9 @@ function renderRequestsTable() {
       const label = document.createElement("div");
       label.className = "request-cart-group-label";
       label.dataset.toggleGroup = cartId;
+      const groupAmount = group.map(([, gr]) => gr.finalAmount).find(a => typeof a === "number" && a > 0);
       label.innerHTML = `
-        <span>🛍 ${group[0][1].cartSize || group.length}-piece order${newest.orderNumber ? ` · #${escapeHtml(newest.orderNumber)}` : ""} · ${escapeHtml(newest.clientName || "")}</span>
+        <span>🛍 ${group[0][1].cartSize || group.length}-piece order${newest.orderNumber ? ` · #${escapeHtml(newest.orderNumber)}` : ""} · ${escapeHtml(newest.clientName || "")}${groupAmount ? ` · 💰 ${escapeHtml(groupAmount.toLocaleString())} EGP` : ""}</span>
         <button type="button" class="request-expand-btn" aria-label="Expand" aria-expanded="${isGroupExpanded}">▾</button>
       `;
       groupEl.appendChild(label);
@@ -1011,10 +1071,8 @@ function renderRequestsTable() {
   feed.querySelectorAll(".status-select").forEach((sel) => {
     sel.addEventListener("change", async () => {
       const rr = requestsById[sel.dataset.id];
-      const amountUpdate = maybeAskForAmount(sel.value, rr ? rr.finalAmount : null);
       try {
-        await db.collection("requests").doc(sel.dataset.id).update({ status: sel.value, ...amountUpdate });
-        if (rr && amountUpdate.finalAmount != null) rr.finalAmount = amountUpdate.finalAmount;
+        await updateRequestStatus(sel.dataset.id, rr, sel.value);
         if (sel.value === "delivered") {
           logActivity("Marked request as delivered", `${rr ? rr.clientName : ""} — ${rr ? (rr.requestType === "custom_design" ? "custom design" : (rr.productName || "")) : ""}`);
         } else {
