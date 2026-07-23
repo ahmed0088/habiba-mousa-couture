@@ -459,42 +459,51 @@ button {
   color: var(--charcoal);
   text-transform: uppercase;
   clip-path: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px);
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
 }
 .filter-chip.active { background: var(--ink); color: var(--gold-soft); border-color: var(--ink); }
+.filter-chip:active { transform: scale(0.96); }
 
-.filter-chip.filter-chip-sale {
-  margin-inline-start: auto;
-  border-color: #b8283a;
-  color: #b8283a;
-  font-weight: 700;
-  border-radius: 22px;
-  clip-path: none;
-  min-height: 44px;
-  padding: 11px 20px;
-}
-.filter-chip.filter-chip-sale.active { background: linear-gradient(135deg, #e2483e, #b8283a); color: #fff; border-color: #b8283a; }
-
-.filter-chip.filter-chip-ready {
-  border-color: var(--turquoise);
-  color: var(--turquoise);
-  font-weight: 700;
-  border-radius: 22px;
-  clip-path: none;
-  min-height: 44px;
-  padding: 11px 20px;
-}
-.filter-chip.filter-chip-ready.active { background: var(--turquoise); color: #fff; border-color: var(--turquoise); }
-
+/* Sale / Favorites / Ready-to-Ship share the same pill shape and only differ
+   by accent color, so each gets its own hue instead of two of them
+   accidentally sharing the exact same red and reading as the same thing. */
+.filter-chip.filter-chip-sale,
+.filter-chip.filter-chip-ready,
 .filter-chip.filter-chip-fav {
-  border-color: #e2483e;
-  color: #e2483e;
   font-weight: 700;
   border-radius: 22px;
   clip-path: none;
   min-height: 44px;
   padding: 11px 20px;
 }
-.filter-chip.filter-chip-fav.active { background: linear-gradient(135deg, #e2483e, #b8283a); color: #fff; border-color: #b8283a; }
+.filter-chip.filter-chip-sale { margin-inline-start: auto; }
+
+.filter-chip.filter-chip-sale { border-color: #b8283a; color: #b8283a; }
+.filter-chip.filter-chip-sale.active {
+  background: linear-gradient(135deg, #e2483e, #b8283a);
+  color: #fff;
+  border-color: #b8283a;
+  box-shadow: 0 6px 16px -6px rgba(184, 40, 58, 0.55);
+  transform: scale(1.04);
+}
+
+.filter-chip.filter-chip-ready { border-color: var(--turquoise); color: var(--turquoise); }
+.filter-chip.filter-chip-ready.active {
+  background: var(--turquoise);
+  color: #fff;
+  border-color: var(--turquoise);
+  box-shadow: 0 6px 16px -6px rgba(60, 150, 140, 0.5);
+  transform: scale(1.04);
+}
+
+.filter-chip.filter-chip-fav { border-color: #b23368; color: #b23368; }
+.filter-chip.filter-chip-fav.active {
+  background: linear-gradient(135deg, #d1487f, #96285b);
+  color: #fff;
+  border-color: #96285b;
+  box-shadow: 0 6px 16px -6px rgba(150, 40, 91, 0.55);
+  transform: scale(1.04);
+}
 
 /* Leaflet's own CSS puts its zoom controls/panes at z-index up to 1000, and since
    .leaflet-container is position:relative with no z-index of its own, that value
