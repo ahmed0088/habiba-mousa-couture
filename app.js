@@ -115,9 +115,11 @@ function addToCart(item) {
 // Quick-add straight from the gallery card, no need to open the product first.
 // Custom (made-to-order) pieces need no choices, so they add right away; a
 // ready-stock piece adds its first in-stock size/color combo as a sensible
-// default — the shopper can still remove/adjust quantity from the cart, or
-// open the piece normally to pick a specific size/color before ordering.
-function quickAddToCart(product) {
+// default — the shopper can still remove/adjust size/color from the cart, or
+// open the piece normally to pick a specific one before ordering. The
+// quantity itself comes from the stepper right on the card.
+function quickAddToCart(product, quantity) {
+  const qty = Math.max(1, quantity || 1);
   if (product.availability === "ready_stock") {
     const variant = (product.variants || []).find(v => v.stock > 0);
     if (!variant) return;
@@ -126,10 +128,10 @@ function quickAddToCart(product) {
       orderType: "ready_stock",
       selectedSize: variant.size || null,
       selectedColor: variant.color || null,
-      quantity: 1
+      quantity: Math.min(qty, variant.stock)
     });
   } else {
-    addToCart({ productId: product.id, material: "unspecified", quantity: 1 });
+    addToCart({ productId: product.id, material: "unspecified", quantity: qty });
   }
   showToastPublic(t("cart_added_toast"));
 }
@@ -762,7 +764,16 @@ function renderGallery() {
         <p class="piece-desc">${escapeHtml(product.description || "")}</p>
         <div class="piece-body-bottom">
           ${priceHtml}
-          ${!isSoldOut ? `<button type="button" class="piece-quickcart-btn" aria-label="${escapeHtml(t("cart_quick_add"))}">🛍 ${escapeHtml(t("cart_quick_add"))}</button>` : ""}
+          ${!isSoldOut ? `
+            <div class="piece-quickcart-row">
+              <div class="piece-qty-stepper">
+                <button type="button" class="piece-qty-btn" data-qty-down aria-label="-">−</button>
+                <span class="piece-qty-value">1</span>
+                <button type="button" class="piece-qty-btn" data-qty-up aria-label="+">+</button>
+              </div>
+              <button type="button" class="piece-quickcart-btn" aria-label="${escapeHtml(t("cart_quick_add"))}">🛍 ${escapeHtml(t("cart_quick_add"))}</button>
+            </div>
+          ` : ""}
         </div>
       </div>
     `;
@@ -775,10 +786,25 @@ function renderGallery() {
       e.stopPropagation();
       shareProduct(product);
     });
-    card.querySelector(".piece-quickcart-btn")?.addEventListener("click", (e) => {
-      e.stopPropagation();
-      quickAddToCart(product);
-    });
+    if (!isSoldOut) {
+      const quickMaxQty = isReady
+        ? Math.max(1, (product.variants || []).find(v => v.stock > 0)?.stock || 1)
+        : 10;
+      const qtyValueEl = card.querySelector(".piece-qty-value");
+      card.querySelector("[data-qty-down]").addEventListener("click", (e) => {
+        e.stopPropagation();
+        qtyValueEl.textContent = Math.max(1, parseInt(qtyValueEl.textContent, 10) - 1);
+      });
+      card.querySelector("[data-qty-up]").addEventListener("click", (e) => {
+        e.stopPropagation();
+        qtyValueEl.textContent = Math.min(quickMaxQty, parseInt(qtyValueEl.textContent, 10) + 1);
+      });
+      card.querySelector(".piece-quickcart-btn").addEventListener("click", (e) => {
+        e.stopPropagation();
+        quickAddToCart(product, parseInt(qtyValueEl.textContent, 10));
+        qtyValueEl.textContent = "1";
+      });
+    }
     card.classList.add("reveal-hidden");
     galleryGrid.appendChild(card);
     galleryRevealObserver.observe(card);

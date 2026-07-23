@@ -792,6 +792,34 @@ button {
   flex-wrap: wrap;
   margin-top: 10px;
 }
+.piece-quickcart-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.piece-qty-stepper {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  padding: 2px 4px;
+  flex-shrink: 0;
+}
+.piece-qty-btn {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: none;
+  background: var(--surface-muted);
+  color: var(--charcoal);
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+}
+.piece-qty-btn:hover { background: var(--gold); color: var(--ivory); }
+.piece-qty-value { min-width: 14px; text-align: center; font-size: 13px; font-weight: 600; }
 .piece-quickcart-btn {
   flex-shrink: 0;
   border: 1px solid var(--line);
