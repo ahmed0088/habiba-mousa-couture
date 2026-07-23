@@ -660,6 +660,14 @@ document.getElementById("requestsFilterChipClear")?.addEventListener("click", ()
   renderRequestsTable();
 });
 
+// Which orders are expanded to their full detail — kept outside
+// renderRequestsTable so it survives the live re-renders that fire on
+// every Firestore update (status change, new request, etc.) instead of
+// snapping every row shut again each time. Keyed by request id for a
+// standalone request, or by cartId for a multi-piece order.
+const expandedRequestIds = new Set();
+const expandedGroupIds = new Set();
+
 function requestMatchesSearch(r, q) {
   if (!q) return true;
   const hay = [
@@ -797,23 +805,26 @@ function renderRequestsTable() {
       ? `<div class="request-row-recipient">${escapeHtml(t("recipient_badge"))}: ${copyableSpan(r.recipientName, "strong") || "—"}${r.recipientPhone ? ` · ${copyableSpan(r.recipientPhone, "span")}` : ""}${r.recipientAddress ? ` · ${copyableSpan(r.recipientAddress, "span")}` : ""}</div>`
       : "";
 
+    const isExpanded = expandedRequestIds.has(id);
+
     const row = document.createElement("div");
-    row.className = "request-row";
+    row.className = `request-row${isExpanded ? " expanded" : ""}`;
     row.innerHTML = `
-      ${thumbHtml}
-      <div class="request-row-body">
-        <div class="request-row-top">
+      <div class="request-row-header" data-toggle-request="${id}">
+        ${thumbHtml}
+        <div class="request-row-header-main">
           ${r.orderNumber ? `<span class="request-order-number">#${escapeHtml(r.orderNumber)}</span>` : ""}
           <span class="request-row-name copyable-field" data-copy-value="${escapeHtml(r.clientName)}" title="${copyHint}">${escapeHtml(r.clientName)}</span>
           <span class="request-row-piece">${escapeHtml(r.productName || "—")}${r.productCode ? ` <span class="request-row-code">(${escapeHtml(r.productCode)})</span>` : ""}</span>
         </div>
+        <select class="status-select status-${r.status}" data-id="${id}">${optionsHtml}</select>
+        <span class="request-row-date">${formatDate(r.createdAt)}</span>
+        <button type="button" class="request-expand-btn" aria-label="Expand" aria-expanded="${isExpanded}">▾</button>
+      </div>
+      <div class="request-row-details">
         ${recipientHtml}
         ${metaParts.length ? `<div class="request-row-meta">${metaParts.join("")}</div>` : ""}
         ${r.notes ? `<div class="request-row-notes">${escapeHtml(r.notes)}</div>` : ""}
-      </div>
-      <div class="request-row-side">
-        <select class="status-select status-${r.status}" data-id="${id}">${optionsHtml}</select>
-        <span class="request-row-date">${formatDate(r.createdAt)}</span>
         <div class="request-row-actions">
           <button class="icon-btn" data-view-request="${id}">View</button>
           <button class="icon-btn" data-copy-request="${id}">📋 ${escapeHtml(t("admin_copy_shipping_btn"))}</button>
@@ -860,18 +871,53 @@ function renderRequestsTable() {
 
   groupsToRender.forEach((group) => {
     if (group.length > 1) {
+      const cartId = group[0][1].cartId;
+      const isGroupExpanded = expandedGroupIds.has(cartId);
+      const newest = group[group.length - 1][1];
+
       const groupEl = document.createElement("div");
-      groupEl.className = "request-cart-group";
+      groupEl.className = `request-cart-group${isGroupExpanded ? " expanded" : ""}`;
+
       const label = document.createElement("div");
       label.className = "request-cart-group-label";
-      label.textContent = `🛍 ${group[0][1].cartSize || group.length}-piece order`;
+      label.dataset.toggleGroup = cartId;
+      label.innerHTML = `
+        <span>🛍 ${group[0][1].cartSize || group.length}-piece order${newest.orderNumber ? ` · #${escapeHtml(newest.orderNumber)}` : ""} · ${escapeHtml(newest.clientName || "")}</span>
+        <button type="button" class="request-expand-btn" aria-label="Expand" aria-expanded="${isGroupExpanded}">▾</button>
+      `;
       groupEl.appendChild(label);
-      group.forEach(([id, r]) => groupEl.appendChild(buildRequestRow(id, r)));
+
+      const body = document.createElement("div");
+      body.className = "request-cart-group-body";
+      group.forEach(([id, r]) => body.appendChild(buildRequestRow(id, r)));
+      groupEl.appendChild(body);
+
       feed.appendChild(groupEl);
     } else {
       const [id, r] = group[0];
       feed.appendChild(buildRequestRow(id, r));
     }
+  });
+
+  feed.querySelectorAll("[data-toggle-request]").forEach((header) => {
+    header.addEventListener("click", (e) => {
+      if (e.target.closest("select, .copyable-field")) return;
+      const reqId = header.dataset.toggleRequest;
+      const row = header.closest(".request-row");
+      const nowExpanded = row.classList.toggle("expanded");
+      if (nowExpanded) expandedRequestIds.add(reqId); else expandedRequestIds.delete(reqId);
+      header.querySelector(".request-expand-btn")?.setAttribute("aria-expanded", String(nowExpanded));
+    });
+  });
+
+  feed.querySelectorAll("[data-toggle-group]").forEach((label) => {
+    label.addEventListener("click", () => {
+      const cartId = label.dataset.toggleGroup;
+      const groupEl = label.closest(".request-cart-group");
+      const nowExpanded = groupEl.classList.toggle("expanded");
+      if (nowExpanded) expandedGroupIds.add(cartId); else expandedGroupIds.delete(cartId);
+      label.querySelector(".request-expand-btn")?.setAttribute("aria-expanded", String(nowExpanded));
+    });
   });
 
   feed.querySelectorAll("[data-view-request]").forEach((btn) => {
