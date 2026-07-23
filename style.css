@@ -761,6 +761,18 @@ button {
   .success-check-circle, .success-check-mark { animation: none; stroke-dashoffset: 0; }
 }
 
+.share-location-status-row { display: flex; align-items: center; gap: 6px; }
+.success-check-sm { width: 22px; height: 22px; margin: 0; display: inline-block; vertical-align: middle; }
+.location-map-pulse { animation: location-pulse 1s ease-out; }
+@keyframes location-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(31, 110, 106, 0.4); }
+  70% { box-shadow: 0 0 0 16px rgba(31, 110, 106, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(31, 110, 106, 0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .location-map-pulse { animation: none; }
+}
+
 .my-account-form h4 { font-family: var(--font-display); font-size: 16px; margin: 0 0 4px; }
 .my-account-divider { border: none; border-top: 1px solid var(--border-soft); margin: 20px 0; }
 .my-requests-group-title {

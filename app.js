@@ -506,7 +506,9 @@ function showRequestView() {
   formStatus.textContent = "";
   document.getElementById("clientLocationUrl").value = "";
   document.getElementById("shareLocationStatus").textContent = "";
+  document.getElementById("shareLocationConfirm").style.display = "none";
   document.getElementById("locationMapWrap").style.display = "none";
+  document.getElementById("locationMap")?.classList.remove("location-map-pulse");
   if (locationMap && locationMarker) {
     locationMap.removeLayer(locationMarker);
   }
@@ -525,38 +527,44 @@ document.getElementById("shipToOtherToggle")?.addEventListener("change", (e) => 
   document.getElementById("recipientFieldsWrap").style.display = e.target.checked ? "block" : "none";
 });
 
-document.getElementById("shareLocationBtn")?.addEventListener("click", () => {
-  const btn = document.getElementById("shareLocationBtn");
-  const status = document.getElementById("shareLocationStatus");
-  if (!navigator.geolocation) {
-    status.textContent = t("share_location_error");
-    return;
-  }
-  btn.disabled = true;
-  status.textContent = t("share_location_loading");
-  navigator.geolocation.getCurrentPosition(
-    (pos) => {
-      const { latitude, longitude } = pos.coords;
-      document.getElementById("clientLocationUrl").value = `https://maps.google.com/?q=${latitude},${longitude}`;
-      status.textContent = t("share_location_success");
-      btn.disabled = false;
-    },
-    () => {
-      status.textContent = t("share_location_error");
-      btn.disabled = false;
-    }
-  );
-});
-
 // Map pin picker — a free (no API key) alternative to typing an address or
 // using one-tap geolocation, for clients who'd rather just point at their spot.
 let locationMap = null;
 let locationMarker = null;
 const ALEXANDRIA_COORDS = [31.2001, 29.9187];
 
+function ensureLocationMap() {
+  if (locationMap) return;
+  locationMap = L.map("locationMap").setView(ALEXANDRIA_COORDS, 12);
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    attribution: "&copy; OpenStreetMap contributors",
+    maxZoom: 19
+  }).addTo(locationMap);
+  locationMap.on("click", (e) => placeMapMarker(e.latlng.lat, e.latlng.lng));
+}
+
+// A quick, unmistakable "yes, we've got it" moment — the same draw-in
+// checkmark used for request/cart success, replayed inline, plus a brief
+// pulse ring around the map so the pin itself is what catches the eye.
+function playLocationConfirmedAnimation() {
+  const confirmWrap = document.getElementById("shareLocationConfirm");
+  if (confirmWrap) {
+    confirmWrap.style.display = "inline-flex";
+    const oldSvg = confirmWrap.querySelector("svg");
+    if (oldSvg) confirmWrap.replaceChild(oldSvg.cloneNode(true), oldSvg);
+  }
+  const mapEl = document.getElementById("locationMap");
+  if (mapEl) {
+    mapEl.classList.remove("location-map-pulse");
+    void mapEl.offsetWidth; // restart the animation even if it just played
+    mapEl.classList.add("location-map-pulse");
+  }
+}
+
 function setLocationPin(lat, lng) {
   document.getElementById("clientLocationUrl").value = `https://maps.google.com/?q=${lat},${lng}`;
   document.getElementById("shareLocationStatus").textContent = t("share_location_success");
+  playLocationConfirmedAnimation();
 }
 
 function placeMapMarker(lat, lng) {
@@ -572,6 +580,32 @@ function placeMapMarker(lat, lng) {
   setLocationPin(lat, lng);
 }
 
+document.getElementById("shareLocationBtn")?.addEventListener("click", () => {
+  const btn = document.getElementById("shareLocationBtn");
+  const status = document.getElementById("shareLocationStatus");
+  if (!navigator.geolocation) {
+    status.textContent = t("share_location_error");
+    return;
+  }
+  btn.disabled = true;
+  status.textContent = t("share_location_loading");
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      const { latitude, longitude } = pos.coords;
+      document.getElementById("locationMapWrap").style.display = "block";
+      ensureLocationMap();
+      locationMap.setView([latitude, longitude], 15);
+      placeMapMarker(latitude, longitude);
+      setTimeout(() => locationMap.invalidateSize(), 50);
+      btn.disabled = false;
+    },
+    () => {
+      status.textContent = t("share_location_error");
+      btn.disabled = false;
+    }
+  );
+});
+
 document.getElementById("pickMapLocationBtn")?.addEventListener("click", () => {
   const wrap = document.getElementById("locationMapWrap");
   if (wrap.style.display !== "none") {
@@ -579,14 +613,7 @@ document.getElementById("pickMapLocationBtn")?.addEventListener("click", () => {
     return;
   }
   wrap.style.display = "block";
-  if (!locationMap) {
-    locationMap = L.map("locationMap").setView(ALEXANDRIA_COORDS, 12);
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: "&copy; OpenStreetMap contributors",
-      maxZoom: 19
-    }).addTo(locationMap);
-    locationMap.on("click", (e) => placeMapMarker(e.latlng.lat, e.latlng.lng));
-  }
+  ensureLocationMap();
   setTimeout(() => locationMap.invalidateSize(), 50);
 });
 
