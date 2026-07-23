@@ -589,6 +589,7 @@ function openRequestDetail(id) {
       </div>
     </div>
     ${isCustomDesign ? `<div style="margin-top:16px;">${detailRow(t("custom_design_label"), r.designDescription || "—")}</div>` : ""}
+    ${isCustomDesign && r.referenceImageUrl ? `<p style="margin-top:10px;"><a href="${escapeHtml(r.referenceImageUrl)}" target="_blank" rel="noopener">${escapeHtml(t("custom_design_image_view_link"))}</a></p>` : ""}
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px 20px; margin-top:18px;">
       ${detailRow("Order #", r.orderNumber, true)}
       ${detailRow("Client", r.clientName, true)}
@@ -884,6 +885,7 @@ function renderRequestsTable() {
       </div>
       <div class="request-row-details">
         ${isCustomDesign && r.designDescription ? `<div class="request-row-notes"><strong>${escapeHtml(t("custom_design_label"))}:</strong> ${escapeHtml(r.designDescription)}</div>` : ""}
+        ${isCustomDesign && r.referenceImageUrl ? `<div class="request-row-notes"><a href="${escapeHtml(r.referenceImageUrl)}" target="_blank" rel="noopener">${escapeHtml(t("custom_design_image_view_link"))}</a></div>` : ""}
         ${recipientHtml}
         ${metaParts.length ? `<div class="request-row-meta">${metaParts.join("")}</div>` : ""}
         ${r.notes ? `<div class="request-row-notes">${escapeHtml(r.notes)}</div>` : ""}

@@ -20,6 +20,7 @@ const requestViewTitle = document.getElementById("requestViewTitle");
 const requestViewTitleCustom = document.getElementById("requestViewTitleCustom");
 const customDesignFieldWrap = document.getElementById("customDesignFieldWrap");
 const customDesignDescriptionField = document.getElementById("customDesignDescription");
+const customDesignImageUrlField = document.getElementById("customDesignImageUrl");
 const customDesignBtn = document.getElementById("customDesignBtn");
 
 // If a price was typed as bare digits (no currency letters), assume EGP so it's
@@ -1234,6 +1235,7 @@ requestForm.addEventListener("submit", async (e) => {
   if (!currentProduct) {
     payload.requestType = "custom_design";
     payload.designDescription = customDesignDescriptionField.value.trim();
+    payload.referenceImageUrl = customDesignImageUrlField.value.trim() || null;
   }
 
   if (document.getElementById("shipToOtherToggle").checked) {

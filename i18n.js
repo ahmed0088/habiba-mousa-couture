@@ -91,6 +91,10 @@ const I18N = {
     custom_design_label: "وصف التصميم",
     custom_design_placeholder: "زي: فستان سهرة طويل لونه أحمر، مفتوح من الضهر، حسيتي بيه في صورة شفتيها... قوليلنا أي تفاصيل",
     custom_design_note: "هنشوف نقدر ننفذه ولا لأ، وهنكلمك على طول نأكد التفاصيل.",
+    custom_design_image_label: "رابط صورة للتصميم (اختياري)",
+    custom_design_image_placeholder: "لينك من إنستجرام، بينترست، أو أي صورة شايفاها أونلاين",
+    custom_design_image_note: "حطي رابط صورة لو عندك واحدة — مش لازم لو مفيش.",
+    custom_design_image_view_link: "🔗 شوفي صورة المرجع",
     custom_design_badge: "🎨 تصميم خاص",
 
     // Cart
@@ -520,6 +524,10 @@ const I18N = {
     custom_design_label: "Describe your design",
     custom_design_placeholder: "e.g. a long red evening dress, open back, inspired by a photo you saw... share any details",
     custom_design_note: "We'll see if we can make it, then follow up personally to confirm the details.",
+    custom_design_image_label: "Reference photo link (optional)",
+    custom_design_image_placeholder: "A link from Instagram, Pinterest, or any photo you found online",
+    custom_design_image_note: "Add a photo link if you have one — not required if not.",
+    custom_design_image_view_link: "🔗 View reference photo",
     custom_design_badge: "🎨 Custom design idea",
 
     // Cart
