@@ -103,6 +103,7 @@ const I18N = {
     cart_success_title: "تم إرسال طلباتك!",
     cart_success_message: "وصلنا طلبك بكل القطع وهنكلمك قريب لتأكيد التفاصيل.",
     cart_submit_error: "حصلت مشكلة وإحنا بنبعت الطلبات. جربي تاني أو كلمينا على واتساب.",
+    stock_error_named: "معلش، \"{name}\" خلصت من المخزون بالمقاس/اللون ده. عدّلي طلبك وجربي تاني.",
 
     // Admin — login
     admin_eyebrow: "دخول الموظفين",
@@ -154,6 +155,7 @@ const I18N = {
     admin_activity_delete_confirm: "حذف سجل النشاط ده؟ الإجراء ده مش بيأثر على البيانات نفسها.",
     admin_activity_restored: "تم الاسترجاع بنجاح.",
     admin_activity_restore_error: "معرفناش نسترجع العنصر ده.",
+    admin_activity_restore_stock_error: "معرفناش نسترجع الطلب ده — مفيش مخزون كفاية من المقاس/اللون ده دلوقتي.",
     admin_th_action: "الإجراء",
     admin_th_target: "التفاصيل",
     admin_th_by: "بواسطة",
@@ -478,6 +480,7 @@ const I18N = {
     cart_success_title: "Your requests are sent!",
     cart_success_message: "We've received your order with all the pieces and will reach out soon to confirm details.",
     cart_submit_error: "Something went wrong sending your requests. Please try again or reach us on WhatsApp.",
+    stock_error_named: "Sorry, \"{name}\" just sold out in that size/color. Please adjust your order and try again.",
 
     admin_eyebrow: "Staff Access",
     admin_brand: "Habiba Mousa",
@@ -527,6 +530,7 @@ const I18N = {
     admin_activity_delete_confirm: "Delete this log entry? This doesn't affect the actual data.",
     admin_activity_restored: "Restored successfully.",
     admin_activity_restore_error: "Couldn't restore this item.",
+    admin_activity_restore_stock_error: "Couldn't restore this request — not enough stock left in that size/color right now.",
     admin_th_action: "Action",
     admin_th_target: "Details",
     admin_th_by: "By",

@@ -796,45 +796,67 @@ function loadCollections() {
     );
 }
 
+// Stock for ready-stock items is only ever changed server-side (see
+// functions/index.js's submitRequest) -- a public client has no Firestore
+// write access to `products` at all (see firestore.rules), on purpose, so
+// nobody can manipulate inventory by calling Firestore directly instead of
+// going through the app. This one callable function is the sole place a
+// ready-stock item's stock actually gets checked and decremented, atomically.
+const submitRequestFn = firebase.functions().httpsCallable("submitRequest");
+
+// Turns a callable-function error (e.g. "OUT_OF_STOCK:<productId>") into a
+// message naming the actual piece, instead of a generic failure.
+function describeSubmitError(err) {
+  const msg = (err && err.message) || "";
+  const [code, productId] = msg.split(":");
+  if (code === "OUT_OF_STOCK" || code === "MISSING_PRODUCT") {
+    const product = allProducts.find(p => p.id === productId);
+    return t("stock_error_named").replace("{name}", product ? product.name : t("piece_category_fallback"));
+  }
+  return t("submit_error");
+}
+
 requestForm.addEventListener("submit", async (e) => {
   e.preventDefault();
   submitBtn.disabled = true;
   submitBtn.textContent = t("submit_btn_sending");
 
   const product = allProducts.find(p => p.id === productIdField.value);
+  const isReadyStock = Boolean(product && product.availability === "ready_stock");
 
-  const payload = {
+  const item = {
     productId: productIdField.value || null,
     productName: product ? product.name : null,
     productCode: product ? (product.productCode || null) : null,
+    quantity: isReadyStock ? (parseInt(document.getElementById("orderQuantity").value, 10) || 1) : 1
+  };
+  if (isReadyStock) {
+    item.orderType = "ready_stock";
+    item.selectedSize = document.getElementById("orderSize").value || null;
+    item.selectedColor = document.getElementById("orderColor").value || null;
+  } else {
+    item.material = document.getElementById("clientMaterial").value;
+  }
+
+  const payload = {
+    items: [item],
     clientName: document.getElementById("clientName").value.trim(),
     clientPhone: document.getElementById("clientPhone").value.trim(),
     clientAddress: document.getElementById("clientAddress").value.trim(),
     clientLocationUrl: document.getElementById("clientLocationUrl").value || null,
-    material: document.getElementById("clientMaterial").value,
     preferredDate: document.getElementById("preferredDate").value || null,
-    notes: document.getElementById("clientNotes").value.trim(),
-    status: "new",
-    clientUid: auth.currentUser ? auth.currentUser.uid : null,
-    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    notes: document.getElementById("clientNotes").value.trim()
   };
 
-  if (product && product.availability === "ready_stock") {
-    payload.orderType = "ready_stock";
-    payload.selectedSize = document.getElementById("orderSize").value || null;
-    payload.selectedColor = document.getElementById("orderColor").value || null;
-    payload.quantity = parseInt(document.getElementById("orderQuantity").value, 10) || 1;
-  }
-
   try {
-    await db.collection("requests").add(payload);
+    await submitRequestFn(payload);
     requestForm.reset();
     closeModal();
     showSuccessPopup("submit_success_title", "submit_success");
   } catch (err) {
     console.error("Failed to submit request:", err);
     formStatus.className = "form-status error";
-    formStatus.textContent = t("submit_error");
+    formStatus.textContent = describeSubmitError(err);
   } finally {
     submitBtn.disabled = false;
     submitBtn.textContent = t("submit_btn");
@@ -881,46 +903,34 @@ cartCheckoutForm?.addEventListener("submit", async (e) => {
   cartSubmitBtn.disabled = true;
   cartSubmitBtn.textContent = t("submit_btn_sending");
 
-  const cartId = crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-  const clientName = document.getElementById("cartClientName").value.trim();
-  const clientPhone = document.getElementById("cartClientPhone").value.trim();
-  const clientAddress = document.getElementById("cartClientAddress").value.trim();
-  const preferredDate = document.getElementById("cartPreferredDate").value || null;
-  const notes = document.getElementById("cartNotes").value.trim();
-  const clientUid = auth.currentUser ? auth.currentUser.uid : null;
-
-  try {
-    const batch = db.batch();
-    cart.forEach((item) => {
+  const payload = {
+    items: cart.map((item) => {
       const product = allProducts.find(p => p.id === item.productId);
-      const ref = db.collection("requests").doc();
-      const payload = {
+      const entry = {
         productId: item.productId,
         productName: product ? product.name : null,
         productCode: product ? (product.productCode || null) : null,
-        clientName,
-        clientPhone,
-        clientAddress,
-        clientLocationUrl: null,
-        material: item.material || "unspecified",
-        preferredDate,
-        notes,
-        status: "new",
-        clientUid,
-        cartId,
-        cartSize: cart.length,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        quantity: item.quantity || 1
       };
       if (item.orderType === "ready_stock") {
-        payload.orderType = "ready_stock";
-        payload.selectedSize = item.selectedSize || null;
-        payload.selectedColor = item.selectedColor || null;
-        payload.quantity = item.quantity || 1;
+        entry.orderType = "ready_stock";
+        entry.selectedSize = item.selectedSize || null;
+        entry.selectedColor = item.selectedColor || null;
+      } else {
+        entry.material = item.material || "unspecified";
       }
-      batch.set(ref, payload);
-    });
-    await batch.commit();
+      return entry;
+    }),
+    clientName: document.getElementById("cartClientName").value.trim(),
+    clientPhone: document.getElementById("cartClientPhone").value.trim(),
+    clientAddress: document.getElementById("cartClientAddress").value.trim(),
+    clientLocationUrl: null,
+    preferredDate: document.getElementById("cartPreferredDate").value || null,
+    notes: document.getElementById("cartNotes").value.trim()
+  };
 
+  try {
+    await submitRequestFn(payload);
     cart = [];
     saveCart();
     cartCheckoutForm.reset();
@@ -928,8 +938,11 @@ cartCheckoutForm?.addEventListener("submit", async (e) => {
     showSuccessPopup("cart_success_title", "cart_success_message");
   } catch (err) {
     console.error("Failed to submit cart:", err);
+    const msg = (err && err.message) || "";
     cartFormStatus.className = "form-status error";
-    cartFormStatus.textContent = t("cart_submit_error");
+    cartFormStatus.textContent = msg.startsWith("OUT_OF_STOCK") || msg.startsWith("MISSING_PRODUCT")
+      ? describeSubmitError(err)
+      : t("cart_submit_error");
   } finally {
     cartSubmitBtn.disabled = false;
     cartSubmitBtn.textContent = t("cart_submit_btn");

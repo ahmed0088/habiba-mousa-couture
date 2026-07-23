@@ -341,7 +341,16 @@ function renderActivityLog() {
       try {
         const { id, ...cleanData } = entry.snapshotData;
         const targetCollection = db.collection(entry.snapshotCollection);
-        if (entry.snapshotId) {
+        const needsStockReclaim = entry.snapshotCollection === "requests"
+          && cleanData.orderType === "ready_stock"
+          && cleanData.status !== "cancelled";
+        if (needsStockReclaim) {
+          const docRef = entry.snapshotId ? targetCollection.doc(entry.snapshotId) : targetCollection.doc();
+          await db.runTransaction(async (tx) => {
+            await decrementStockInTransaction(tx, cleanData);
+            tx.set(docRef, { ...cleanData, stockRestored: false });
+          });
+        } else if (entry.snapshotId) {
           await targetCollection.doc(entry.snapshotId).set(cleanData);
         } else {
           await targetCollection.add(cleanData);
@@ -350,7 +359,11 @@ function renderActivityLog() {
         showToast(t("admin_activity_restored"));
       } catch (err) {
         console.error("Failed to restore item:", err);
-        showToast(t("admin_activity_restore_error") + errSuffix(err), "error");
+        if (err && err.message === "OUT_OF_STOCK") {
+          showToast(t("admin_activity_restore_stock_error"), "error");
+        } else {
+          showToast(t("admin_activity_restore_error") + errSuffix(err), "error");
+        }
       }
     });
   });
@@ -416,6 +429,66 @@ function formatDate(ts) {
   if (!ts) return "—";
   const d = ts.toDate ? ts.toDate() : new Date(ts);
   return d.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+}
+
+// ---------- Stock (ready-stock requests only) ----------
+// The public submission flow can't touch `products` directly (see
+// firestore.rules + functions/index.js) -- but staff already have full
+// Firestore write access to both `requests` and `products` for the admin
+// dashboard, so these run as plain client-side transactions rather than
+// needing another Cloud Function.
+
+function findVariant(variants, size, color) {
+  return (variants || []).find(
+    (v) => (v.size || null) === (size || null) && (v.color || null) === (color || null)
+  );
+}
+
+// Cancelling or deleting a ready-stock request gives its held stock back.
+async function restoreStockInTransaction(tx, r) {
+  if (!r || r.orderType !== "ready_stock" || r.stockRestored || !r.productId) return;
+  const productRef = db.collection("products").doc(r.productId);
+  const snap = await tx.get(productRef);
+  if (!snap.exists) return;
+  const variants = (snap.data().variants || []).map((v) => ({ ...v }));
+  const variant = findVariant(variants, r.selectedSize, r.selectedColor);
+  if (!variant) return;
+  variant.stock = (variant.stock || 0) + (r.quantity || 1);
+  tx.update(productRef, { variants });
+}
+
+// The inverse, used only when un-deleting a ready-stock request from the
+// Activity Log whose stock was given back when it was removed -- bringing
+// it back needs to re-claim that stock, and can fail if someone else has
+// since taken the last unit.
+async function decrementStockInTransaction(tx, r) {
+  if (!r || r.orderType !== "ready_stock" || !r.productId) return;
+  const productRef = db.collection("products").doc(r.productId);
+  const snap = await tx.get(productRef);
+  if (!snap.exists) throw new Error("MISSING_PRODUCT");
+  const variants = (snap.data().variants || []).map((v) => ({ ...v }));
+  const variant = findVariant(variants, r.selectedSize, r.selectedColor);
+  const qty = r.quantity || 1;
+  if (!variant || (variant.stock || 0) < qty) throw new Error("OUT_OF_STOCK");
+  variant.stock -= qty;
+  tx.update(productRef, { variants });
+}
+
+// Shared by both the list view's <select> and the detail modal's status
+// pills -- restores stock atomically with the status change whenever a
+// ready-stock request transitions to "cancelled".
+async function updateRequestStatus(id, newStatus, r) {
+  const reqRef = db.collection("requests").doc(id);
+  if (newStatus === "cancelled" && r && r.orderType === "ready_stock" && !r.stockRestored) {
+    await db.runTransaction(async (tx) => {
+      const snap = await tx.get(reqRef);
+      const data = snap.data();
+      await restoreStockInTransaction(tx, data);
+      tx.update(reqRef, { status: newStatus, stockRestored: true });
+    });
+  } else {
+    await reqRef.update({ status: newStatus });
+  }
 }
 
 // ---------- Requests ----------
@@ -502,7 +575,7 @@ function openRequestDetail(id) {
       if (btn.classList.contains("active")) return;
       const newStatus = btn.dataset.status;
       try {
-        await db.collection("requests").doc(id).update({ status: newStatus });
+        await updateRequestStatus(id, newStatus, r);
         logActivity("Changed request status", `${r.clientName} → ${newStatus}`);
         requestDetailBody.querySelectorAll(".status-pill-btn").forEach((b) => {
           b.classList.toggle("active", b === btn);
@@ -624,13 +697,22 @@ function renderRequestsTable() {
   feed.querySelectorAll("[data-delete-request]").forEach((btn) => {
     btn.addEventListener("click", async () => {
       if (!confirm("Delete this request? You can restore it later from the Activity Log if needed.")) return;
-      const r = requestsById[btn.dataset.deleteRequest];
+      const id = btn.dataset.deleteRequest;
+      const r = requestsById[id];
       try {
-        await db.collection("requests").doc(btn.dataset.deleteRequest).delete();
+        const reqRef = db.collection("requests").doc(id);
+        await db.runTransaction(async (tx) => {
+          const snap = await tx.get(reqRef);
+          if (snap.exists) await restoreStockInTransaction(tx, snap.data());
+          tx.delete(reqRef);
+        });
         logActivity("Deleted request", r ? r.clientName : "", {
           snapshotCollection: "requests",
-          snapshotId: btn.dataset.deleteRequest,
-          snapshotData: r || null
+          snapshotId: id,
+          // Snapshot as stock-already-restored so a later "Restore" from the
+          // Activity Log knows to re-claim that stock instead of granting it
+          // back for free.
+          snapshotData: r ? { ...r, stockRestored: true } : null
         });
       } catch (err) {
         console.error("Failed to delete request:", err);
@@ -641,9 +723,10 @@ function renderRequestsTable() {
 
   feed.querySelectorAll(".status-select").forEach((sel) => {
     sel.addEventListener("change", async () => {
+      const r = requestsById[sel.dataset.id];
       try {
-        await db.collection("requests").doc(sel.dataset.id).update({ status: sel.value });
-        logActivity("Changed request status", `${requestsById[sel.dataset.id] ? requestsById[sel.dataset.id].clientName : ""} → ${sel.value}`);
+        await updateRequestStatus(sel.dataset.id, sel.value, r);
+        logActivity("Changed request status", `${r ? r.clientName : ""} → ${sel.value}`);
       } catch (err) {
         console.error("Failed to update status:", err);
         alert("Couldn't update status. Please try again." + errSuffix(err));
