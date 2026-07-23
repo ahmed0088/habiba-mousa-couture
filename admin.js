@@ -583,11 +583,19 @@ function updateDashboardStats() {
   const activeProductsEl = document.getElementById("statActiveProducts");
   const activeCollectionsEl = document.getElementById("statActiveCollections");
   const multiOrdersEl = document.getElementById("statMultiItemOrders");
+  const lowStockEl = document.getElementById("statLowStock");
   if (newRequestsEl) newRequestsEl.textContent = allRequests.filter(([, r]) => r.status === "new").length;
   if (totalRequestsEl) totalRequestsEl.textContent = allRequests.length;
   if (activeProductsEl) activeProductsEl.textContent = allProductsAdmin.filter(([, p]) => p.status === "active").length;
   if (activeCollectionsEl) activeCollectionsEl.textContent = allCollections.filter(c => c.status === "active").length;
   if (multiOrdersEl) multiOrdersEl.textContent = new Set(allRequests.map(([, r]) => r.cartId).filter(Boolean)).size;
+  if (lowStockEl) {
+    lowStockEl.textContent = allProductsAdmin.filter(([, p]) => {
+      if (p.availability !== "ready_stock" || p.status !== "active") return false;
+      const totalStock = (p.variants || []).reduce((sum, v) => sum + (v.stock || 0), 0);
+      return totalStock <= 3;
+    }).length;
+  }
 }
 
 function renderRequestsTable() {
@@ -905,9 +913,17 @@ function renderProductsTable() {
 
   filtered.forEach(([id, p]) => {
     const tr = document.createElement("tr");
+    const totalStock = p.availability === "ready_stock" ? (p.variants || []).reduce((sum, v) => sum + (v.stock || 0), 0) : null;
+    const stockBadge = p.availability === "ready_stock"
+      ? totalStock === 0
+        ? ` <span class="sold-out-badge">Sold Out</span>`
+        : totalStock <= 3
+          ? ` <span class="low-stock-badge">Only ${totalStock} left</span>`
+          : ` <span class="ready-badge">Ready Stock</span>`
+      : "";
     tr.innerHTML = `
       <td data-label="Code">${escapeHtml(p.productCode || "—")}</td>
-      <td data-label="Piece">${escapeHtml(p.name)}${p.availability === "ready_stock" ? ` <span class="ready-badge">Ready Stock</span>` : ""}</td>
+      <td data-label="Piece">${escapeHtml(p.name)}${stockBadge}</td>
       <td data-label="Category">${escapeHtml(p.category || "—")}</td>
       <td data-label="Price">${p.salePrice ? `${escapeHtml(p.priceRange || "—")} → <strong>${escapeHtml(p.salePrice)}</strong> (Sale)` : escapeHtml(p.priceRange || "—")}</td>
       <td data-label="Status"><span class="status-pill status-${p.status === "active" ? "confirmed" : "delivered"}">${escapeHtml(p.status)}</span></td>

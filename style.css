@@ -1283,6 +1283,11 @@ button {
   border: 1px solid var(--turquoise);
 }
 .stat-tile-multi .stat-number { color: var(--turquoise); }
+.stat-tile-lowstock {
+  background: linear-gradient(145deg, rgba(184,40,58,0.12), rgba(201,151,63,0.1));
+  border: 1px solid #b8283a;
+}
+.stat-tile-lowstock .stat-number { color: #b8283a; }
 .stat-label { font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-faint); margin: 6px 0 0; }
 @media (max-width: 900px) {
   .stat-grid { grid-template-columns: repeat(2, 1fr); }
@@ -1524,6 +1529,20 @@ select.status-select.status-cancelled { background-color: #f6dcdc; color: #a13a3
   text-transform: uppercase;
   color: var(--text-faint);
   background: var(--surface-muted);
+  border-radius: 999px;
+  padding: 3px 10px;
+}
+
+.low-stock-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: #fff;
+  background: linear-gradient(135deg, #e2483e, #b8283a);
   border-radius: 999px;
   padding: 3px 10px;
 }

@@ -147,14 +147,15 @@ function addToCart(item) {
 function quickAddToCart(product, quantity) {
   const qty = Math.max(1, quantity || 1);
   if (product.availability === "ready_stock") {
-    const variant = (product.variants || []).find(v => v.stock > 0);
+    const variant = firstAddableVariant(product);
     if (!variant) return;
+    const available = getAvailableToAdd(product, variant.size || null, variant.color || null);
     addToCart({
       productId: product.id,
       orderType: "ready_stock",
       selectedSize: variant.size || null,
       selectedColor: variant.color || null,
-      quantity: Math.min(qty, variant.stock)
+      quantity: Math.min(qty, available)
     });
   } else {
     addToCart({ productId: product.id, material: "unspecified", quantity: qty });
@@ -550,6 +551,26 @@ function getVariantStock(product, size, color) {
     .reduce((sum, v) => sum + (v.stock || 0), 0);
 }
 
+// How much of this exact size/color is already sitting in the cart (this
+// shopper's own, since the cart is local-only) — needed so "how many can I
+// still add" accounts for what they've already reserved, not just raw stock.
+function getCartQtyForVariant(productId, size, color) {
+  return cart
+    .filter(c => c.productId === productId && (c.selectedSize || null) === (size || null) && (c.selectedColor || null) === (color || null))
+    .reduce((sum, c) => sum + (c.quantity || 0), 0);
+}
+
+function getAvailableToAdd(product, size, color) {
+  return Math.max(0, getVariantStock(product, size, color) - getCartQtyForVariant(product.id, size, color));
+}
+
+// The variant quick-add would pick automatically (first one with anything
+// left to add), or null if every variant is either out of stock or already
+// fully reserved in the cart.
+function firstAddableVariant(product) {
+  return (product.variants || []).find(v => getAvailableToAdd(product, v.size || null, v.color || null) > 0) || null;
+}
+
 function populateOrderQuantity(maxQty) {
   const qtySelect = document.getElementById("orderQuantity");
   const max = Math.max(1, Math.min(maxQty, 10));
@@ -560,7 +581,7 @@ function populateOrderQuantity(maxQty) {
 function updateOrderQuantityForSelection(product) {
   const size = document.getElementById("orderSize").value;
   const color = document.getElementById("orderColor").value;
-  populateOrderQuantity(getVariantStock(product, size || null, color || null) || 1);
+  populateOrderQuantity(getAvailableToAdd(product, size || null, color || null) || 1);
 }
 
 function refreshOrderColorOptions(product) {
@@ -635,7 +656,14 @@ function openModal(product) {
   requestForm.reset();
   productIdField.value = product.id; // reset() clears hidden fields too, so set again
   setupVariantSelectors(product);
-  if (product.availability === "ready_stock" && totalStock === 0) {
+  // "Order This Item" is a separate, independent immediate order (not tied
+  // to the cart), so it only cares about genuine sold-out. Add to Cart also
+  // needs to disappear once this shopper's own cart already holds every
+  // unit left, even if the product itself technically still has stock.
+  const remainingForCart = product.availability === "ready_stock"
+    ? (product.variants || []).reduce((sum, v) => sum + getAvailableToAdd(product, v.size || null, v.color || null), 0)
+    : null;
+  if (product.availability === "ready_stock" && (totalStock === 0 || remainingForCart <= 0)) {
     document.getElementById("orderVariantWrap").style.display = "none";
     if (addToCartBtn) addToCartBtn.style.display = "none";
   } else if (addToCartBtn) {
@@ -815,6 +843,22 @@ function renderGallery() {
     const isReady = product.availability === "ready_stock";
     const totalStock = isReady ? (product.variants || []).reduce((sum, v) => sum + (v.stock || 0), 0) : 0;
     const isSoldOut = isReady && totalStock === 0;
+    // Stock genuinely left to add — separate from totalStock, since anything
+    // already sitting in this shopper's own cart shouldn't still look
+    // available to quick-add more of.
+    const remainingToAdd = isReady
+      ? (product.variants || []).reduce((sum, v) => sum + getAvailableToAdd(product, v.size || null, v.color || null), 0)
+      : 0;
+    const isFullyReserved = isReady && !isSoldOut && remainingToAdd <= 0;
+    const isLowStock = isReady && remainingToAdd > 0 && remainingToAdd <= 3;
+    const canQuickAdd = !isSoldOut && !isFullyReserved;
+    const badgeHtml = isSoldOut
+      ? `<span class="sold-out-badge">${escapeHtml(t("sold_out_label"))}</span>`
+      : isFullyReserved
+        ? `<span class="sold-out-badge">${escapeHtml(t("in_cart_badge"))}</span>`
+        : isLowStock
+          ? `<span class="low-stock-badge">${escapeHtml(t("stock_left_label").replace("{count}", remainingToAdd))}</span>`
+          : `<span class="ready-badge">${escapeHtml(t("ready_badge"))}</span>`;
     card.innerHTML = `
       <div class="piece-media">
         ${onSale ? `<span class="sale-badge">${discountPercent ? `-${discountPercent}%` : t("sale_badge")}</span>` : ""}
@@ -831,12 +875,12 @@ function renderGallery() {
           : `<span>${escapeHtml(product.name)}</span>`}
       </div>
       <div class="piece-body">
-        <p class="piece-eyebrow">${escapeHtml(product.category || t("piece_category_fallback"))}${collectionName ? ` <span class="piece-collection-tag">· ${escapeHtml(collectionName)}</span>` : ""}${isReady ? (isSoldOut ? ` <span class="sold-out-badge">${escapeHtml(t("sold_out_label"))}</span>` : ` <span class="ready-badge">${escapeHtml(t("ready_badge"))}</span>`) : ""}</p>
+        <p class="piece-eyebrow">${escapeHtml(product.category || t("piece_category_fallback"))}${collectionName ? ` <span class="piece-collection-tag">· ${escapeHtml(collectionName)}</span>` : ""}${isReady ? ` ${badgeHtml}` : ""}</p>
         <h3 class="piece-name">${escapeHtml(product.name)}</h3>
         <p class="piece-desc">${escapeHtml(product.description || "")}</p>
         <div class="piece-body-bottom">
           ${priceHtml}
-          ${!isSoldOut ? `
+          ${canQuickAdd ? `
             <div class="piece-quickcart-row">
               <div class="piece-qty-stepper">
                 <button type="button" class="piece-qty-btn" data-qty-down aria-label="-">−</button>
@@ -858,9 +902,9 @@ function renderGallery() {
       e.stopPropagation();
       shareProduct(product);
     });
-    if (!isSoldOut) {
+    if (canQuickAdd) {
       const quickMaxQty = isReady
-        ? Math.max(1, (product.variants || []).find(v => v.stock > 0)?.stock || 1)
+        ? Math.max(1, getAvailableToAdd(product, firstAddableVariant(product)?.size || null, firstAddableVariant(product)?.color || null) || 1)
         : 10;
       const qtyValueEl = card.querySelector(".piece-qty-value");
       card.querySelector("[data-qty-down]").addEventListener("click", (e) => {
@@ -1023,8 +1067,8 @@ addToCartBtn?.addEventListener("click", () => {
   if (product.availability === "ready_stock") {
     const size = document.getElementById("orderSize").value || null;
     const color = document.getElementById("orderColor").value || null;
-    const availableStock = getVariantStock(product, size, color);
-    if (availableStock <= 0) {
+    const available = getAvailableToAdd(product, size, color);
+    if (available <= 0) {
       cartAddStatus.className = "form-status error";
       cartAddStatus.textContent = t("cart_add_out_of_stock");
       return;
@@ -1032,7 +1076,7 @@ addToCartBtn?.addEventListener("click", () => {
     item.orderType = "ready_stock";
     item.selectedSize = size;
     item.selectedColor = color;
-    item.quantity = Math.min(qty, availableStock);
+    item.quantity = Math.min(qty, available);
   } else {
     item.material = "unspecified";
   }
