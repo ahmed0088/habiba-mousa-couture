@@ -107,8 +107,34 @@ function updateCartBadge() {
   cartBadge.style.display = count > 0 ? "flex" : "none";
 }
 
+// Caps a cart line's quantity at the real stock for its exact size/color
+// (made-to-order items, which have no size/color, are left uncapped here).
+function clampCartItemToStock(item) {
+  if (!item.selectedSize && !item.selectedColor) return;
+  const product = allProducts.find(p => p.id === item.productId);
+  if (!product || product.availability !== "ready_stock") return;
+  const maxStock = getVariantStock(product, item.selectedSize || null, item.selectedColor || null);
+  if (item.quantity > maxStock) item.quantity = Math.max(1, maxStock);
+}
+
+// Adding the same product+variant twice used to create two separate cart
+// lines, each individually capped at stock — so two lines of "2" could add
+// up to 4 units of something only 2 are in stock of. Merging into one line
+// (and re-clamping the combined total) makes that impossible.
 function addToCart(item) {
-  cart.push(item);
+  const existing = cart.find(c =>
+    c.productId === item.productId &&
+    (c.selectedSize || null) === (item.selectedSize || null) &&
+    (c.selectedColor || null) === (item.selectedColor || null) &&
+    (c.material || null) === (item.material || null)
+  );
+  if (existing) {
+    existing.quantity = (existing.quantity || 1) + (item.quantity || 1);
+    clampCartItemToStock(existing);
+  } else {
+    cart.push(item);
+    clampCartItemToStock(item);
+  }
   saveCart();
 }
 
@@ -146,6 +172,7 @@ function changeCartQty(index, delta) {
   const item = cart[index];
   if (!item) return;
   item.quantity = Math.max(1, (item.quantity || 1) + delta);
+  clampCartItemToStock(item);
   saveCart();
   renderCartList();
 }
@@ -160,8 +187,36 @@ function cartItemVariantLabel(item, product) {
   return parts.join(" · ");
 }
 
+// Merges any duplicate lines already sitting in someone's cart from before
+// addToCart started merging on its own (e.g. two "M · Black" lines of 2 each
+// on a piece with only 2 in stock), then re-clamps the merged total.
+function normalizeCart() {
+  const merged = [];
+  cart.forEach((item) => {
+    const existing = merged.find(m =>
+      m.productId === item.productId &&
+      (m.selectedSize || null) === (item.selectedSize || null) &&
+      (m.selectedColor || null) === (item.selectedColor || null) &&
+      (m.material || null) === (item.material || null)
+    );
+    if (existing) {
+      existing.quantity = (existing.quantity || 1) + (item.quantity || 1);
+    } else {
+      merged.push(item);
+    }
+  });
+  merged.forEach(clampCartItemToStock);
+  if (merged.length !== cart.length) {
+    cart = merged;
+    saveCart();
+  } else {
+    cart = merged;
+  }
+}
+
 function renderCartList() {
   if (!cartItemsList) return;
+  normalizeCart();
   cartItemsList.innerHTML = "";
 
   if (cart.length === 0) {

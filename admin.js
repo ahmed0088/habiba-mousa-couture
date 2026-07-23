@@ -449,9 +449,32 @@ function statusPillGroupHtml(id, currentStatus) {
   return `<div class="status-pill-group">${pills}</div>`;
 }
 
+// Deletes one request doc (with a restorable snapshot in the Activity Log),
+// shared by both the list view's Delete button and the detail modal's
+// per-sibling delete so a cart order's pieces can be removed individually
+// without hunting for each one in the main list.
+async function deleteRequestDoc(id) {
+  if (!confirm("Delete this request? You can restore it later from the Activity Log if needed.")) return false;
+  const r = requestsById[id];
+  try {
+    await db.collection("requests").doc(id).delete();
+    logActivity("Deleted request", r ? r.clientName : "", {
+      snapshotCollection: "requests",
+      snapshotId: id,
+      snapshotData: r || null
+    });
+    return true;
+  } catch (err) {
+    console.error("Failed to delete request:", err);
+    alert("Couldn't delete this request. Please try again." + errSuffix(err));
+    return false;
+  }
+}
+
 // A cart checkout creates one requests doc per item, all sharing a cartId —
-// this shows the rest of that order right in the detail view so staff don't
-// have to hunt through the list to see what else was ordered alongside it.
+// this shows the rest of that order right in the detail view, each with its
+// own delete button, so staff don't have to hunt through the list to remove
+// just one piece of a multi-piece order.
 function cartSiblingsHtml(currentId, r) {
   if (!r.cartId) return "";
   const siblings = allRequests.filter(([, sr]) => sr.cartId === r.cartId);
@@ -459,6 +482,7 @@ function cartSiblingsHtml(currentId, r) {
     <div class="cart-sibling-row${sid === currentId ? " current" : ""}">
       <span>${escapeHtml(sr.productName || "—")}${sr.productCode ? ` <span style="color:var(--text-faint); font-size:12px;">(${escapeHtml(sr.productCode)})</span>` : ""}</span>
       <span class="status-pill status-${escapeHtml(sr.status)}">${escapeHtml(STATUS_LABELS[sr.status] || sr.status)}</span>
+      <button type="button" class="icon-btn danger" data-sibling-delete="${sid}">Delete</button>
     </div>
   `).join("");
   return `
@@ -498,6 +522,20 @@ function openRequestDetail(id) {
     ${cartSiblingsHtml(id, r)}
   `;
 
+  requestDetailBody.querySelectorAll("[data-sibling-delete]").forEach((btn) => {
+    btn.addEventListener("click", async (e) => {
+      e.stopPropagation();
+      const siblingId = btn.dataset.siblingDelete;
+      const deleted = await deleteRequestDoc(siblingId);
+      if (!deleted) return;
+      if (siblingId === id) {
+        requestDetailBackdrop.classList.remove("open");
+      } else {
+        openRequestDetail(id);
+      }
+    });
+  });
+
   requestDetailBody.querySelectorAll(".status-pill-btn").forEach((btn) => {
     btn.addEventListener("click", async () => {
       if (btn.classList.contains("active")) return;
@@ -529,7 +567,13 @@ const requestsStatusFilter = document.getElementById("requestsStatusFilter");
 
 function requestMatchesSearch(r, q) {
   if (!q) return true;
-  const hay = `${r.clientName || ""} ${r.clientPhone || ""} ${r.productName || ""} ${r.productCode || ""} ${r.clientAddress || ""}`.toLowerCase();
+  const hay = [
+    r.orderNumber, r.clientName, r.clientPhone, r.clientAddress,
+    r.productName, r.productCode, r.notes, r.preferredDate,
+    MATERIAL_LABELS[r.material] || r.material,
+    STATUS_LABELS[r.status] || r.status,
+    r.selectedSize, r.selectedColor
+  ].filter(Boolean).join(" ").toLowerCase();
   return hay.includes(q);
 }
 
@@ -626,20 +670,8 @@ function renderRequestsTable() {
   });
 
   feed.querySelectorAll("[data-delete-request]").forEach((btn) => {
-    btn.addEventListener("click", async () => {
-      if (!confirm("Delete this request? You can restore it later from the Activity Log if needed.")) return;
-      const r = requestsById[btn.dataset.deleteRequest];
-      try {
-        await db.collection("requests").doc(btn.dataset.deleteRequest).delete();
-        logActivity("Deleted request", r ? r.clientName : "", {
-          snapshotCollection: "requests",
-          snapshotId: btn.dataset.deleteRequest,
-          snapshotData: r || null
-        });
-      } catch (err) {
-        console.error("Failed to delete request:", err);
-        alert("Couldn't delete this request. Please try again." + errSuffix(err));
-      }
+    btn.addEventListener("click", () => {
+      deleteRequestDoc(btn.dataset.deleteRequest);
     });
   });
 

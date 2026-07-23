@@ -1523,6 +1523,7 @@ select.status-select.status-cancelled { background-color: #f6dcdc; color: #a13a3
 .cart-sibling-row {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   justify-content: space-between;
   gap: 10px;
   padding: 8px 0;
@@ -1531,16 +1532,36 @@ select.status-select.status-cancelled { background-color: #f6dcdc; color: #a13a3
 }
 .cart-sibling-row:last-child { border-bottom: none; }
 .cart-sibling-row.current { font-weight: 700; color: var(--heading); }
+.cart-sibling-row > span:first-child { flex: 1 1 140px; min-width: 0; }
 
 @media (max-width: 640px) {
   .request-row { position: relative; padding-inline-end: 16px; }
-  .request-row-side { flex-direction: row-reverse; align-items: center; width: 100%; margin-left: 0; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border-soft); justify-content: space-between; }
+  .request-row-side {
+    flex-direction: row-reverse;
+    flex-wrap: wrap;
+    align-items: center;
+    width: 100%;
+    margin-left: 0;
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid var(--border-soft);
+    justify-content: space-between;
+    row-gap: 8px;
+  }
+  /* Status select + date share the top line; View/Delete get their own
+     full-width line below instead of squeezing in and overflowing. */
+  .request-row-actions { flex-basis: 100%; justify-content: flex-end; }
 }
 
 @media (max-width: 700px) {
   .admin-shell { flex-direction: column; }
   .admin-sidebar { width: 100%; }
   .product-form-grid { grid-template-columns: 1fr; }
+
+  /* Desktop's generous 40px/24px padding leaves barely 200px of usable
+     width on a phone once the card's own padding is subtracted too. */
+  .admin-main { padding: 16px; }
+  .admin-card { padding: 14px; }
 
   .admin-nav-toggle { display: flex; }
   .admin-nav, .admin-sidebar-footer { display: none; }
