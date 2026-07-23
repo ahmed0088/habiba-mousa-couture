@@ -48,6 +48,9 @@
           <button type="button" class="btn-link" id="accountSignOutBtn" data-i18n="account_signout">تسجيل الخروج</button>
         </span>
       </div>
+      <button type="button" class="cart-btn" id="cartBtn" data-i18n-aria-label="cart_label" aria-label="Cart">
+        🛍<span class="cart-badge" id="cartBadge" style="display:none;">0</span>
+      </button>
       <div class="lang-toggle" aria-label="Language / اللغة">
         <button type="button" data-lang="ar">AR</button>
         <button type="button" data-lang="en">EN</button>
@@ -238,10 +241,64 @@
           <textarea id="clientNotes" data-i18n-placeholder="notes_placeholder" placeholder="أخبرينا بأي تفاصيل تساعدنا في تحضير استشارتكِ"></textarea>
         </div>
         <p class="form-note" data-i18n="form_note">سنتواصل معكِ مباشرة لتأكيد التفاصيل والسعر — هذا طلب وليس دفعًا.</p>
-        <div class="submit-row">
+        <div class="submit-row" style="display:flex; gap:10px; flex-wrap:wrap;">
           <button type="submit" class="btn btn-solid" id="submitBtn" data-i18n="submit_btn">إرسال الطلب</button>
+          <button type="button" class="btn" id="addToCartBtn" data-i18n="cart_add_btn">🛍 ضيفي للعربة</button>
         </div>
         <div class="form-status" id="formStatus"></div>
+        <div class="form-status" id="cartAddStatus"></div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Cart Modal: item list + combined checkout -->
+<div class="modal-backdrop" id="cartBackdrop">
+  <div class="modal">
+    <button class="modal-close" id="cartClose" aria-label="Close">&times;</button>
+
+    <div id="cartListView">
+      <h3 data-i18n="cart_title">عربة التسوق</h3>
+      <div id="cartItemsList"></div>
+      <p class="empty-state" id="cartEmpty" style="display:none;" data-i18n="cart_empty">عربتك فاضية — ضيفي قطعة من الكولكشن.</p>
+      <div id="cartSummary" style="display:none;">
+        <div class="submit-row" style="display:flex; gap:10px; flex-wrap:wrap;">
+          <button type="button" class="btn btn-solid" id="cartCheckoutBtn" data-i18n="cart_checkout">إرسال كل الطلبات</button>
+          <button type="button" class="btn" id="cartClearBtn" data-i18n="cart_clear">إفراغ العربة</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="cartCheckoutView" style="display:none;">
+      <button type="button" class="back-link" id="backToCartBtn" data-i18n="detail_back">→ عودة</button>
+      <h3 data-i18n="cart_checkout_title">تأكيد الطلب</h3>
+      <p class="form-note" id="cartCheckoutSummary"></p>
+      <form id="cartCheckoutForm">
+        <div class="field">
+          <label for="cartClientName" data-i18n="label_name">اسمكِ</label>
+          <input type="text" id="cartClientName" required />
+        </div>
+        <div class="field">
+          <label for="cartClientPhone" data-i18n="label_phone">رقم الهاتف / واتساب</label>
+          <input type="tel" id="cartClientPhone" required />
+        </div>
+        <div class="field">
+          <label for="cartClientAddress" data-i18n="label_address">العنوان (المحافظة، المدينة، الشارع)</label>
+          <input type="text" id="cartClientAddress" />
+        </div>
+        <div class="field">
+          <label for="cartPreferredDate" data-i18n="label_date">الموعد المطلوب (اختياري)</label>
+          <input type="date" id="cartPreferredDate" />
+        </div>
+        <div class="field">
+          <label for="cartNotes" data-i18n="cart_notes_label">ملاحظات على الطلب كله</label>
+          <textarea id="cartNotes" data-i18n-placeholder="notes_placeholder" placeholder="أخبرينا بأي تفاصيل تساعدنا في تحضير استشارتكِ"></textarea>
+        </div>
+        <p class="form-note" data-i18n="form_note">سنتواصل معكِ مباشرة لتأكيد التفاصيل والسعر — هذا طلب وليس دفعًا.</p>
+        <div class="submit-row">
+          <button type="submit" class="btn btn-solid" id="cartSubmitBtn" data-i18n="cart_submit_btn">إرسال الطلبات</button>
+        </div>
+        <div class="form-status" id="cartFormStatus"></div>
       </form>
     </div>
   </div>

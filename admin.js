@@ -449,6 +449,26 @@ function statusPillGroupHtml(id, currentStatus) {
   return `<div class="status-pill-group">${pills}</div>`;
 }
 
+// A cart checkout creates one requests doc per item, all sharing a cartId —
+// this shows the rest of that order right in the detail view so staff don't
+// have to hunt through the list to see what else was ordered alongside it.
+function cartSiblingsHtml(currentId, r) {
+  if (!r.cartId) return "";
+  const siblings = allRequests.filter(([, sr]) => sr.cartId === r.cartId);
+  const rows = siblings.map(([sid, sr]) => `
+    <div class="cart-sibling-row${sid === currentId ? " current" : ""}">
+      <span>${escapeHtml(sr.productName || "—")}${sr.productCode ? ` <span style="color:var(--text-faint); font-size:12px;">(${escapeHtml(sr.productCode)})</span>` : ""}</span>
+      <span class="status-pill status-${escapeHtml(sr.status)}">${escapeHtml(STATUS_LABELS[sr.status] || sr.status)}</span>
+    </div>
+  `).join("");
+  return `
+    <div class="cart-siblings-block">
+      <p class="cart-siblings-title">🛍 Part of a ${siblings.length}-piece order</p>
+      ${rows}
+    </div>
+  `;
+}
+
 function openRequestDetail(id) {
   const r = requestsById[id];
   if (!r) return;
@@ -474,6 +494,7 @@ function openRequestDetail(id) {
     </div>
     ${r.clientLocationUrl ? `<p style="margin:16px 0 0;"><strong>Location:</strong> <a href="${escapeHtml(r.clientLocationUrl)}" target="_blank" rel="noopener">Open pinned location in Maps</a></p>` : ""}
     ${r.notes ? `<div style="margin-top:16px;">${detailRow("Notes", r.notes)}</div>` : ""}
+    ${cartSiblingsHtml(id, r)}
   `;
 
   requestDetailBody.querySelectorAll(".status-pill-btn").forEach((btn) => {
@@ -561,12 +582,14 @@ function renderRequestsTable() {
 
     const row = document.createElement("div");
     row.className = "request-row";
+    if (r.cartId) row.dataset.cartId = r.cartId;
     row.innerHTML = `
       ${thumbHtml}
       <div class="request-row-body">
         <div class="request-row-top">
           <span class="request-row-name">${escapeHtml(r.clientName)}</span>
           <span class="request-row-piece">${escapeHtml(r.productName || "—")}${r.productCode ? ` <span class="request-row-code">(${escapeHtml(r.productCode)})</span>` : ""}</span>
+          ${r.cartId ? `<button type="button" class="request-cart-badge" data-cart-badge="${escapeHtml(r.cartId)}" title="Part of a ${r.cartSize || "multi"}-piece order submitted together">🛍 ${r.cartSize || "?"}-piece order</button>` : ""}
         </div>
         ${metaParts.length ? `<div class="request-row-meta">${metaParts.map(m => `<span>${m}</span>`).join("")}</div>` : ""}
         ${r.notes ? `<div class="request-row-notes">${escapeHtml(r.notes)}</div>` : ""}
@@ -585,6 +608,17 @@ function renderRequestsTable() {
 
   feed.querySelectorAll("[data-view-request]").forEach((btn) => {
     btn.addEventListener("click", () => openRequestDetail(btn.dataset.viewRequest));
+  });
+
+  feed.querySelectorAll("[data-cart-badge]").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const cartId = btn.dataset.cartBadge;
+      const siblings = feed.querySelectorAll(`.request-row[data-cart-id="${CSS.escape(cartId)}"]`);
+      siblings.forEach((row) => row.classList.add("request-row-cart-highlight"));
+      siblings[0]?.scrollIntoView({ behavior: "smooth", block: "center" });
+      setTimeout(() => siblings.forEach((row) => row.classList.remove("request-row-cart-highlight")), 1600);
+    });
   });
 
   feed.querySelectorAll("[data-delete-request]").forEach((btn) => {
