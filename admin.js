@@ -430,6 +430,21 @@ function escapeHtml(str) {
   return div.innerHTML;
 }
 
+// Any field on a Firestore doc is only as trustworthy as firestore.rules make
+// it — a public "requests" create isn't schema-validated field by field, so
+// a crafted javascript:/data: URI in something like referenceImageUrl could
+// otherwise become a clickable, code-executing link here. Only ever render
+// http(s) links.
+function sanitizeUrl(url) {
+  if (!url) return null;
+  try {
+    const u = new URL(url, location.href);
+    return (u.protocol === "http:" || u.protocol === "https:") ? u.href : null;
+  } catch (e) {
+    return null;
+  }
+}
+
 function formatDate(ts) {
   if (!ts) return "—";
   const d = ts.toDate ? ts.toDate() : new Date(ts);
@@ -637,7 +652,7 @@ function openRequestDetail(id) {
       </div>
     </div>
     ${isCustomDesign ? `<div style="margin-top:16px;">${detailRow(t("custom_design_label"), r.designDescription || "—")}</div>` : ""}
-    ${isCustomDesign && r.referenceImageUrl ? `<p style="margin-top:10px;"><a href="${escapeHtml(r.referenceImageUrl)}" target="_blank" rel="noopener">${escapeHtml(t("custom_design_image_view_link"))}</a></p>` : ""}
+    ${isCustomDesign && sanitizeUrl(r.referenceImageUrl) ? `<p style="margin-top:10px;"><a href="${escapeHtml(sanitizeUrl(r.referenceImageUrl))}" target="_blank" rel="noopener">${escapeHtml(t("custom_design_image_view_link"))}</a></p>` : ""}
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px 20px; margin-top:18px;">
       ${detailRow("Order #", r.orderNumber, true)}
       ${detailRow("Client", r.clientName, true)}
@@ -659,7 +674,7 @@ function openRequestDetail(id) {
         </div>
       </div>
     ` : ""}
-    ${r.clientLocationUrl ? `<p style="margin:16px 0 0;"><strong>Location:</strong> <a href="${escapeHtml(r.clientLocationUrl)}" target="_blank" rel="noopener">Open pinned location in Maps</a></p>` : ""}
+    ${sanitizeUrl(r.clientLocationUrl) ? `<p style="margin:16px 0 0;"><strong>Location:</strong> <a href="${escapeHtml(sanitizeUrl(r.clientLocationUrl))}" target="_blank" rel="noopener">Open pinned location in Maps</a></p>` : ""}
     ${r.notes ? `<div style="margin-top:16px;">${detailRow("Notes", r.notes)}</div>` : ""}
     ${cartSiblingsHtml(id, r)}
   `;
@@ -789,6 +804,7 @@ function updateDashboardStats() {
   const multiOrdersEl = document.getElementById("statMultiItemOrders");
   const lowStockEl = document.getElementById("statLowStock");
   const avgAmountEl = document.getElementById("statAvgAmount");
+  const totalAmountEl = document.getElementById("statTotalAmount");
   if (newRequestsEl) newRequestsEl.textContent = allRequests.filter(([, r]) => r.status === "new").length;
   if (totalRequestsEl) totalRequestsEl.textContent = allRequests.length;
   if (activeProductsEl) activeProductsEl.textContent = allProductsAdmin.filter(([, p]) => p.status === "active").length;
@@ -815,6 +831,11 @@ function updateDashboardStats() {
     avgAmountEl.textContent = amounts.length
       ? `${Math.round(amounts.reduce((sum, a) => sum + a, 0) / amounts.length).toLocaleString()} EGP`
       : "—";
+    if (totalAmountEl) {
+      totalAmountEl.textContent = amounts.length
+        ? `${amounts.reduce((sum, a) => sum + a, 0).toLocaleString()} EGP`
+        : "—";
+    }
   }
 }
 
@@ -843,7 +864,8 @@ const STAT_TILE_HANDLERS = {
   },
   statTileMultiItemOrders: () => jumpToRequestsView("all", "multi", "admin_stat_multi_orders_desc"),
   statTileLowStock: () => jumpToProductsView("lowstock", "admin_stat_low_stock_desc"),
-  statTileAvgAmount: () => jumpToRequestsView("delivered", null, "admin_stat_avg_amount_desc")
+  statTileAvgAmount: () => jumpToRequestsView("delivered", null, "admin_stat_avg_amount_desc"),
+  statTileTotalAmount: () => jumpToRequestsView("delivered", null, "admin_stat_total_amount_desc")
 };
 Object.keys(STAT_TILE_HANDLERS).forEach((tileId) => {
   const tile = document.getElementById(tileId);
@@ -946,7 +968,7 @@ function renderRequestsTable() {
       </div>
       <div class="request-row-details">
         ${isCustomDesign && r.designDescription ? `<div class="request-row-notes"><strong>${escapeHtml(t("custom_design_label"))}:</strong> ${escapeHtml(r.designDescription)}</div>` : ""}
-        ${isCustomDesign && r.referenceImageUrl ? `<div class="request-row-notes"><a href="${escapeHtml(r.referenceImageUrl)}" target="_blank" rel="noopener">${escapeHtml(t("custom_design_image_view_link"))}</a></div>` : ""}
+        ${isCustomDesign && sanitizeUrl(r.referenceImageUrl) ? `<div class="request-row-notes"><a href="${escapeHtml(sanitizeUrl(r.referenceImageUrl))}" target="_blank" rel="noopener">${escapeHtml(t("custom_design_image_view_link"))}</a></div>` : ""}
         ${recipientHtml}
         ${metaParts.length ? `<div class="request-row-meta">${metaParts.join("")}</div>` : ""}
         ${r.notes ? `<div class="request-row-notes">${escapeHtml(r.notes)}</div>` : ""}
@@ -1807,7 +1829,7 @@ function loadVideos() {
     allVideos.forEach((v) => {
       const tr = document.createElement("tr");
       tr.innerHTML = `
-        <td data-label="Title"><a href="${escapeHtml(v.url)}" target="_blank" rel="noopener">${escapeHtml(v.title || v.url)}</a></td>
+        <td data-label="Title">${sanitizeUrl(v.url) ? `<a href="${escapeHtml(sanitizeUrl(v.url))}" target="_blank" rel="noopener">${escapeHtml(v.title || v.url)}</a>` : escapeHtml(v.title || v.url)}</td>
         <td data-label="Status"><span class="status-pill status-${v.status === "active" ? "confirmed" : "delivered"}">${escapeHtml(v.status)}</span></td>
         <td data-label="">
           <button class="icon-btn" data-toggle-video="${v.id}" data-next="${v.status === "active" ? "archived" : "active"}">${v.status === "active" ? "Archive" : "Restore"}</button>

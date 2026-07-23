@@ -45,11 +45,51 @@ service cloud.firestore {
     // Anyone can submit a request (optionally tied to their own account via clientUid);
     // staff can read/update everything, a signed-in client can read only their own requests.
     match /requests/{requestId} {
-      allow create: if request.resource.data.clientUid == null
-                    || request.resource.data.clientUid == request.auth.uid;
+      // Public create: anonymous or signed-in as the request's own owner. Status
+      // and finalAmount are staff-only administrative fields and can never be
+      // set from the public form; any URL fields must be http(s) links, not
+      // javascript:/data: URIs that could execute if a staff member later
+      // clicks them in the admin dashboard.
+      allow create: if (request.resource.data.clientUid == null
+                        || request.resource.data.clientUid == request.auth.uid)
+                    && request.resource.data.status == 'new'
+                    && !('finalAmount' in request.resource.data)
+                    && (!('clientLocationUrl' in request.resource.data)
+                        || request.resource.data.clientLocationUrl == null
+                        || request.resource.data.clientLocationUrl.matches('^https://.*'))
+                    && (!('referenceImageUrl' in request.resource.data)
+                        || request.resource.data.referenceImageUrl == null
+                        || request.resource.data.referenceImageUrl.matches('^https?://.*'));
+
       allow read: if isStaff()
                   || (request.auth != null && resource.data.clientUid == request.auth.uid);
-      allow update, delete: if isStaff();
+
+      // Staff can update anything. A signed-in client can edit or cancel only
+      // their own request, and only while it's still 'new' or 'contacted'
+      // (before real work starts, matching the cancellation policy on the
+      // Terms page) — limited to the fields a client would legitimately want
+      // to fix (contact/shipping/notes/design details), never the piece it's
+      // for, its order/cart identifiers, or staff-owned fields like
+      // finalAmount or any status past 'cancelled'.
+      allow update: if isStaff()
+                    || (request.auth != null
+                        && resource.data.clientUid == request.auth.uid
+                        && resource.data.status in ['new', 'contacted']
+                        && request.resource.data.status in ['new', 'contacted', 'cancelled']
+                        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+                            'clientName', 'clientPhone', 'clientAddress', 'clientLocationUrl',
+                            'recipientName', 'recipientPhone', 'recipientAddress',
+                            'material', 'preferredDate', 'notes',
+                            'designDescription', 'referenceImageUrl', 'status'
+                          ])
+                        && (!('clientLocationUrl' in request.resource.data)
+                            || request.resource.data.clientLocationUrl == null
+                            || request.resource.data.clientLocationUrl.matches('^https://.*'))
+                        && (!('referenceImageUrl' in request.resource.data)
+                            || request.resource.data.referenceImageUrl == null
+                            || request.resource.data.referenceImageUrl.matches('^https?://.*')));
+
+      allow delete: if isStaff();
     }
 
     // Client profiles (name/email/phone captured at signup) — a client manages only their own;
