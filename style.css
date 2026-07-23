@@ -333,6 +333,7 @@ button {
   cursor: pointer;
 }
 .cart-btn:hover { border-color: var(--gold); }
+.cart-btn svg { width: 17px; height: 17px; fill: var(--charcoal); }
 .cart-badge {
   position: absolute;
   top: -6px;
@@ -1794,6 +1795,7 @@ select.status-select.status-cancelled { background-color: #f6dcdc; color: #a13a3
   align-items: center;
   gap: var(--space-2);
 }
+.account-nav button { white-space: nowrap; }
 .account-signed-in { display: inline-flex; align-items: center; gap: var(--space-2); }
 
 @media (max-width: 1200px) {
