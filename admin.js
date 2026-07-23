@@ -684,7 +684,7 @@ function renderRequestsTable() {
   }
   empty.style.display = "none";
 
-  filtered.forEach(([id, r]) => {
+  function buildRequestRow(id, r) {
     const optionsHtml = STATUS_OPTIONS.map(
       s => `<option value="${s}" ${r.status === s ? "selected" : ""}>${STATUS_LABELS[s]}</option>`
     ).join("");
@@ -706,7 +706,6 @@ function renderRequestsTable() {
 
     const row = document.createElement("div");
     row.className = "request-row";
-    if (r.cartId) row.dataset.cartId = r.cartId;
     row.innerHTML = `
       ${thumbHtml}
       <div class="request-row-body">
@@ -714,7 +713,6 @@ function renderRequestsTable() {
           ${r.orderNumber ? `<span class="request-order-number">#${escapeHtml(r.orderNumber)}</span>` : ""}
           <span class="request-row-name">${escapeHtml(r.clientName)}</span>
           <span class="request-row-piece">${escapeHtml(r.productName || "—")}${r.productCode ? ` <span class="request-row-code">(${escapeHtml(r.productCode)})</span>` : ""}</span>
-          ${r.cartId ? `<button type="button" class="request-cart-badge" data-cart-badge="${escapeHtml(r.cartId)}" title="Part of a ${r.cartSize || "multi"}-piece order submitted together">🛍 ${r.cartSize || "?"}-piece order</button>` : ""}
         </div>
         ${metaParts.length ? `<div class="request-row-meta">${metaParts.map(m => `<span>${m}</span>`).join("")}</div>` : ""}
         ${r.notes ? `<div class="request-row-notes">${escapeHtml(r.notes)}</div>` : ""}
@@ -728,22 +726,48 @@ function renderRequestsTable() {
         </div>
       </div>
     `;
-    feed.appendChild(row);
+    return row;
+  }
+
+  // Cart checkouts write one requests doc per item; group them back together
+  // here so a 3-piece order always renders as 3 adjacent rows instead of
+  // wherever their individual timestamps happen to fall in the list.
+  function groupRequestsForDisplay(list) {
+    const groups = [];
+    const indexByCartId = new Map();
+    list.forEach((entry) => {
+      const cartId = entry[1].cartId;
+      if (cartId && indexByCartId.has(cartId)) {
+        groups[indexByCartId.get(cartId)].push(entry);
+      } else {
+        if (cartId) indexByCartId.set(cartId, groups.length);
+        groups.push([entry]);
+      }
+    });
+    // `list` is newest-first; within a group that means its items were
+    // collected newest-first too, so reverse to show submission order.
+    groups.forEach((g) => { if (g.length > 1) g.reverse(); });
+    return groups;
+  }
+
+  groupRequestsForDisplay(filtered).forEach((group) => {
+    if (group.length > 1) {
+      const groupEl = document.createElement("div");
+      groupEl.className = "request-cart-group";
+      const label = document.createElement("div");
+      label.className = "request-cart-group-label";
+      label.textContent = `🛍 ${group[0][1].cartSize || group.length}-piece order`;
+      groupEl.appendChild(label);
+      group.forEach(([id, r]) => groupEl.appendChild(buildRequestRow(id, r)));
+      feed.appendChild(groupEl);
+    } else {
+      const [id, r] = group[0];
+      feed.appendChild(buildRequestRow(id, r));
+    }
   });
 
   feed.querySelectorAll("[data-view-request]").forEach((btn) => {
     btn.addEventListener("click", () => openRequestDetail(btn.dataset.viewRequest));
-  });
-
-  feed.querySelectorAll("[data-cart-badge]").forEach((btn) => {
-    btn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      const cartId = btn.dataset.cartBadge;
-      const siblings = feed.querySelectorAll(`.request-row[data-cart-id="${CSS.escape(cartId)}"]`);
-      siblings.forEach((row) => row.classList.add("request-row-cart-highlight"));
-      siblings[0]?.scrollIntoView({ behavior: "smooth", block: "center" });
-      setTimeout(() => siblings.forEach((row) => row.classList.remove("request-row-cart-highlight")), 1600);
-    });
   });
 
   feed.querySelectorAll("[data-delete-request]").forEach((btn) => {

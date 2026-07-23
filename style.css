@@ -1647,19 +1647,22 @@ select.status-select.status-cancelled { background-color: #f6dcdc; color: #a13a3
   padding: 2px 10px;
 }
 
-.request-cart-badge {
-  display: inline-flex;
-  align-items: center;
-  background: rgba(201, 151, 63, 0.16);
+.request-cart-group {
   border: 1px solid var(--gold);
-  color: var(--gold);
-  border-radius: 999px;
+  border-radius: 12px;
+  padding: 10px 10px 2px;
+  margin-bottom: 10px;
+  background: rgba(201, 151, 63, 0.05);
+}
+.request-cart-group .request-row { margin-bottom: 8px; }
+.request-cart-group-label {
   font-size: 11px;
   font-weight: 700;
-  padding: 2px 10px;
-  cursor: pointer;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--gold);
+  padding: 2px 6px 8px;
 }
-.request-cart-badge:hover { background: var(--gold); color: var(--ivory); }
 
 .active-filter-chip {
   display: inline-flex;
@@ -1684,11 +1687,6 @@ select.status-select.status-cancelled { background-color: #f6dcdc; color: #a13a3
   border-radius: 50%;
 }
 .active-filter-chip button:hover { background: var(--gold); color: var(--ivory); }
-.request-row-cart-highlight {
-  border-color: var(--gold) !important;
-  box-shadow: 0 0 0 2px var(--gold);
-  transition: box-shadow 0.2s ease, border-color 0.2s ease;
-}
 
 .cart-siblings-block {
   margin-top: 18px;
