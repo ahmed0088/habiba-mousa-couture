@@ -100,6 +100,7 @@ function shareProduct(product) {
 let activeFilter = "all";
 let activeCollection = "all";
 let saleOnly = false;
+let readyOnly = false;
 let loadFailed = false;
 let currentProduct = null;
 let currentImageIndex = 0;
@@ -271,6 +272,57 @@ document.getElementById("pickMapLocationBtn")?.addEventListener("click", () => {
 
 backToDetailBtn.addEventListener("click", showDetailView);
 
+function getVariantStock(product, size, color) {
+  return (product.variants || [])
+    .filter(v => (!size || v.size === size) && (!color || v.color === color))
+    .reduce((sum, v) => sum + (v.stock || 0), 0);
+}
+
+function populateOrderQuantity(maxQty) {
+  const qtySelect = document.getElementById("orderQuantity");
+  const max = Math.max(1, Math.min(maxQty, 10));
+  qtySelect.innerHTML = Array.from({ length: max }, (_, i) => i + 1)
+    .map(n => `<option value="${n}">${n}</option>`).join("");
+}
+
+function updateOrderQuantityForSelection(product) {
+  const size = document.getElementById("orderSize").value;
+  const color = document.getElementById("orderColor").value;
+  populateOrderQuantity(getVariantStock(product, size || null, color || null) || 1);
+}
+
+function refreshOrderColorOptions(product) {
+  const selectedSize = document.getElementById("orderSize").value;
+  const colorSelect = document.getElementById("orderColor");
+  const colors = [...new Set(
+    (product.variants || [])
+      .filter(v => v.color && v.stock > 0 && (!selectedSize || v.size === selectedSize))
+      .map(v => v.color)
+  )];
+  colorSelect.innerHTML = colors.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("");
+  document.getElementById("orderColorWrap").style.display = colors.length > 0 ? "block" : "none";
+  updateOrderQuantityForSelection(product);
+}
+
+function setupVariantSelectors(product) {
+  const wrap = document.getElementById("orderVariantWrap");
+  if (product.availability !== "ready_stock") {
+    wrap.style.display = "none";
+    return;
+  }
+  wrap.style.display = "block";
+
+  const sizeSelect = document.getElementById("orderSize");
+  const sizes = [...new Set((product.variants || []).filter(v => v.size && v.stock > 0).map(v => v.size))];
+  sizeSelect.innerHTML = sizes.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join("");
+  document.getElementById("orderSizeWrap").style.display = sizes.length > 0 ? "block" : "none";
+
+  sizeSelect.onchange = () => refreshOrderColorOptions(product);
+  document.getElementById("orderColor").onchange = () => updateOrderQuantityForSelection(product);
+
+  refreshOrderColorOptions(product);
+}
+
 function openModal(product) {
   currentProduct = product;
   currentImageIndex = 0;
@@ -290,8 +342,20 @@ function openModal(product) {
   detailDescription.textContent = product.description || "";
   renderCarousel();
 
+  const totalStock = product.availability === "ready_stock"
+    ? (product.variants || []).reduce((sum, v) => sum + (v.stock || 0), 0)
+    : null;
+  if (product.availability === "ready_stock" && totalStock === 0) {
+    detailRequestBtn.textContent = t("sold_out_label");
+    detailRequestBtn.disabled = true;
+  } else {
+    detailRequestBtn.textContent = t(product.availability === "ready_stock" ? "detail_cta_order" : "detail_cta_request");
+    detailRequestBtn.disabled = false;
+  }
+
   requestForm.reset();
   productIdField.value = product.id; // reset() clears hidden fields too, so set again
+  setupVariantSelectors(product);
 
   showDetailView();
   modalBackdrop.classList.add("open");
@@ -372,6 +436,16 @@ function renderCombinedFilters(categories) {
     refreshCollectionAndCategoryUI();
   });
   filterRow.appendChild(saleBtn);
+
+  const readyBtn = document.createElement("button");
+  readyBtn.type = "button";
+  readyBtn.className = "filter-chip filter-chip-ready" + (readyOnly ? " active" : "");
+  readyBtn.textContent = t("filter_ready_stock");
+  readyBtn.addEventListener("click", () => {
+    readyOnly = !readyOnly;
+    refreshCollectionAndCategoryUI();
+  });
+  filterRow.appendChild(readyBtn);
 }
 
 function renderGallery() {
@@ -387,27 +461,29 @@ function renderGallery() {
     : collectionFiltered.filter(p => p.category === activeFilter);
 
   const saleFiltered = saleOnly ? categoryFiltered.filter(p => p.salePrice) : categoryFiltered;
+  const readyFiltered = readyOnly ? saleFiltered.filter(p => p.availability === "ready_stock") : saleFiltered;
 
   const searchQuery = (productSearchInput?.value || "").trim().toLowerCase();
   const filtered = searchQuery
-    ? saleFiltered.filter(p => {
+    ? readyFiltered.filter(p => {
         const collectionName = allCollections.find(c => c.id === p.collectionId)?.name || "";
         return `${p.name || ""} ${p.category || ""} ${p.description || ""} ${collectionName} ${p.productCode || ""}`
           .toLowerCase().includes(searchQuery);
       })
-    : saleFiltered;
+    : readyFiltered;
 
   galleryGrid.innerHTML = "";
 
   if (filtered.length === 0) {
     emptyState.style.display = "block";
-    const filtersActive = activeCollection !== "all" || activeFilter !== "all" || saleOnly || Boolean(searchQuery);
+    const filtersActive = activeCollection !== "all" || activeFilter !== "all" || saleOnly || readyOnly || Boolean(searchQuery);
     if (filtersActive) {
       emptyState.innerHTML = `<p>${escapeHtml(t("empty_state_filtered"))}</p><button type="button" class="btn-link" id="clearFiltersBtn">${escapeHtml(t("empty_state_clear"))}</button>`;
       document.getElementById("clearFiltersBtn").addEventListener("click", () => {
         activeCollection = "all";
         activeFilter = "all";
         saleOnly = false;
+        readyOnly = false;
         if (productSearchInput) productSearchInput.value = "";
         refreshCollectionAndCategoryUI();
       });
@@ -428,6 +504,9 @@ function renderGallery() {
       : (product.priceRange ? `<p class="piece-price">${escapeHtml(formatPrice(product.priceRange))}</p>` : "");
     const collectionName = product.collectionId ? allCollections.find(c => c.id === product.collectionId)?.name : null;
     const isLiked = likedProducts.has(product.id);
+    const isReady = product.availability === "ready_stock";
+    const totalStock = isReady ? (product.variants || []).reduce((sum, v) => sum + (v.stock || 0), 0) : 0;
+    const isSoldOut = isReady && totalStock === 0;
     card.innerHTML = `
       <div class="piece-media">
         ${onSale ? `<span class="sale-badge">${discountPercent ? `-${discountPercent}%` : t("sale_badge")}</span>` : ""}
@@ -444,7 +523,7 @@ function renderGallery() {
           : `<span>${escapeHtml(product.name)}</span>`}
       </div>
       <div class="piece-body">
-        <p class="piece-eyebrow">${escapeHtml(product.category || t("piece_category_fallback"))}${collectionName ? ` <span class="piece-collection-tag">· ${escapeHtml(collectionName)}</span>` : ""}</p>
+        <p class="piece-eyebrow">${escapeHtml(product.category || t("piece_category_fallback"))}${collectionName ? ` <span class="piece-collection-tag">· ${escapeHtml(collectionName)}</span>` : ""}${isReady ? (isSoldOut ? ` <span class="sold-out-badge">${escapeHtml(t("sold_out_label"))}</span>` : ` <span class="ready-badge">${escapeHtml(t("ready_badge"))}</span>`) : ""}</p>
         <h3 class="piece-name">${escapeHtml(product.name)}</h3>
         <p class="piece-desc">${escapeHtml(product.description || "")}</p>
         ${priceHtml}
@@ -554,6 +633,13 @@ requestForm.addEventListener("submit", async (e) => {
     clientUid: auth.currentUser ? auth.currentUser.uid : null,
     createdAt: firebase.firestore.FieldValue.serverTimestamp()
   };
+
+  if (product && product.availability === "ready_stock") {
+    payload.orderType = "ready_stock";
+    payload.selectedSize = document.getElementById("orderSize").value || null;
+    payload.selectedColor = document.getElementById("orderColor").value || null;
+    payload.quantity = parseInt(document.getElementById("orderQuantity").value, 10) || 1;
+  }
 
   try {
     await db.collection("requests").add(payload);

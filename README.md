@@ -58,7 +58,7 @@ The admin dashboard checks two things: a Firebase **Auth** login, and a matching
 Now sign in at `admin.html` with that email/password.
 
 ### Adding more staff later
-Repeat steps 1–5 above for each new person — create their Auth login, then add a `staff` doc keyed by their UID with `role: staff` (or `admin` if they need full access). The "Add Staff Member" form in the dashboard records a request for this in a `staff_pending` list as a reminder, but the actual access grant needs the UID step above, since Firestore rules check against Auth UIDs for security.
+Ask the person to sign up for a regular client account on the public site first (Sign Up, on the account menu) — this creates their Auth login and a matching `clients` doc automatically. Then in `admin.html` → **Staff** → **+ Add Staff Member**, type their email; the form looks it up in `clients` and, once found, grants dashboard access directly using their real UID — no manual Firebase Console step needed. If no matching account is found, they need to sign up first.
 
 ## 5. Add your first products
 
@@ -96,6 +96,8 @@ You'll get a live URL like `habiba-mousa-couture.web.app` — that's what you li
 | images | array of strings | image URLs — first is the cover image, all feed the product detail carousel |
 | imageFocus | string | `top` (default) / `center` / `bottom` — which part of the photo stays visible when cropped to the thumbnail frame |
 | status | string | `active` or `archived` |
+| availability | string | `made_to_order` (default — client submits a custom request) or `ready_stock` (in-stock item sold via `variants`) |
+| variants | array of `{size, color, stock}` | only used when `availability` is `ready_stock`; size/color are optional free text (blank if the item doesn't come in that dimension), stock is the quantity on hand for that combination |
 | createdAt | timestamp | server-set |
 
 **`collections`**
@@ -114,6 +116,9 @@ You'll get a live URL like `habiba-mousa-couture.web.app` — that's what you li
 | clientLocationUrl | string \| null | optional Google Maps link (`?q=lat,lng`) from the client's own device via the "Share my location" button — no typing needed |
 | material | string | one of the fixed material keys (`silk`, `chiffon`, `satin`, `lace`, `cotton`, `crepe`, `tulle`, `organza`, `velvet`, `brocade`, `unspecified`) chosen from a dropdown — no free typing |
 | productId / productName / productCode | string | which piece they're asking about |
+| orderType | string \| undefined | set to `ready_stock` when this request came from ordering an in-stock item (vs. a custom design request) |
+| selectedSize / selectedColor | string \| null | the variant the client picked, when `orderType` is `ready_stock` |
+| quantity | number | how many they want, when `orderType` is `ready_stock` |
 | preferredDate | string | optional |
 | notes | string | |
 | status | string | `new` → `contacted` → `confirmed` → `in_progress` → `delivered` / `cancelled` |

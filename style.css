@@ -474,6 +474,17 @@ button {
 }
 .filter-chip.filter-chip-sale.active { background: linear-gradient(135deg, #e2483e, #b8283a); color: #fff; border-color: #b8283a; }
 
+.filter-chip.filter-chip-ready {
+  border-color: var(--turquoise);
+  color: var(--turquoise);
+  font-weight: 700;
+  border-radius: 22px;
+  clip-path: none;
+  min-height: 44px;
+  padding: 11px 20px;
+}
+.filter-chip.filter-chip-ready.active { background: var(--turquoise); color: #fff; border-color: var(--turquoise); }
+
 /* Leaflet's own CSS puts its zoom controls/panes at z-index up to 1000, and since
    .leaflet-container is position:relative with no z-index of its own, that value
    escapes into the page's stacking context instead of staying scoped to the map —
@@ -898,6 +909,17 @@ button {
   font-size: 13px;
 }
 .site-footer a { color: var(--gold-soft); text-decoration: none; }
+.footer-brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  font-family: var(--font-display);
+  font-size: 17px;
+  color: var(--ivory);
+}
+.footer-brand-logo { height: 28px; width: 28px; border-radius: 50%; }
 
 /* ---------- Admin ---------- */
 
@@ -1213,10 +1235,109 @@ select.status-select.status-cancelled { background-color: #f6dcdc; color: #a13a3
   gap: var(--space-2);
 }
 
-/* Mobile-only section captions for the request card — appended to the row
-   markup but must stay hidden here (unconditionally) so they never render
-   as phantom extra columns in the desktop table. */
-.request-section-label { display: none; }
+.variant-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+.variant-row input {
+  padding: 8px 10px;
+  border: 1px solid var(--input-border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--charcoal);
+  font-family: var(--font-body);
+  font-size: 13.5px;
+}
+.variant-row input.variant-size, .variant-row input.variant-color { width: 110px; }
+.variant-row input.variant-stock { width: 80px; }
+.variant-row .icon-btn.danger { flex-shrink: 0; }
+
+.ready-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--turquoise);
+  border: 1px solid var(--turquoise);
+  border-radius: 999px;
+  padding: 2px 9px;
+  margin-inline-start: 8px;
+}
+.sold-out-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  background: var(--surface-muted);
+  border-radius: 999px;
+  padding: 3px 10px;
+}
+
+/* Requests admin view: a card-per-request feed (not a table), so it reflows
+   at any width instead of ever needing horizontal scroll. */
+.request-row {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  padding: 14px 16px;
+  border: 1px solid var(--border-soft);
+  border-radius: 10px;
+  background: var(--surface);
+  margin-bottom: 10px;
+}
+.request-row-body { flex: 1 1 240px; min-width: 0; }
+.request-row-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+}
+.request-row-name { font-weight: 700; font-size: 15px; color: var(--heading); }
+.request-row-piece { font-size: 13px; color: var(--text-muted); }
+.request-row-code { color: var(--text-faint); font-size: 12px; }
+.request-row-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  margin-top: 6px;
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+.request-row-notes {
+  margin-top: 6px;
+  font-size: 12.5px;
+  color: var(--text-faint);
+  font-style: italic;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+.request-row-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  flex: 0 0 auto;
+  margin-left: auto;
+}
+.request-row-date { font-size: 11.5px; color: var(--text-faint); }
+.request-row-actions { display: flex; gap: 6px; }
+
+@media (max-width: 640px) {
+  .request-row { position: relative; padding-inline-end: 16px; }
+  .request-row-side { flex-direction: row-reverse; align-items: center; width: 100%; margin-left: 0; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border-soft); justify-content: space-between; }
+}
 
 @media (max-width: 700px) {
   .admin-shell { flex-direction: column; }
@@ -1262,74 +1383,6 @@ select.status-select.status-cancelled { background-color: #f6dcdc; color: #a13a3
     margin-right: 12px;
   }
 
-  /* The request-card thumbnail has no label to pair it with — give it its
-     own header treatment instead of the label/value row styling. */
-  .admin-card td.request-thumb-cell {
-    padding-top: 0;
-  }
-
-  /* The request list card is a compact summary row (thumbnail, client,
-     piece, status, actions) — everything else (contact, address, material,
-     needed-by, notes, received, section captions) is still one tap away via
-     "View", so it's hidden here rather than repeated in every list row.
-     CSS grid placement only touches the mobile card view — the desktop
-     table's real columns (and their DOM order) are untouched. */
-  #requestsTable tr {
-    display: grid;
-    grid-template-columns: 52px 1fr;
-    align-items: start;
-    column-gap: 12px;
-    row-gap: 4px;
-  }
-  #requestsTable td.request-thumb-cell { grid-column: 1; grid-row: 1 / 4; border-bottom: none; }
-  #requestsTable td.request-client-cell { grid-column: 2; grid-row: 1; border-bottom: none; padding-bottom: 0; min-width: 0; }
-  #requestsTable td[data-label="Piece"] { grid-column: 2; grid-row: 2; border-bottom: none; padding-top: 0; min-width: 0; }
-  #requestsTable td[data-label="Status"] { grid-column: 2; grid-row: 3; justify-self: end; border-bottom: none; padding: 2px 0 0; }
-  #requestsTable td[data-label="Status"]::before { display: none; }
-  #requestsTable td.request-actions-cell { grid-column: 1 / 3; grid-row: 4; }
-
-  #requestsTable td[data-label="Contact"],
-  #requestsTable td[data-label="Address"],
-  #requestsTable td.request-material-subtitle,
-  #requestsTable td[data-label="Needed By"],
-  #requestsTable td[data-label="Notes"],
-  #requestsTable td[data-label="Received"],
-  #requestsTable td.request-section-label {
-    display: none;
-  }
-
-  #requestsTable .request-thumb,
-  #requestsTable .request-thumb-empty {
-    width: 52px;
-    height: 68px;
-  }
-
-  #requestsTable td.request-client-cell {
-    text-align: right;
-    font-size: 15px;
-    font-weight: 700;
-    color: var(--heading);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  #requestsTable td.request-client-cell::before { display: none; }
-  #requestsTable td[data-label="Piece"] {
-    text-align: right;
-    font-size: 12.5px;
-    color: var(--text-muted);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  #requestsTable td[data-label="Piece"]::before { display: none; }
-
-  #requestsTable td.request-actions-cell {
-    text-align: right;
-    margin-top: 8px;
-    padding-top: 10px;
-    border-top: 1px solid var(--border-soft);
-  }
 }
 
 .icon-btn {

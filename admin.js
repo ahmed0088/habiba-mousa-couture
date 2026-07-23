@@ -470,6 +470,7 @@ function openRequestDetail(id) {
       ${detailRow("Address", r.clientAddress)}
       ${detailRow("Needed by", r.preferredDate)}
       ${detailRow("Received", formatDate(r.createdAt))}
+      ${r.orderType === "ready_stock" ? detailRow("Ready-stock order", `${[r.selectedSize, r.selectedColor].filter(Boolean).join(" / ") || "—"} × ${r.quantity || 1}`) : ""}
     </div>
     ${r.clientLocationUrl ? `<p style="margin:16px 0 0;"><strong>Location:</strong> <a href="${escapeHtml(r.clientLocationUrl)}" target="_blank" rel="noopener">Open pinned location in Maps</a></p>` : ""}
     ${r.notes ? `<div style="margin-top:16px;">${detailRow("Notes", r.notes)}</div>` : ""}
@@ -522,14 +523,14 @@ function updateDashboardStats() {
 }
 
 function renderRequestsTable() {
-  const tbody = document.getElementById("requestsTableBody");
+  const feed = document.getElementById("requestsFeed");
   const empty = document.getElementById("requestsEmpty");
   const q = (requestsSearchInput?.value || "").trim().toLowerCase();
   const statusFilter = requestsStatusFilter?.value || "all";
   const filtered = allRequests.filter(([, r]) =>
     requestMatchesSearch(r, q) && (statusFilter === "all" || r.status === statusFilter)
   );
-  tbody.innerHTML = "";
+  feed.innerHTML = "";
 
   if (filtered.length === 0) {
     empty.style.display = "block";
@@ -539,44 +540,54 @@ function renderRequestsTable() {
   empty.style.display = "none";
 
   filtered.forEach(([id, r]) => {
-    const tr = document.createElement("tr");
     const optionsHtml = STATUS_OPTIONS.map(
       s => `<option value="${s}" ${r.status === s ? "selected" : ""}>${STATUS_LABELS[s]}</option>`
     ).join("");
 
-    const product = r.productId ? allProductsAdmin.find(([id]) => id === r.productId) : null;
+    const product = r.productId ? allProductsAdmin.find(([pid]) => pid === r.productId) : null;
     const thumbSrc = product && product[1].images && product[1].images[0] ? product[1].images[0] : "";
     const thumbFocus = product && product[1].imageFocus ? product[1].imageFocus : "top";
     const thumbHtml = thumbSrc
       ? `<img class="request-thumb" src="${escapeHtml(thumbSrc)}" alt="${escapeHtml(r.productName || "")}" style="object-position: center ${escapeHtml(thumbFocus)};" loading="lazy" />`
       : `<div class="request-thumb request-thumb-empty"></div>`;
 
-    tr.innerHTML = `
-      <td class="request-thumb-cell">${thumbHtml}</td>
-      <td class="request-client-cell" data-label="Client">${escapeHtml(r.clientName)}</td>
-      <td data-label="Piece">${escapeHtml(r.productName || "—")}${r.productCode ? ` <span style="color:var(--text-faint); font-size:12px;">(${escapeHtml(r.productCode)})</span>` : ""}</td>
-      <td data-label="Contact">${escapeHtml(r.clientPhone)}</td>
-      <td data-label="Address" style="max-width:180px;">${escapeHtml(r.clientAddress || "—")}</td>
-      <td class="request-material-subtitle" data-label="Material">${escapeHtml(MATERIAL_LABELS[r.material] || "—")}</td>
-      <td data-label="Needed By">${escapeHtml(r.preferredDate || "—")}</td>
-      <td data-label="Notes" style="max-width:220px;">${escapeHtml(r.notes || "—")}</td>
-      <td data-label="Status"><select class="status-select status-${r.status}" data-id="${id}">${optionsHtml}</select></td>
-      <td data-label="Received">${formatDate(r.createdAt)}</td>
-      <td class="request-actions-cell" data-label="">
-        <button class="icon-btn" data-view-request="${id}">View</button>
-        <button class="icon-btn danger" data-delete-request="${id}">Delete</button>
-      </td>
-      <td class="request-section-label request-section-label-customer">${escapeHtml(t("admin_section_customer"))}</td>
-      <td class="request-section-label request-section-label-details">${escapeHtml(t("admin_section_details"))}</td>
+    const metaParts = [
+      r.clientPhone ? `📞 ${escapeHtml(r.clientPhone)}` : "",
+      r.clientAddress ? `📍 ${escapeHtml(r.clientAddress)}` : "",
+      r.material ? `🧵 ${escapeHtml(MATERIAL_LABELS[r.material] || r.material)}` : "",
+      r.preferredDate ? `📅 ${escapeHtml(r.preferredDate)}` : "",
+      r.orderType === "ready_stock" ? `📦 ${escapeHtml([r.selectedSize, r.selectedColor].filter(Boolean).join(" / ") || "Ready Stock")} × ${r.quantity || 1}` : ""
+    ].filter(Boolean);
+
+    const row = document.createElement("div");
+    row.className = "request-row";
+    row.innerHTML = `
+      ${thumbHtml}
+      <div class="request-row-body">
+        <div class="request-row-top">
+          <span class="request-row-name">${escapeHtml(r.clientName)}</span>
+          <span class="request-row-piece">${escapeHtml(r.productName || "—")}${r.productCode ? ` <span class="request-row-code">(${escapeHtml(r.productCode)})</span>` : ""}</span>
+        </div>
+        ${metaParts.length ? `<div class="request-row-meta">${metaParts.map(m => `<span>${m}</span>`).join("")}</div>` : ""}
+        ${r.notes ? `<div class="request-row-notes">${escapeHtml(r.notes)}</div>` : ""}
+      </div>
+      <div class="request-row-side">
+        <select class="status-select status-${r.status}" data-id="${id}">${optionsHtml}</select>
+        <span class="request-row-date">${formatDate(r.createdAt)}</span>
+        <div class="request-row-actions">
+          <button class="icon-btn" data-view-request="${id}">View</button>
+          <button class="icon-btn danger" data-delete-request="${id}">Delete</button>
+        </div>
+      </div>
     `;
-    tbody.appendChild(tr);
+    feed.appendChild(row);
   });
 
-  tbody.querySelectorAll("[data-view-request]").forEach((btn) => {
+  feed.querySelectorAll("[data-view-request]").forEach((btn) => {
     btn.addEventListener("click", () => openRequestDetail(btn.dataset.viewRequest));
   });
 
-  tbody.querySelectorAll("[data-delete-request]").forEach((btn) => {
+  feed.querySelectorAll("[data-delete-request]").forEach((btn) => {
     btn.addEventListener("click", async () => {
       if (!confirm("Delete this request? You can restore it later from the Activity Log if needed.")) return;
       const r = requestsById[btn.dataset.deleteRequest];
@@ -594,7 +605,7 @@ function renderRequestsTable() {
     });
   });
 
-  tbody.querySelectorAll(".status-select").forEach((sel) => {
+  feed.querySelectorAll(".status-select").forEach((sel) => {
     sel.addEventListener("change", async () => {
       try {
         await db.collection("requests").doc(sel.dataset.id).update({ status: sel.value });
@@ -654,6 +665,38 @@ function updateProductImagePreview() {
 document.getElementById("pImages")?.addEventListener("input", updateProductImagePreview);
 document.getElementById("pImageFocus")?.addEventListener("change", updateProductImagePreview);
 
+// ---------- Ready-stock variants (size/color/stock) ----------
+
+function addVariantRow(variant) {
+  const wrap = document.getElementById("pVariantRows");
+  const row = document.createElement("div");
+  row.className = "variant-row";
+  row.innerHTML = `
+    <input type="text" class="variant-size" placeholder="Size (e.g. M)" value="${escapeHtml(variant?.size || "")}" />
+    <input type="text" class="variant-color" placeholder="Color (e.g. Red)" value="${escapeHtml(variant?.color || "")}" />
+    <input type="number" class="variant-stock" placeholder="Stock" min="0" value="${variant?.stock ?? ""}" />
+    <button type="button" class="icon-btn danger" data-remove-variant>&times;</button>
+  `;
+  row.querySelector("[data-remove-variant]").addEventListener("click", () => row.remove());
+  wrap.appendChild(row);
+}
+
+document.getElementById("pAddVariantBtn")?.addEventListener("click", () => addVariantRow());
+
+document.getElementById("pAvailability")?.addEventListener("change", (e) => {
+  document.getElementById("pVariantsWrap").style.display = e.target.value === "ready_stock" ? "block" : "none";
+});
+
+function collectVariants() {
+  return [...document.querySelectorAll("#pVariantRows .variant-row")]
+    .map((row) => ({
+      size: row.querySelector(".variant-size").value.trim(),
+      color: row.querySelector(".variant-color").value.trim(),
+      stock: Math.max(0, parseInt(row.querySelector(".variant-stock").value, 10) || 0)
+    }))
+    .filter((v) => v.size || v.color || v.stock > 0);
+}
+
 const imageLightbox = document.getElementById("imageLightbox");
 const lightboxImage = document.getElementById("lightboxImage");
 const lightboxClose = document.getElementById("lightboxClose");
@@ -682,6 +725,9 @@ function resetProductForm() {
   document.getElementById("pDescription").value = "";
   document.getElementById("pImages").value = "";
   document.getElementById("pImageFocus").value = "top";
+  document.getElementById("pAvailability").value = "made_to_order";
+  document.getElementById("pVariantsWrap").style.display = "none";
+  document.getElementById("pVariantRows").innerHTML = "";
   productFormStatus.className = "form-status";
   productFormStatus.textContent = "";
   updateProductImagePreview();
@@ -726,7 +772,9 @@ saveProductBtn.addEventListener("click", async () => {
       .split("\n")
       .map(line => line.trim())
       .filter(Boolean),
-    imageFocus: document.getElementById("pImageFocus").value
+    imageFocus: document.getElementById("pImageFocus").value,
+    availability: document.getElementById("pAvailability").value,
+    variants: document.getElementById("pAvailability").value === "ready_stock" ? collectVariants() : []
   };
 
   saveProductBtn.disabled = true;
@@ -789,7 +837,7 @@ function renderProductsTable() {
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td data-label="Code">${escapeHtml(p.productCode || "—")}</td>
-      <td data-label="Piece">${escapeHtml(p.name)}</td>
+      <td data-label="Piece">${escapeHtml(p.name)}${p.availability === "ready_stock" ? ` <span class="ready-badge">Ready Stock</span>` : ""}</td>
       <td data-label="Category">${escapeHtml(p.category || "—")}</td>
       <td data-label="Price">${p.salePrice ? `${escapeHtml(p.priceRange || "—")} → <strong>${escapeHtml(p.salePrice)}</strong> (Sale)` : escapeHtml(p.priceRange || "—")}</td>
       <td data-label="Status"><span class="status-pill status-${p.status === "active" ? "confirmed" : "delivered"}">${escapeHtml(p.status)}</span></td>
@@ -816,6 +864,10 @@ function renderProductsTable() {
         document.getElementById("pDescription").value = p.description || "";
         document.getElementById("pImages").value = (p.images || []).join("\n");
         document.getElementById("pImageFocus").value = p.imageFocus || "top";
+        document.getElementById("pAvailability").value = p.availability || "made_to_order";
+        document.getElementById("pVariantRows").innerHTML = "";
+        (p.variants || []).forEach((v) => addVariantRow(v));
+        document.getElementById("pVariantsWrap").style.display = (p.availability === "ready_stock") ? "block" : "none";
         updateProductImagePreview();
         productFormTitle.textContent = "Edit Piece";
         openProductForm();
@@ -1242,9 +1294,12 @@ function closeStaffForm() {
 
 function resetStaffForm() {
   staffEditUid.value = "";
+  document.getElementById("staffMatchedUid").value = "";
   document.getElementById("staffEmail").value = "";
   document.getElementById("staffEmail").disabled = false;
+  document.getElementById("staffEmailMatchStatus").textContent = "";
   document.getElementById("staffName").value = "";
+  document.getElementById("staffName").disabled = false;
   document.getElementById("staffRole").value = "staff";
   addStaffBtn.textContent = "Add Staff Member";
   staffFormTitle.textContent = "Add Staff Member";
@@ -1267,22 +1322,12 @@ staffFormBackdrop?.addEventListener("click", (e) => {
   if (e.target === staffFormBackdrop) closeStaffForm();
 });
 
-function populateStaffEmailOptions(emails) {
-  const datalist = document.getElementById("staffEmailOptions");
-  if (!datalist) return;
-  datalist.innerHTML = [...new Set(emails.filter(Boolean))]
-    .map(email => `<option value="${escapeHtml(email)}"></option>`)
-    .join("");
-}
-
 function loadStaff() {
   db.collection("staff").onSnapshot((snapshot) => {
     const tbody = document.getElementById("staffTableBody");
     tbody.innerHTML = "";
-    const knownEmails = [];
     snapshot.forEach((doc) => {
       const s = doc.data();
-      knownEmails.push(s.email);
       const tr = document.createElement("tr");
       tr.innerHTML = `
         <td data-label="Name">${escapeHtml(s.name || "—")}</td>
@@ -1295,11 +1340,6 @@ function loadStaff() {
       `;
       tbody.appendChild(tr);
     });
-
-    populateStaffEmailOptions(knownEmails);
-    db.collection("staff_pending").get().then((pendingSnap) => {
-      populateStaffEmailOptions([...knownEmails, ...pendingSnap.docs.map(d => d.data().email)]);
-    }).catch((err) => console.error("Failed to load pending staff emails:", err));
 
     tbody.querySelectorAll("[data-edit-staff]").forEach((btn) => {
       btn.addEventListener("click", () => {
@@ -1331,6 +1371,52 @@ function loadStaff() {
   }, (err) => console.error("Staff listener error:", err));
 }
 
+// Staff docs are keyed by Firebase Auth UID so security rules can check access.
+// Rather than requiring a manual Firebase Console step, we look up the typed
+// email against the `clients` collection (populated when someone signs up on
+// the public site) so we can grab their real UID directly — no Auth Admin SDK
+// needed, since every client already has a working login by the time they
+// show up there.
+let staffEmailLookupTimer = null;
+
+async function lookupClientByEmail(email) {
+  const normalized = email.trim();
+  if (!normalized) return null;
+  let snap = await db.collection("clients").where("email", "==", normalized).limit(1).get();
+  if (snap.empty && normalized.toLowerCase() !== normalized) {
+    snap = await db.collection("clients").where("email", "==", normalized.toLowerCase()).limit(1).get();
+  }
+  return snap.empty ? null : { uid: snap.docs[0].id, ...snap.docs[0].data() };
+}
+
+document.getElementById("staffEmail")?.addEventListener("input", (e) => {
+  if (staffEditUid.value) return; // editing an existing staff member — no lookup needed
+  const email = e.target.value;
+  const statusEl = document.getElementById("staffEmailMatchStatus");
+  const matchedField = document.getElementById("staffMatchedUid");
+  matchedField.value = "";
+  addStaffBtn.disabled = false;
+
+  clearTimeout(staffEmailLookupTimer);
+  if (!email.trim()) {
+    statusEl.textContent = "";
+    return;
+  }
+  statusEl.textContent = "Searching…";
+  staffEmailLookupTimer = setTimeout(async () => {
+    const client = await lookupClientByEmail(email);
+    if (client) {
+      matchedField.value = client.uid;
+      statusEl.textContent = `✓ Found an account: ${client.name || client.email}`;
+      if (!document.getElementById("staffName").value.trim()) {
+        document.getElementById("staffName").value = client.name || "";
+      }
+    } else {
+      statusEl.textContent = "No account found with this email yet — ask them to sign up on the site first, then try again.";
+    }
+  }, 400);
+});
+
 addStaffBtn?.addEventListener("click", async () => {
   const name = document.getElementById("staffName").value.trim();
   const role = document.getElementById("staffRole").value;
@@ -1351,28 +1437,29 @@ addStaffBtn?.addEventListener("click", async () => {
   }
 
   const email = document.getElementById("staffEmail").value.trim();
+  const matchedUid = document.getElementById("staffMatchedUid").value;
   if (!email) {
     statusEl.className = "form-status error";
     statusEl.textContent = "Email is required.";
     return;
   }
+  if (!matchedUid) {
+    statusEl.className = "form-status error";
+    statusEl.textContent = "No account found with this email yet — ask them to sign up on the site first, then try again.";
+    return;
+  }
 
-  statusEl.className = "form-status error";
-  statusEl.textContent =
-    "Note: this creates a staff record, but you still need the matching login created in Firebase Console → Authentication first, using the same email — then copy that user's UID here as the document ID. (See README for the step-by-step.)";
-
-  // Staff docs are keyed by Firebase Auth UID so security rules can check access.
-  // Since this simple form doesn't create Auth users directly, we store a pending
-  // record keyed by email for the admin to reconcile — see README for the full flow.
   try {
-    await db.collection("staff_pending").add({
-      email, name, role,
+    await db.collection("staff").doc(matchedUid).set({
+      name, email, role,
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
-    logActivity("Invited staff member", email);
-    document.getElementById("staffEmail").value = "";
-    document.getElementById("staffName").value = "";
+    logActivity("Added staff member", `${name} (${role})`);
+    resetStaffForm();
+    closeStaffForm();
   } catch (err) {
-    console.error("Failed to save staff invite:", err);
+    console.error("Failed to add staff member:", err);
+    statusEl.className = "form-status error";
+    statusEl.textContent = "Couldn't add this person. Please try again." + errSuffix(err);
   }
 });
