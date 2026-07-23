@@ -348,7 +348,7 @@ db.collection("products").get().then((snap) => {
   snap.docs.forEach((doc) => { productsCacheForRequests[doc.id] = doc.data(); });
 }).catch((err) => console.error("Failed to load product photos for My Requests:", err));
 
-function renderRequestRow(r) {
+function renderRequestRow(r, suppressCartTag) {
   const row = document.createElement("div");
   row.className = "my-request-row";
   const product = r.productId ? productsCacheForRequests[r.productId] : null;
@@ -359,7 +359,7 @@ function renderRequestRow(r) {
     : `<div class="my-request-thumb-empty"></div>`;
   const tagsHtml = [
     r.orderNumber ? `<span class="my-request-order-number">#${escapeHtmlAccount(r.orderNumber)}</span>` : "",
-    r.cartId ? `<span class="my-request-cart-tag">🛍 ${escapeHtmlAccount(t("my_requests_multi_item").replace("{count}", r.cartSize || "?"))}</span>` : ""
+    (r.cartId && !suppressCartTag) ? `<span class="my-request-cart-tag">🛍 ${escapeHtmlAccount(t("my_requests_multi_item").replace("{count}", r.cartSize || "?"))}</span>` : ""
   ].filter(Boolean).join("");
   row.innerHTML = `
     ${thumbHtml}
@@ -381,6 +381,26 @@ const REQUESTS_PAGE_SIZE = 8;
 let currentShowCount = REQUESTS_PAGE_SIZE;
 let pastShowCount = REQUESTS_PAGE_SIZE;
 
+// A multi-item order writes one requests doc per piece; group them back
+// together so a 3-piece order always shows as 3 adjacent rows instead of
+// wherever each piece's own timestamp happens to fall in the list.
+function groupMyRequests(items) {
+  const groups = [];
+  const indexByCartId = new Map();
+  items.forEach((r) => {
+    if (r.cartId && indexByCartId.has(r.cartId)) {
+      groups[indexByCartId.get(r.cartId)].push(r);
+    } else {
+      if (r.cartId) indexByCartId.set(r.cartId, groups.length);
+      groups.push([r]);
+    }
+  });
+  // `items` is newest-first, so a group's items were collected newest-first
+  // too — reverse to show them in original submission order.
+  groups.forEach((g) => { if (g.length > 1) g.reverse(); });
+  return groups;
+}
+
 function renderRequestGroup(container, titleKey, items, showCount, onShowMore) {
   if (items.length === 0) return;
   const heading = document.createElement("p");
@@ -388,13 +408,35 @@ function renderRequestGroup(container, titleKey, items, showCount, onShowMore) {
   heading.textContent = t(titleKey);
   container.appendChild(heading);
 
-  items.slice(0, showCount).forEach(r => container.appendChild(renderRequestRow(r)));
+  const groups = groupMyRequests(items);
+  const toRender = [];
+  let shown = 0;
+  for (const g of groups) {
+    toRender.push(g);
+    shown += g.length;
+    if (shown >= showCount) break;
+  }
 
-  if (items.length > showCount) {
+  toRender.forEach((g) => {
+    if (g.length > 1) {
+      const groupEl = document.createElement("div");
+      groupEl.className = "my-request-cart-group";
+      const label = document.createElement("div");
+      label.className = "my-request-cart-group-label";
+      label.textContent = `🛍 ${t("my_requests_group_label").replace("{count}", g[0].cartSize || g.length)}`;
+      groupEl.appendChild(label);
+      g.forEach(r => groupEl.appendChild(renderRequestRow(r, true)));
+      container.appendChild(groupEl);
+    } else {
+      container.appendChild(renderRequestRow(g[0]));
+    }
+  });
+
+  if (shown < items.length) {
     const moreBtn = document.createElement("button");
     moreBtn.type = "button";
     moreBtn.className = "btn-link my-requests-more-btn";
-    moreBtn.textContent = `${t("my_requests_show_more")} (${items.length - showCount})`;
+    moreBtn.textContent = `${t("my_requests_show_more")} (${items.length - shown})`;
     moreBtn.addEventListener("click", onShowMore);
     container.appendChild(moreBtn);
   }
