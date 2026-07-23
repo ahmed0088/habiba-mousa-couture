@@ -568,6 +568,13 @@ function openRequestDetail(id) {
     <div class="submit-row" style="margin-top:14px;">
       <button type="button" class="icon-btn" id="requestDetailCopyBtn">📋 ${escapeHtml(t("admin_copy_shipping_btn"))}</button>
     </div>
+    <div class="field" style="margin-top:16px; max-width:220px;">
+      <label for="requestAmountInput">${escapeHtml(t("admin_amount_collected_label"))}</label>
+      <div style="display:flex; gap:8px;">
+        <input type="number" id="requestAmountInput" min="0" step="1" value="${r.finalAmount != null ? r.finalAmount : ""}" placeholder="${escapeHtml(t("admin_amount_collected_placeholder"))}" />
+        <button type="button" class="icon-btn" id="requestAmountSaveBtn" style="flex-shrink:0;">${escapeHtml(t("admin_amount_save_btn"))}</button>
+      </div>
+    </div>
     ${isCustomDesign ? `<div style="margin-top:16px;">${detailRow(t("custom_design_label"), r.designDescription || "—")}</div>` : ""}
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px 20px; margin-top:18px;">
       ${detailRow("Order #", r.orderNumber, true)}
@@ -596,6 +603,21 @@ function openRequestDetail(id) {
   `;
 
   document.getElementById("requestDetailCopyBtn")?.addEventListener("click", () => copyShippingDetails(r));
+
+  document.getElementById("requestAmountSaveBtn")?.addEventListener("click", async () => {
+    const raw = document.getElementById("requestAmountInput").value;
+    const parsed = raw === "" ? null : parseFloat(raw);
+    const amount = (parsed === null || isNaN(parsed)) ? null : parsed;
+    try {
+      await db.collection("requests").doc(id).update({ finalAmount: amount });
+      r.finalAmount = amount;
+      logActivity("Updated amount collected", `${r.clientName} — ${amount != null ? amount + " EGP" : "—"}`);
+      showToast(t("admin_amount_saved"));
+    } catch (err) {
+      console.error("Failed to save amount:", err);
+      alert(t("admin_amount_save_error") + errSuffix(err));
+    }
+  });
 
   requestDetailBody.querySelectorAll(".detail-copy-btn").forEach((btn) => {
     btn.addEventListener("click", () => copySingleValue(btn.dataset.copyValue));
@@ -694,6 +716,7 @@ function updateDashboardStats() {
   const activeCollectionsEl = document.getElementById("statActiveCollections");
   const multiOrdersEl = document.getElementById("statMultiItemOrders");
   const lowStockEl = document.getElementById("statLowStock");
+  const avgAmountEl = document.getElementById("statAvgAmount");
   if (newRequestsEl) newRequestsEl.textContent = allRequests.filter(([, r]) => r.status === "new").length;
   if (totalRequestsEl) totalRequestsEl.textContent = allRequests.length;
   if (activeProductsEl) activeProductsEl.textContent = allProductsAdmin.filter(([, p]) => p.status === "active").length;
@@ -701,6 +724,16 @@ function updateDashboardStats() {
   if (multiOrdersEl) multiOrdersEl.textContent = new Set(allRequests.map(([, r]) => r.cartId).filter(Boolean)).size;
   if (lowStockEl) {
     lowStockEl.textContent = allProductsAdmin.filter(([, p]) => productIsLowStock(p)).length;
+  }
+  if (avgAmountEl) {
+    // Only delivered orders with a real amount typed in count toward the
+    // average — everything else has no confirmed money collected yet.
+    const amounts = allRequests
+      .filter(([, r]) => r.status === "delivered" && typeof r.finalAmount === "number" && r.finalAmount > 0)
+      .map(([, r]) => r.finalAmount);
+    avgAmountEl.textContent = amounts.length
+      ? `${Math.round(amounts.reduce((sum, a) => sum + a, 0) / amounts.length).toLocaleString()} EGP`
+      : "—";
   }
 }
 
@@ -728,7 +761,8 @@ const STAT_TILE_HANDLERS = {
     showToast(t("admin_stat_active_collections_desc"));
   },
   statTileMultiItemOrders: () => jumpToRequestsView("all", "multi", "admin_stat_multi_orders_desc"),
-  statTileLowStock: () => jumpToProductsView("lowstock", "admin_stat_low_stock_desc")
+  statTileLowStock: () => jumpToProductsView("lowstock", "admin_stat_low_stock_desc"),
+  statTileAvgAmount: () => jumpToRequestsView("delivered", null, "admin_stat_avg_amount_desc")
 };
 Object.keys(STAT_TILE_HANDLERS).forEach((tileId) => {
   const tile = document.getElementById(tileId);
@@ -805,7 +839,8 @@ function renderRequestsTable() {
       r.clientAddress ? `<span class="copyable-field" data-copy-value="${escapeHtml(r.clientAddress)}" title="${copyHint}">📍 ${escapeHtml(r.clientAddress)}</span>` : "",
       r.material ? `<span>🧵 ${escapeHtml(MATERIAL_LABELS[r.material] || r.material)}</span>` : "",
       r.preferredDate ? `<span>📅 ${escapeHtml(r.preferredDate)}</span>` : "",
-      r.orderType === "ready_stock" ? `<span>📦 ${escapeHtml([r.selectedSize, r.selectedColor].filter(Boolean).join(" / ") || "Ready Stock")} × ${r.quantity || 1}</span>` : ""
+      r.orderType === "ready_stock" ? `<span>📦 ${escapeHtml([r.selectedSize, r.selectedColor].filter(Boolean).join(" / ") || "Ready Stock")} × ${r.quantity || 1}</span>` : "",
+      (typeof r.finalAmount === "number" && r.finalAmount > 0) ? `<span>💰 ${escapeHtml(r.finalAmount.toLocaleString())} EGP</span>` : ""
     ].filter(Boolean);
 
     const recipientHtml = (r.recipientName || r.recipientAddress)
