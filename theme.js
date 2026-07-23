@@ -9,8 +9,8 @@
 const THEME_KEY = "hmc_theme";
 
 const THEMES = [
+  { key: "light", swatch: "#161616", ar: "أبيض وأسود كلاسيك (فاتح)", en: "Classic Light" },
   { key: "dark", swatch: "#c9973f", ar: "أونيكس وذهبي (داكن)", en: "Onyx & Gold (Dark)" },
-  { key: "light", swatch: "#6e1f2f", ar: "رمّاني كلاسيك (فاتح)", en: "Pomegranate Classic (Light)" },
   { key: "emerald", swatch: "#1f6e4a", ar: "زمردي", en: "Emerald" },
   { key: "sapphire", swatch: "#1f4e8f", ar: "ياقوتي أزرق", en: "Sapphire" },
   { key: "rosegold", swatch: "#b5657a", ar: "روز جولد", en: "Rose Gold" }
@@ -25,12 +25,12 @@ function getStoredTheme() {
 }
 
 function getPreferredTheme() {
-  // Dark is the site's default look; a visitor's own choice (once made) always wins via localStorage.
-  return "dark";
+  // Light is the site's default look; a visitor's own choice (once made) always wins via localStorage.
+  return "light";
 }
 
 function applyTheme(theme) {
-  const valid = THEMES.some(t => t.key === theme) ? theme : "dark";
+  const valid = THEMES.some(t => t.key === theme) ? theme : "light";
   localStorage.setItem(THEME_KEY, valid);
   document.documentElement.setAttribute("data-theme", valid);
   const active = THEMES.find(t => t.key === valid) || THEMES[0];
