@@ -245,6 +245,18 @@ button {
   line-height: 1;
 }
 
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.nav-links-utility {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
 .nav-links a { text-decoration: none; color: var(--charcoal); position: relative; }
 .nav-links a:hover { color: var(--emerald-text); }
 .nav-links a::after {
@@ -512,6 +524,24 @@ button {
 }
 .filter-chip.filter-chip-sale { margin-inline-start: auto; }
 
+/* Below ~640px, wrapping this row (selects + 3 pill chips, an odd count)
+   leaves an unbalanced dangling chip on its own half-empty row. A horizontal
+   swipeable strip (no wrap) sidesteps that entirely and is the pattern users
+   already expect for filter chips on a phone. */
+@media (max-width: 640px) {
+  .filter-row {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    margin: 0 calc(-1 * var(--space-3));
+    padding: 2px var(--space-3) 6px;
+  }
+  .filter-row::-webkit-scrollbar { display: none; }
+  .filter-row > * { flex-shrink: 0; }
+  .filter-chip.filter-chip-sale { margin-inline-start: 0; }
+}
+
 .filter-chip.filter-chip-sale { border-color: #b8283a; color: #b8283a; }
 .filter-chip.filter-chip-sale.active {
   background: linear-gradient(135deg, #e2483e, #b8283a);
@@ -753,6 +783,30 @@ button {
   display: inline-flex;
   align-items: center;
 }
+
+.piece-body-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+.piece-quickcart-btn {
+  flex-shrink: 0;
+  border: 1px solid var(--line);
+  background: var(--surface-muted);
+  color: var(--charcoal);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  padding: 7px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+}
+.piece-quickcart-btn:hover { border-color: var(--gold); background: var(--row-hover); }
+.piece-quickcart-btn:active { transform: scale(0.96); }
 
 .sale-badge {
   position: absolute;
@@ -1090,6 +1144,11 @@ button {
 }
 .stat-tile { text-align: center; padding: var(--space-3) var(--space-2); }
 .stat-number { font-family: var(--font-display); font-size: 40px; margin: 0; color: var(--emerald-text); }
+.stat-tile-multi {
+  background: linear-gradient(145deg, rgba(31,110,106,0.14), rgba(201,151,63,0.1));
+  border: 1px solid var(--turquoise);
+}
+.stat-tile-multi .stat-number { color: var(--turquoise); }
 .stat-label { font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-faint); margin: 6px 0 0; }
 @media (max-width: 900px) {
   .stat-grid { grid-template-columns: repeat(2, 1fr); }
@@ -1388,6 +1447,19 @@ select.status-select.status-cancelled { background-color: #f6dcdc; color: #a13a3
 .request-row-date { font-size: 11.5px; color: var(--text-faint); }
 .request-row-actions { display: flex; gap: 6px; }
 
+.request-order-number {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(31, 110, 106, 0.14);
+  border: 1px solid var(--turquoise);
+  color: var(--turquoise);
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  padding: 2px 10px;
+}
+
 .request-cart-badge {
   display: inline-flex;
   align-items: center;
@@ -1559,16 +1631,41 @@ select.status-select.status-cancelled { background-color: #f6dcdc; color: #a13a3
     right: 0;
     z-index: 45;
     flex-direction: column;
-    align-items: flex-start;
-    gap: var(--space-2);
+    align-items: stretch;
+    gap: 0;
     background: var(--surface);
+    border-top: 1px solid var(--line);
     border-bottom: 1px solid var(--line);
     box-shadow: 0 16px 30px -12px rgba(28,16,19,0.35);
-    padding: var(--space-2) var(--space-3) var(--space-3);
+    padding: 6px 0 var(--space-2);
     display: none;
   }
   .nav-links.open { display: flex; }
-  .account-nav, .account-signed-in { flex-direction: column; align-items: flex-start; gap: 8px; }
+
+  /* Primary links: full-width rows with a hairline between them, instead of
+     a cramped inline stack — easier to tap and reads less like plain text. */
+  .nav-links > a {
+    padding: 14px var(--space-3);
+    border-bottom: 1px solid var(--border-soft);
+    font-size: 13px;
+  }
+  .nav-links > a::after { display: none; }
+
+  /* Account actions get their own section, visually separated from the
+     primary links above and the language/theme utility row below. */
+  .account-nav {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    padding: var(--space-2) var(--space-3);
+    border-bottom: 1px solid var(--border-soft);
+  }
+  .account-signed-in { flex-direction: column; align-items: flex-start; gap: 10px; }
+
+  .nav-links-utility {
+    justify-content: space-between;
+    padding: var(--space-2) var(--space-3) 0;
+  }
 }
 
 /* ---------- Product detail (modal) ---------- */
@@ -1576,7 +1673,10 @@ select.status-select.status-cancelled { background-color: #f6dcdc; color: #a13a3
 .detail-carousel {
   position: relative;
   aspect-ratio: 3/4;
-  margin: 0 0 var(--space-3);
+  /* Extra top margin so the modal's close button (absolutely positioned at
+     the modal's own top-right) always clears the image, instead of the two
+     overlapping when the carousel starts right at the modal's inner edge. */
+  margin: 20px 0 var(--space-3);
   background: var(--surface-muted);
   border-radius: 10px;
   border: 1px solid var(--line);
@@ -1788,7 +1888,20 @@ select.status-select.status-cancelled { background-color: #f6dcdc; color: #a13a3
   border: 1px solid var(--line);
 }
 .my-request-thumb-empty { background: var(--surface-muted); border-style: dashed; }
-.my-request-piece { font-family: var(--font-display); font-size: 16px; }
+.my-request-name { font-family: var(--font-display); font-size: 16px; }
+.my-request-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 3px; }
+.my-request-order-number,
+.my-request-cart-tag {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-body);
+  font-size: 10.5px;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 1px 8px;
+}
+.my-request-order-number { color: var(--turquoise); background: rgba(31, 110, 106, 0.14); border: 1px solid var(--turquoise); }
+.my-request-cart-tag { color: var(--gold); background: rgba(201, 151, 63, 0.16); border: 1px solid var(--gold); }
 .my-request-date { font-size: 12.5px; color: var(--text-faint); white-space: nowrap; }
 
 @media (max-width: 480px) {

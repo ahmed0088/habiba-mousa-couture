@@ -357,9 +357,16 @@ function renderRequestRow(r) {
   const thumbHtml = thumbSrc
     ? `<img class="my-request-thumb" src="${escapeHtmlAccount(thumbSrc)}" alt="" style="object-position: center ${escapeHtmlAccount(thumbFocus)};" loading="lazy" />`
     : `<div class="my-request-thumb-empty"></div>`;
+  const tagsHtml = [
+    r.orderNumber ? `<span class="my-request-order-number">#${escapeHtmlAccount(r.orderNumber)}</span>` : "",
+    r.cartId ? `<span class="my-request-cart-tag">🛍 ${escapeHtmlAccount(t("my_requests_multi_item").replace("{count}", r.cartSize || "?"))}</span>` : ""
+  ].filter(Boolean).join("");
   row.innerHTML = `
     ${thumbHtml}
-    <div class="my-request-piece">${escapeHtmlAccount(r.productName || "—")}</div>
+    <div class="my-request-piece">
+      ${tagsHtml ? `<div class="my-request-tags">${tagsHtml}</div>` : ""}
+      <div class="my-request-name">${escapeHtmlAccount(r.productName || "—")}</div>
+    </div>
     <div class="my-request-meta">
       <span class="status-pill status-${escapeHtmlAccount(r.status)}">${escapeHtmlAccount(t(STATUS_KEY_MAP[r.status] || r.status))}</span>
       <div class="my-request-date">${formatDateAccount(r.createdAt)}</div>

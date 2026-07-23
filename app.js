@@ -112,6 +112,28 @@ function addToCart(item) {
   saveCart();
 }
 
+// Quick-add straight from the gallery card, no need to open the product first.
+// Custom (made-to-order) pieces need no choices, so they add right away; a
+// ready-stock piece adds its first in-stock size/color combo as a sensible
+// default — the shopper can still remove/adjust quantity from the cart, or
+// open the piece normally to pick a specific size/color before ordering.
+function quickAddToCart(product) {
+  if (product.availability === "ready_stock") {
+    const variant = (product.variants || []).find(v => v.stock > 0);
+    if (!variant) return;
+    addToCart({
+      productId: product.id,
+      orderType: "ready_stock",
+      selectedSize: variant.size || null,
+      selectedColor: variant.color || null,
+      quantity: 1
+    });
+  } else {
+    addToCart({ productId: product.id, material: "unspecified", quantity: 1 });
+  }
+  showToastPublic(t("cart_added_toast"));
+}
+
 function removeFromCart(index) {
   cart.splice(index, 1);
   saveCart();
@@ -334,13 +356,40 @@ function closeLightbox() {
   imageLightbox.classList.remove("open");
 }
 
-detailCarouselImage.addEventListener("click", openLightbox);
+detailCarouselImage.addEventListener("click", () => {
+  if (detailCarouselImage.dataset.justSwiped) return;
+  openLightbox();
+});
 lightboxClose.addEventListener("click", closeLightbox);
 imageLightbox.addEventListener("click", (e) => {
   if (e.target === imageLightbox) closeLightbox();
 });
 lightboxPrev.addEventListener("click", () => stepImage(-1));
 lightboxNext.addEventListener("click", () => stepImage(1));
+
+// Touch-swipe support for the product carousel and lightbox — the on-image
+// prev/next arrows stay as-is, this just adds swipe as an equally valid way
+// to move between photos, matching how every phone photo viewer behaves.
+function addSwipeNavigation(el) {
+  let startX = 0, startY = 0;
+  el.addEventListener("touchstart", (e) => {
+    const t = e.touches[0];
+    startX = t.clientX;
+    startY = t.clientY;
+  }, { passive: true });
+  el.addEventListener("touchend", (e) => {
+    const t = e.changedTouches[0];
+    const dx = t.clientX - startX;
+    const dy = t.clientY - startY;
+    if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+      stepImage(dx < 0 ? 1 : -1);
+      el.dataset.justSwiped = "1";
+      setTimeout(() => { delete el.dataset.justSwiped; }, 300);
+    }
+  });
+}
+addSwipeNavigation(detailCarouselImage);
+addSwipeNavigation(lightboxImage);
 
 function showDetailView() {
   detailView.style.display = "block";
@@ -711,7 +760,10 @@ function renderGallery() {
         <p class="piece-eyebrow">${escapeHtml(product.category || t("piece_category_fallback"))}${collectionName ? ` <span class="piece-collection-tag">· ${escapeHtml(collectionName)}</span>` : ""}${isReady ? (isSoldOut ? ` <span class="sold-out-badge">${escapeHtml(t("sold_out_label"))}</span>` : ` <span class="ready-badge">${escapeHtml(t("ready_badge"))}</span>`) : ""}</p>
         <h3 class="piece-name">${escapeHtml(product.name)}</h3>
         <p class="piece-desc">${escapeHtml(product.description || "")}</p>
-        ${priceHtml}
+        <div class="piece-body-bottom">
+          ${priceHtml}
+          ${!isSoldOut ? `<button type="button" class="piece-quickcart-btn" aria-label="${escapeHtml(t("cart_quick_add"))}">🛍 ${escapeHtml(t("cart_quick_add"))}</button>` : ""}
+        </div>
       </div>
     `;
     card.addEventListener("click", () => openModal(product));
@@ -722,6 +774,10 @@ function renderGallery() {
     card.querySelector(".piece-share-btn").addEventListener("click", (e) => {
       e.stopPropagation();
       shareProduct(product);
+    });
+    card.querySelector(".piece-quickcart-btn")?.addEventListener("click", (e) => {
+      e.stopPropagation();
+      quickAddToCart(product);
     });
     card.classList.add("reveal-hidden");
     galleryGrid.appendChild(card);
@@ -796,6 +852,18 @@ function loadCollections() {
     );
 }
 
+// A short, human-readable order number (e.g. "HM-260723-4821") shown to both
+// the client (My Requests) and staff (admin Requests) — much easier to say
+// over the phone or WhatsApp than a raw document ID or UUID cartId.
+function generateOrderNumber() {
+  const now = new Date();
+  const y = String(now.getFullYear()).slice(-2);
+  const m = String(now.getMonth() + 1).padStart(2, "0");
+  const d = String(now.getDate()).padStart(2, "0");
+  const rand = Math.floor(1000 + Math.random() * 9000);
+  return `HM-${y}${m}${d}-${rand}`;
+}
+
 requestForm.addEventListener("submit", async (e) => {
   e.preventDefault();
   submitBtn.disabled = true;
@@ -804,6 +872,7 @@ requestForm.addEventListener("submit", async (e) => {
   const product = allProducts.find(p => p.id === productIdField.value);
 
   const payload = {
+    orderNumber: generateOrderNumber(),
     productId: productIdField.value || null,
     productName: product ? product.name : null,
     productCode: product ? (product.productCode || null) : null,
@@ -882,6 +951,7 @@ cartCheckoutForm?.addEventListener("submit", async (e) => {
   cartSubmitBtn.textContent = t("submit_btn_sending");
 
   const cartId = crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  const orderNumber = generateOrderNumber();
   const clientName = document.getElementById("cartClientName").value.trim();
   const clientPhone = document.getElementById("cartClientPhone").value.trim();
   const clientAddress = document.getElementById("cartClientAddress").value.trim();
@@ -895,6 +965,7 @@ cartCheckoutForm?.addEventListener("submit", async (e) => {
       const product = allProducts.find(p => p.id === item.productId);
       const ref = db.collection("requests").doc();
       const payload = {
+        orderNumber,
         productId: item.productId,
         productName: product ? product.name : null,
         productCode: product ? (product.productCode || null) : null,

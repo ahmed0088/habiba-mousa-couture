@@ -463,7 +463,7 @@ function cartSiblingsHtml(currentId, r) {
   `).join("");
   return `
     <div class="cart-siblings-block">
-      <p class="cart-siblings-title">🛍 Part of a ${siblings.length}-piece order</p>
+      <p class="cart-siblings-title">🛍 Order ${r.orderNumber ? `#${escapeHtml(r.orderNumber)}` : ""} — ${siblings.length} pieces together</p>
       ${rows}
     </div>
   `;
@@ -483,6 +483,7 @@ function openRequestDetail(id) {
     ${photoHtml}
     ${statusPillGroupHtml(id, r.status)}
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px 20px; margin-top:18px;">
+      ${detailRow("Order #", r.orderNumber)}
       ${detailRow("Client", r.clientName)}
       ${detailRow("Phone", r.clientPhone)}
       ${detailRow("Piece", r.productName + (r.productCode ? ` (${r.productCode})` : ""))}
@@ -537,10 +538,12 @@ function updateDashboardStats() {
   const totalRequestsEl = document.getElementById("statTotalRequests");
   const activeProductsEl = document.getElementById("statActiveProducts");
   const activeCollectionsEl = document.getElementById("statActiveCollections");
+  const multiOrdersEl = document.getElementById("statMultiItemOrders");
   if (newRequestsEl) newRequestsEl.textContent = allRequests.filter(([, r]) => r.status === "new").length;
   if (totalRequestsEl) totalRequestsEl.textContent = allRequests.length;
   if (activeProductsEl) activeProductsEl.textContent = allProductsAdmin.filter(([, p]) => p.status === "active").length;
   if (activeCollectionsEl) activeCollectionsEl.textContent = allCollections.filter(c => c.status === "active").length;
+  if (multiOrdersEl) multiOrdersEl.textContent = new Set(allRequests.map(([, r]) => r.cartId).filter(Boolean)).size;
 }
 
 function renderRequestsTable() {
@@ -587,6 +590,7 @@ function renderRequestsTable() {
       ${thumbHtml}
       <div class="request-row-body">
         <div class="request-row-top">
+          ${r.orderNumber ? `<span class="request-order-number">#${escapeHtml(r.orderNumber)}</span>` : ""}
           <span class="request-row-name">${escapeHtml(r.clientName)}</span>
           <span class="request-row-piece">${escapeHtml(r.productName || "—")}${r.productCode ? ` <span class="request-row-code">(${escapeHtml(r.productCode)})</span>` : ""}</span>
           ${r.cartId ? `<button type="button" class="request-cart-badge" data-cart-badge="${escapeHtml(r.cartId)}" title="Part of a ${r.cartSize || "multi"}-piece order submitted together">🛍 ${r.cartSize || "?"}-piece order</button>` : ""}
