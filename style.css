@@ -485,6 +485,17 @@ button {
 }
 .filter-chip.filter-chip-ready.active { background: var(--turquoise); color: #fff; border-color: var(--turquoise); }
 
+.filter-chip.filter-chip-fav {
+  border-color: #e2483e;
+  color: #e2483e;
+  font-weight: 700;
+  border-radius: 22px;
+  clip-path: none;
+  min-height: 44px;
+  padding: 11px 20px;
+}
+.filter-chip.filter-chip-fav.active { background: linear-gradient(135deg, #e2483e, #b8283a); color: #fff; border-color: #b8283a; }
+
 /* Leaflet's own CSS puts its zoom controls/panes at z-index up to 1000, and since
    .leaflet-container is position:relative with no z-index of its own, that value
    escapes into the page's stacking context instead of staying scoped to the map —

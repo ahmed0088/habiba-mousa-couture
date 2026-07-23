@@ -67,6 +67,8 @@ function toggleLike(productId, btn) {
     btn.classList.add("liked");
   }
   localStorage.setItem(LIKED_STORAGE_KEY, JSON.stringify([...likedProducts]));
+  // Viewing "Favorites only"? Un-liking a piece should drop it from view immediately.
+  if (favOnly) renderGallery();
 }
 
 function showToastPublic(message) {
@@ -101,6 +103,7 @@ let activeFilter = "all";
 let activeCollection = "all";
 let saleOnly = false;
 let readyOnly = false;
+let favOnly = false;
 let loadFailed = false;
 let currentProduct = null;
 let currentImageIndex = 0;
@@ -427,6 +430,16 @@ function renderCombinedFilters(categories) {
     filterRow.appendChild(categorySelect);
   }
 
+  const favBtn = document.createElement("button");
+  favBtn.type = "button";
+  favBtn.className = "filter-chip filter-chip-fav" + (favOnly ? " active" : "");
+  favBtn.textContent = t("filter_favorites");
+  favBtn.addEventListener("click", () => {
+    favOnly = !favOnly;
+    refreshCollectionAndCategoryUI();
+  });
+  filterRow.appendChild(favBtn);
+
   const saleBtn = document.createElement("button");
   saleBtn.type = "button";
   saleBtn.className = "filter-chip filter-chip-sale" + (saleOnly ? " active" : "");
@@ -462,28 +475,37 @@ function renderGallery() {
 
   const saleFiltered = saleOnly ? categoryFiltered.filter(p => p.salePrice) : categoryFiltered;
   const readyFiltered = readyOnly ? saleFiltered.filter(p => p.availability === "ready_stock") : saleFiltered;
+  const favFiltered = favOnly ? readyFiltered.filter(p => likedProducts.has(p.id)) : readyFiltered;
 
   const searchQuery = (productSearchInput?.value || "").trim().toLowerCase();
   const filtered = searchQuery
-    ? readyFiltered.filter(p => {
+    ? favFiltered.filter(p => {
         const collectionName = allCollections.find(c => c.id === p.collectionId)?.name || "";
         return `${p.name || ""} ${p.category || ""} ${p.description || ""} ${collectionName} ${p.productCode || ""}`
           .toLowerCase().includes(searchQuery);
       })
-    : readyFiltered;
+    : favFiltered;
 
   galleryGrid.innerHTML = "";
 
   if (filtered.length === 0) {
     emptyState.style.display = "block";
-    const filtersActive = activeCollection !== "all" || activeFilter !== "all" || saleOnly || readyOnly || Boolean(searchQuery);
-    if (filtersActive) {
+    const onlyFavFilterActive = favOnly && activeCollection === "all" && activeFilter === "all" && !saleOnly && !readyOnly && !searchQuery;
+    const filtersActive = activeCollection !== "all" || activeFilter !== "all" || saleOnly || readyOnly || favOnly || Boolean(searchQuery);
+    if (onlyFavFilterActive) {
+      emptyState.innerHTML = `<p>${escapeHtml(t("empty_state_favorites"))}</p><button type="button" class="btn-link" id="clearFiltersBtn">${escapeHtml(t("empty_state_clear"))}</button>`;
+      document.getElementById("clearFiltersBtn").addEventListener("click", () => {
+        favOnly = false;
+        refreshCollectionAndCategoryUI();
+      });
+    } else if (filtersActive) {
       emptyState.innerHTML = `<p>${escapeHtml(t("empty_state_filtered"))}</p><button type="button" class="btn-link" id="clearFiltersBtn">${escapeHtml(t("empty_state_clear"))}</button>`;
       document.getElementById("clearFiltersBtn").addEventListener("click", () => {
         activeCollection = "all";
         activeFilter = "all";
         saleOnly = false;
         readyOnly = false;
+        favOnly = false;
         if (productSearchInput) productSearchInput.value = "";
         refreshCollectionAndCategoryUI();
       });
