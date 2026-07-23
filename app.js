@@ -378,15 +378,87 @@ function showToastPublic(message) {
   setTimeout(() => toast.remove(), 3000);
 }
 
-function shareProduct(product) {
+// Desktop/unsupported-browser fallback for navigator.share — a real menu
+// with recognizable share targets instead of silently dumping the link on
+// the clipboard with no visible confirmation beyond a toast.
+let activeSharePopover = null;
+
+function closeSharePopover() {
+  if (!activeSharePopover) return;
+  activeSharePopover.remove();
+  activeSharePopover = null;
+  document.removeEventListener("click", handleShareOutsideClick, true);
+  document.removeEventListener("keydown", handleShareEscape);
+  window.removeEventListener("scroll", closeSharePopover, true);
+}
+
+function handleShareOutsideClick(e) {
+  if (activeSharePopover && !activeSharePopover.contains(e.target)) closeSharePopover();
+}
+
+function handleShareEscape(e) {
+  if (e.key === "Escape") closeSharePopover();
+}
+
+function openSharePopover(anchorBtn, url, text) {
+  closeSharePopover();
+  const popover = document.createElement("div");
+  popover.className = "share-popover";
+  popover.setAttribute("role", "menu");
+  popover.innerHTML = `
+    <a class="share-popover-item" href="https://wa.me/?text=${encodeURIComponent(`${text} ${url}`)}" target="_blank" rel="noopener" data-share="whatsapp">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.71.45 3.38 1.3 4.85L2 22l5.36-1.4a9.9 9.9 0 0 0 4.68 1.19h.01c5.46 0 9.9-4.45 9.9-9.91C21.96 6.45 17.5 2 12.04 2Zm5.8 14.1c-.24.68-1.4 1.3-1.93 1.36-.5.06-1 .27-3.32-.7-2.79-1.15-4.58-3.97-4.72-4.16-.14-.19-1.12-1.5-1.12-2.85 0-1.36.7-2.02.96-2.29.24-.26.53-.33.7-.33h.5c.16 0 .38-.03.58.44.24.55.8 1.9.87 2.04.07.15.11.32.02.51-.08.19-.13.31-.26.48-.13.16-.28.36-.4.48-.13.13-.27.28-.12.55.16.28.71 1.16 1.52 1.88 1.05.93 1.93 1.22 2.2 1.36.28.13.44.11.6-.07.16-.19.7-.82.89-1.1.19-.28.38-.23.63-.14.26.1 1.65.78 1.93.92.28.14.47.21.54.32.06.13.06.7-.18 1.37Z"/></svg>
+      WhatsApp
+    </a>
+    <a class="share-popover-item" href="https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}" target="_blank" rel="noopener" data-share="facebook">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13.5 21v-7.53h2.53l.38-2.93h-2.9V8.68c0-.85.24-1.43 1.45-1.43H16.5V4.63c-.28-.04-1.25-.12-2.38-.12-2.36 0-3.97 1.44-3.97 4.08v2.27H7.62v2.93h2.53V21h3.35Z"/></svg>
+      Facebook
+    </a>
+    <button type="button" class="share-popover-item" data-share="copy">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 1H4a2 2 0 0 0-2 2v14h2V3h12V1Zm3 4H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2Zm0 16H8V7h11v14Z"/></svg>
+      <span data-copy-label>${escapeHtml(t("share_copy_link"))}</span>
+    </button>
+  `;
+  document.body.appendChild(popover);
+
+  const rect = anchorBtn.getBoundingClientRect();
+  const popRect = popover.getBoundingClientRect();
+  let left = rect.left + window.scrollX;
+  if (left + popRect.width > window.innerWidth - 8) left = window.innerWidth - popRect.width - 8;
+  popover.style.top = `${rect.bottom + window.scrollY + 6}px`;
+  popover.style.left = `${Math.max(8, left)}px`;
+
+  popover.querySelector('[data-share="copy"]').addEventListener("click", () => {
+    if (!navigator.clipboard) return;
+    navigator.clipboard.writeText(url).then(() => {
+      const label = popover.querySelector("[data-copy-label]");
+      if (label) label.textContent = t("share_copied");
+      showToastPublic(t("share_copied"));
+      setTimeout(closeSharePopover, 900);
+    }).catch(() => {});
+  });
+
+  activeSharePopover = popover;
+  setTimeout(() => {
+    document.addEventListener("click", handleShareOutsideClick, true);
+    document.addEventListener("keydown", handleShareEscape);
+    window.addEventListener("scroll", closeSharePopover, true);
+  }, 0);
+}
+
+function shareProduct(product, anchorBtn) {
   const url = `${location.origin}${location.pathname}?product=${product.id}`;
   const priceText = product.salePrice
     ? formatPrice(product.salePrice)
     : (product.priceRange ? formatPrice(product.priceRange) : "");
   const text = `${product.name}${priceText ? " — " + priceText : ""}`;
 
+  // Native share sheet is the more "pro" feel where it's actually available
+  // (mainly mobile); everywhere else, a real menu instead of a silent copy.
   if (navigator.share) {
     navigator.share({ title: product.name, text, url }).catch(() => {});
+  } else if (anchorBtn) {
+    openSharePopover(anchorBtn, url, text);
   } else if (navigator.clipboard) {
     navigator.clipboard.writeText(url).then(() => showToastPublic(t("share_copied"))).catch(() => {});
   }
@@ -1089,7 +1161,7 @@ function renderGallery() {
     });
     card.querySelector(".piece-share-btn").addEventListener("click", (e) => {
       e.stopPropagation();
-      shareProduct(product);
+      shareProduct(product, e.currentTarget);
     });
     if (canQuickAdd) {
       const qtyValueEl = card.querySelector(".piece-qty-value");

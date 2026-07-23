@@ -377,6 +377,7 @@ const I18N = {
     like_label: "أضيفي للمفضلة",
     share_label: "شاركي",
     share_copied: "تم نسخ الرابط!",
+    share_copy_link: "نسخ الرابط",
 
     // Request form — address & material
     label_address: "العنوان (المحافظة، المدينة، الشارع)",
@@ -812,6 +813,7 @@ const I18N = {
     like_label: "Add to favorites",
     share_label: "Share",
     share_copied: "Link copied!",
+    share_copy_link: "Copy Link",
 
     // Request form — address & material
     label_address: "Address (Governorate, City, Street)",

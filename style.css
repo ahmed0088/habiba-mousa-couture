@@ -1009,6 +1009,37 @@ button {
 .piece-like-btn.liked svg { fill: #e2483e; }
 .piece-collection-tag { color: var(--text-faint); text-transform: none; letter-spacing: 0; font-size: 11px; }
 
+.share-popover {
+  position: absolute;
+  z-index: 300;
+  background: var(--surface);
+  border: 1px solid var(--border-soft);
+  border-radius: 10px;
+  box-shadow: 0 12px 28px rgba(0,0,0,0.18);
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  min-width: 160px;
+}
+.share-popover-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  border-radius: 6px;
+  font-size: 13.5px;
+  font-family: var(--font-body);
+  color: var(--charcoal);
+  text-decoration: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: start;
+  width: 100%;
+}
+.share-popover-item:hover { background: var(--surface-muted); }
+.share-popover-item svg { width: 18px; height: 18px; flex-shrink: 0; fill: var(--charcoal); }
+
 .empty-state {
   text-align: center;
   padding: var(--space-6) var(--space-3);
