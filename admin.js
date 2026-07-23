@@ -453,6 +453,34 @@ const MATERIAL_LABELS = {
 
 let requestsById = {};
 
+// Plain-text block a staff member can paste straight into a courier's
+// booking form or WhatsApp chat. Uses the recipient override (if this
+// piece is a gift going to someone else) instead of the account holder's
+// own info, since that's who the shipping company actually needs to reach.
+function buildShippingCopyText(r) {
+  const name = r.recipientName || r.clientName;
+  const phone = r.recipientPhone || r.clientPhone;
+  const address = r.recipientAddress || r.clientAddress;
+  const lines = [
+    `${t("admin_copy_label_name")}: ${name || "—"}`,
+    `${t("admin_copy_label_phone")}: ${phone || "—"}`,
+    `${t("admin_copy_label_address")}: ${address || "—"}`,
+    `${t("admin_copy_label_piece")}: ${r.productName || "—"}${r.productCode ? ` (${r.productCode})` : ""}`
+  ];
+  if (r.orderType === "ready_stock") {
+    lines.push(`${t("admin_copy_label_variant")}: ${[r.selectedSize, r.selectedColor].filter(Boolean).join(" / ") || "—"} × ${r.quantity || 1}`);
+  }
+  if (r.orderNumber) lines.push(`${t("admin_copy_label_order")}: ${r.orderNumber}`);
+  return lines.join("\n");
+}
+
+function copyShippingDetails(r) {
+  const text = buildShippingCopyText(r);
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(() => showToast(t("admin_copy_shipping_success"))).catch(() => {});
+  }
+}
+
 const requestDetailBackdrop = document.getElementById("requestDetailBackdrop");
 const requestDetailClose = document.getElementById("requestDetailClose");
 const requestDetailBody = document.getElementById("requestDetailBody");
@@ -526,6 +554,9 @@ function openRequestDetail(id) {
   requestDetailBody.innerHTML = `
     ${photoHtml}
     ${statusPillGroupHtml(id, r.status)}
+    <div class="submit-row" style="margin-top:14px;">
+      <button type="button" class="icon-btn" id="requestDetailCopyBtn">📋 ${escapeHtml(t("admin_copy_shipping_btn"))}</button>
+    </div>
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px 20px; margin-top:18px;">
       ${detailRow("Order #", r.orderNumber)}
       ${detailRow("Client", r.clientName)}
@@ -551,6 +582,8 @@ function openRequestDetail(id) {
     ${r.notes ? `<div style="margin-top:16px;">${detailRow("Notes", r.notes)}</div>` : ""}
     ${cartSiblingsHtml(id, r)}
   `;
+
+  document.getElementById("requestDetailCopyBtn")?.addEventListener("click", () => copyShippingDetails(r));
 
   requestDetailBody.querySelectorAll("[data-sibling-delete]").forEach((btn) => {
     btn.addEventListener("click", async (e) => {
@@ -764,6 +797,7 @@ function renderRequestsTable() {
         <span class="request-row-date">${formatDate(r.createdAt)}</span>
         <div class="request-row-actions">
           <button class="icon-btn" data-view-request="${id}">View</button>
+          <button class="icon-btn" data-copy-request="${id}">📋 ${escapeHtml(t("admin_copy_shipping_btn"))}</button>
           <button class="icon-btn danger" data-delete-request="${id}">Delete</button>
         </div>
       </div>
@@ -823,6 +857,13 @@ function renderRequestsTable() {
 
   feed.querySelectorAll("[data-view-request]").forEach((btn) => {
     btn.addEventListener("click", () => openRequestDetail(btn.dataset.viewRequest));
+  });
+
+  feed.querySelectorAll("[data-copy-request]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const r = requestsById[btn.dataset.copyRequest];
+      if (r) copyShippingDetails(r);
+    });
   });
 
   feed.querySelectorAll("[data-delete-request]").forEach((btn) => {
