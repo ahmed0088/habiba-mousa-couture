@@ -18,7 +18,7 @@ const I18N = {
     // Hero
     hero_eyebrow: "تفصيل حسب الطلب — الإسكندرية",
     hero_title_html: "بتتفصّل عشانِك <em>إنتِ بس</em><br/>مفيش رف هنا خالص.",
-    hero_sub: "تفرجي على الكولكشن، اختاري التصميم اللي عجبك، وابعتيلنا تفاصيلك. هنكلمك بنفسنا نأكد المقاس والقماش والميعاد.",
+    hero_sub: "اتفرجي على الكولكشن، اختاري التصميم اللي عجبك، وابعتيلنا تفاصيلك. هنكلمك بنفسنا نأكد المقاس والقماش والميعاد.",
     btn_view_collection: "شوفي الكولكشن",
     spec_process_label: "الخطوات",
     spec_process_value: "الطلب ← الاستشارة ← القياس ← التسليم",
@@ -166,7 +166,7 @@ const I18N = {
     admin_activity_filter_clear: "مسح الفلاتر",
     admin_activity_restore: "استرجاع",
     admin_activity_delete: "حذف",
-    admin_activity_restore_confirm: "استرجاع هذا العنصر؟ هيتضاف تاني زي ما كان.",
+    admin_activity_restore_confirm: "استرجاع العنصر ده؟ هيتضاف تاني زي ما كان.",
     admin_activity_delete_confirm: "حذف سجل النشاط ده؟ الإجراء ده مش بيأثر على البيانات نفسها.",
     admin_activity_restored: "تم الاسترجاع بنجاح.",
     admin_activity_restore_error: "معرفناش نسترجع العنصر ده.",

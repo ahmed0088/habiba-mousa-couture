@@ -996,8 +996,10 @@ button {
   border: 1px solid var(--border-soft);
   max-width: 520px;
   width: 100%;
+  min-width: 0;
   max-height: 90vh;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: var(--space-4);
   position: relative;
   border-radius: 12px;
@@ -1049,6 +1051,7 @@ button {
 }
 .field input, .field textarea, .field select {
   width: 100%;
+  min-width: 0;
   padding: 11px 12px;
   border: 1px solid var(--input-border);
   border-radius: 6px;
