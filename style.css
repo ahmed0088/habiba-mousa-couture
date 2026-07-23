@@ -1103,10 +1103,7 @@ button {
 /* ---------- Admin ---------- */
 
 .admin-body {
-  background-color: var(--surface-muted);
-  background-image:
-    repeating-linear-gradient(45deg, rgba(201,151,63,0.05) 0, rgba(201,151,63,0.05) 1px, transparent 1px, transparent 42px),
-    repeating-linear-gradient(-45deg, rgba(201,151,63,0.05) 0, rgba(201,151,63,0.05) 1px, transparent 1px, transparent 42px);
+  background-color: var(--page-bg);
 }
 
 .admin-shell { display: flex; min-height: 100vh; }
@@ -1114,12 +1111,10 @@ button {
 .admin-sidebar {
   width: 220px;
   background: var(--glass-sidebar);
-  backdrop-filter: blur(18px) saturate(160%);
-  -webkit-backdrop-filter: blur(18px) saturate(160%);
   color: var(--ivory);
   padding: var(--space-3) var(--space-2);
   flex-shrink: 0;
-  border-right: 1px solid rgba(201,151,63,0.25);
+  border-right: 1px solid rgba(255,255,255,0.1);
 }
 
 .admin-sidebar .brand { color: var(--ivory); font-size: 20px; }
@@ -1217,12 +1212,12 @@ button {
 .stat-tile:hover, .stat-tile:focus-visible { transform: translateY(-3px); box-shadow: 0 10px 22px rgba(0,0,0,0.16); outline: none; }
 .stat-number { font-family: var(--font-display); font-size: 40px; margin: 0; color: var(--emerald-text); }
 .stat-tile-multi {
-  background: linear-gradient(145deg, rgba(31,110,106,0.14), rgba(201,151,63,0.1));
+  background: rgba(31,110,106,0.08);
   border: 1px solid var(--turquoise);
 }
 .stat-tile-multi .stat-number { color: var(--turquoise); }
 .stat-tile-lowstock {
-  background: linear-gradient(145deg, rgba(184,40,58,0.12), rgba(201,151,63,0.1));
+  background: rgba(184,40,58,0.08);
   border: 1px solid #b8283a;
 }
 .stat-tile-lowstock .stat-number { color: #b8283a; }
@@ -1349,10 +1344,9 @@ select.status-select.status-cancelled { background-color: #f6dcdc; color: #a13a3
 .status-pill-btn.active.status-cancelled { background: #f6dcdc; }
 
 .admin-card {
-  background: var(--glass-surface);
-  backdrop-filter: blur(14px) saturate(150%);
-  -webkit-backdrop-filter: blur(14px) saturate(150%);
-  border: 1px solid var(--glass-border);
+  background: var(--surface);
+  border: 1px solid var(--border-soft);
+  border-radius: 12px;
   padding: var(--space-3);
   margin-bottom: var(--space-3);
 }
