@@ -1740,6 +1740,8 @@ select.status-select.status-cancelled { background-color: #f6dcdc; color: #a13a3
 .cart-sibling-row.current { font-weight: 700; color: var(--heading); }
 .cart-sibling-row > span:first-child { flex: 1 1 140px; min-width: 0; }
 
+.admin-requests-filter-row { display: flex; gap: 14px; flex-wrap: wrap; align-items: flex-end; }
+
 @media (max-width: 640px) {
   .request-row { position: relative; padding-inline-end: 16px; }
   .request-row-side {
@@ -1757,6 +1759,14 @@ select.status-select.status-cancelled { background-color: #f6dcdc; color: #a13a3
   /* Status select + date share the top line; View/Delete get their own
      full-width line below instead of squeezing in and overflowing. */
   .request-row-actions { flex-basis: 100%; justify-content: flex-end; }
+
+  /* Native date inputs can refuse to shrink below their own intrinsic
+     width on mobile Safari, so instead of trying to fit From/To beside
+     the search/status fields, stack every filter to full width — that
+     guarantees nothing can spill past the viewport edge. */
+  .admin-requests-filter-row { flex-direction: column; align-items: stretch; }
+  .admin-requests-filter-row .field { max-width: none !important; }
+  .admin-requests-filter-row #requestsDateClearBtn { align-self: flex-start; }
 }
 
 @media (max-width: 700px) {
