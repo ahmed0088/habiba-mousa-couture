@@ -578,11 +578,18 @@ function refreshOrderColorOptions(product) {
 
 function setupVariantSelectors(product) {
   const wrap = document.getElementById("orderVariantWrap");
+  // Always show at least a quantity picker — even a made-to-order piece can
+  // reasonably be wanted "2 of", and this is also what Add to Cart reads.
+  wrap.style.display = "block";
+
   if (product.availability !== "ready_stock") {
-    wrap.style.display = "none";
+    document.getElementById("orderSizeWrap").style.display = "none";
+    document.getElementById("orderColorWrap").style.display = "none";
+    document.getElementById("orderSize").onchange = null;
+    document.getElementById("orderColor").onchange = null;
+    populateOrderQuantity(10);
     return;
   }
-  wrap.style.display = "block";
 
   const sizeSelect = document.getElementById("orderSize");
   const sizes = [...new Set((product.variants || []).filter(v => v.size && v.stock > 0).map(v => v.size))];
@@ -628,6 +635,16 @@ function openModal(product) {
   requestForm.reset();
   productIdField.value = product.id; // reset() clears hidden fields too, so set again
   setupVariantSelectors(product);
+  if (product.availability === "ready_stock" && totalStock === 0) {
+    document.getElementById("orderVariantWrap").style.display = "none";
+    if (addToCartBtn) addToCartBtn.style.display = "none";
+  } else if (addToCartBtn) {
+    addToCartBtn.style.display = "";
+  }
+  if (cartAddStatus) {
+    cartAddStatus.className = "form-status";
+    cartAddStatus.textContent = "";
+  }
 
   showDetailView();
   modalBackdrop.classList.add("open");
@@ -1000,12 +1017,12 @@ addToCartBtn?.addEventListener("click", () => {
   cartAddStatus.className = "form-status";
   cartAddStatus.textContent = "";
 
-  const item = { productId: product.id, quantity: 1 };
+  const qty = parseInt(document.getElementById("orderQuantity").value, 10) || 1;
+  const item = { productId: product.id, quantity: qty };
 
   if (product.availability === "ready_stock") {
     const size = document.getElementById("orderSize").value || null;
     const color = document.getElementById("orderColor").value || null;
-    const qty = parseInt(document.getElementById("orderQuantity").value, 10) || 1;
     const availableStock = getVariantStock(product, size, color);
     if (availableStock <= 0) {
       cartAddStatus.className = "form-status error";
@@ -1017,7 +1034,7 @@ addToCartBtn?.addEventListener("click", () => {
     item.selectedColor = color;
     item.quantity = Math.min(qty, availableStock);
   } else {
-    item.material = document.getElementById("clientMaterial").value;
+    item.material = "unspecified";
   }
 
   addToCart(item);

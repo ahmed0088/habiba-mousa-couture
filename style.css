@@ -63,6 +63,74 @@
   --emerald-text: var(--rose); /* dark maroon is unreadable on dark surfaces — use the brighter rose instead */
 }
 
+/* Pro theme variants — same layout/type system, different jewel accent hue.
+   --ink/--ivory stay constant across every theme (hero/footer/sidebar dark
+   surfaces are deliberately theme-independent); only the accent + page-chrome
+   tokens shift. */
+
+:root[data-theme="emerald"] {
+  --emerald: #1f6e4a;
+  --emerald-deep: #14492f;
+  --rose: #6a9c7c;
+  --charcoal: #2c211f;
+  --heading: #12261c;
+  --page-bg: #f4f7f0;
+  --header-bg: rgba(244, 247, 240, 0.92);
+  --surface: #ffffff;
+  --surface-muted: #eef3ea;
+  --text-muted: #4a5a4d;
+  --text-faint: #7c8a7e;
+  --border-soft: #dfe8db;
+  --input-border: #c7d6c0;
+  --row-hover: #f6faf3;
+  --glass-surface: rgba(255, 255, 255, 0.68);
+  --glass-border: rgba(255, 255, 255, 0.45);
+  --glass-sidebar: rgba(18, 38, 28, 0.82);
+  --emerald-text: var(--emerald);
+}
+
+:root[data-theme="sapphire"] {
+  --emerald: #1f4e8f;
+  --emerald-deep: #163a6b;
+  --rose: #6f8fb8;
+  --charcoal: #2c211f;
+  --heading: #101c2e;
+  --page-bg: #f2f5fa;
+  --header-bg: rgba(242, 245, 250, 0.92);
+  --surface: #ffffff;
+  --surface-muted: #e9eef6;
+  --text-muted: #4a5568;
+  --text-faint: #7c8797;
+  --border-soft: #dde4f0;
+  --input-border: #c3d0e3;
+  --row-hover: #f4f7fb;
+  --glass-surface: rgba(255, 255, 255, 0.68);
+  --glass-border: rgba(255, 255, 255, 0.45);
+  --glass-sidebar: rgba(16, 28, 46, 0.82);
+  --emerald-text: var(--emerald);
+}
+
+:root[data-theme="rosegold"] {
+  --emerald: #b5657a;
+  --emerald-deep: #8a4358;
+  --rose: #e0a8b5;
+  --charcoal: #2c211f;
+  --heading: #3a1e26;
+  --page-bg: #fbf3f2;
+  --header-bg: rgba(251, 243, 242, 0.92);
+  --surface: #ffffff;
+  --surface-muted: #f6e9e7;
+  --text-muted: #6b5054;
+  --text-faint: #a1878a;
+  --border-soft: #f0dcd9;
+  --input-border: #e0c4c0;
+  --row-hover: #fdf5f4;
+  --glass-surface: rgba(255, 255, 255, 0.68);
+  --glass-border: rgba(255, 255, 255, 0.45);
+  --glass-sidebar: rgba(58, 30, 38, 0.82);
+  --emerald-text: var(--emerald);
+}
+
 * { box-sizing: border-box; }
 
 html { scroll-behavior: smooth; }
@@ -204,11 +272,49 @@ button {
   flex-shrink: 0;
   width: 30px;
   height: 30px;
-  border: 1px solid var(--line);
+  border: 1px solid var(--theme-swatch, var(--line));
   border-radius: 3px;
   background: transparent;
   font-size: 14px;
   padding: 0;
+}
+
+.theme-picker-popover {
+  position: fixed;
+  display: none;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 190px;
+  padding: 6px;
+  background: var(--surface);
+  border: 1px solid var(--border-soft);
+  border-radius: 10px;
+  box-shadow: 0 16px 34px -12px rgba(10, 6, 7, 0.45);
+  z-index: 200;
+}
+.theme-picker-popover.open { display: flex; }
+.theme-picker-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--charcoal);
+  text-align: start;
+  cursor: pointer;
+}
+.theme-picker-option:hover { background: var(--row-hover); }
+.theme-picker-option.active { font-weight: 700; background: var(--surface-muted); }
+.theme-picker-swatch {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  border: 1px solid rgba(0, 0, 0, 0.15);
 }
 
 .cart-btn {
