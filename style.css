@@ -133,10 +133,17 @@
 
 * { box-sizing: border-box; }
 
-html { scroll-behavior: smooth; }
+html { scroll-behavior: smooth; overflow-x: hidden; }
 
+/* A single element even 1px wider than the viewport makes the whole page
+   horizontally scrollable, and on mobile that shows up as the page
+   wobbling left/right while you scroll down (the touch gesture isn't
+   perfectly vertical, so it drags the accidental horizontal scroll a
+   little too). Elements that genuinely need horizontal scroll (wide
+   tables, etc.) manage their own overflow-x internally, so this is safe. */
 body {
   margin: 0;
+  overflow-x: hidden;
   background-color: var(--page-bg);
   background-image:
     repeating-linear-gradient(45deg, rgba(201,151,63,0.055) 0, rgba(201,151,63,0.055) 1px, transparent 1px, transparent 42px),
