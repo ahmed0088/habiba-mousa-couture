@@ -492,6 +492,19 @@ const requestDetailBackdrop = document.getElementById("requestDetailBackdrop");
 const requestDetailClose = document.getElementById("requestDetailClose");
 const requestDetailBody = document.getElementById("requestDetailBody");
 
+// Nothing else in this app ever records the real agreed price, so the only
+// way the "amount collected" average has a chance of staying up to date is
+// to ask right at the moment an order goes to delivered — otherwise staff
+// have to remember to come back and type it into the detail view later,
+// which is easy to forget (and did get forgotten, per user report).
+function maybeAskForAmount(newStatus, currentAmount) {
+  if (newStatus !== "delivered" || (typeof currentAmount === "number" && currentAmount > 0)) return {};
+  const raw = window.prompt(t("admin_amount_collected_prompt"));
+  if (raw == null || raw.trim() === "") return {};
+  const parsed = parseFloat(raw);
+  return (isNaN(parsed) || parsed <= 0) ? {} : { finalAmount: parsed };
+}
+
 function detailRow(label, value, copyable) {
   const copyBtn = (copyable && value)
     ? `<button type="button" class="detail-copy-btn" data-copy-value="${escapeHtml(value)}" title="${escapeHtml(t("admin_copy_click_hint"))}">📋</button>`
@@ -641,8 +654,14 @@ function openRequestDetail(id) {
     btn.addEventListener("click", async () => {
       if (btn.classList.contains("active")) return;
       const newStatus = btn.dataset.status;
+      const amountUpdate = maybeAskForAmount(newStatus, r.finalAmount);
       try {
-        await db.collection("requests").doc(id).update({ status: newStatus });
+        await db.collection("requests").doc(id).update({ status: newStatus, ...amountUpdate });
+        if (amountUpdate.finalAmount != null) {
+          r.finalAmount = amountUpdate.finalAmount;
+          const amountInput = document.getElementById("requestAmountInput");
+          if (amountInput) amountInput.value = amountUpdate.finalAmount;
+        }
         if (newStatus === "delivered") {
           logActivity("Marked request as delivered", `${r.clientName} — ${r.requestType === "custom_design" ? "custom design" : (r.productName || "")}`);
         } else {
@@ -989,9 +1008,11 @@ function renderRequestsTable() {
 
   feed.querySelectorAll(".status-select").forEach((sel) => {
     sel.addEventListener("change", async () => {
+      const rr = requestsById[sel.dataset.id];
+      const amountUpdate = maybeAskForAmount(sel.value, rr ? rr.finalAmount : null);
       try {
-        await db.collection("requests").doc(sel.dataset.id).update({ status: sel.value });
-        const rr = requestsById[sel.dataset.id];
+        await db.collection("requests").doc(sel.dataset.id).update({ status: sel.value, ...amountUpdate });
+        if (rr && amountUpdate.finalAmount != null) rr.finalAmount = amountUpdate.finalAmount;
         if (sel.value === "delivered") {
           logActivity("Marked request as delivered", `${rr ? rr.clientName : ""} — ${rr ? (rr.requestType === "custom_design" ? "custom design" : (rr.productName || "")) : ""}`);
         } else {
