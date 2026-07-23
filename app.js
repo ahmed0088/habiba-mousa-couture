@@ -1189,6 +1189,35 @@ function loadCollections() {
     );
 }
 
+function loadVideos() {
+  const section = document.getElementById("videos-section");
+  const grid = document.getElementById("videosGrid");
+  if (!section || !grid) return;
+  db.collection("videos")
+    .orderBy("createdAt", "desc")
+    .onSnapshot(
+      (snapshot) => {
+        const videos = snapshot.docs
+          .map(doc => ({ id: doc.id, ...doc.data() }))
+          .filter(v => v.status === "active" && v.embedUrl);
+        if (videos.length === 0) {
+          section.style.display = "none";
+          return;
+        }
+        section.style.display = "block";
+        grid.innerHTML = videos.map(v => `
+          <div>
+            <div class="video-embed-wrap">
+              <iframe src="${escapeHtml(v.embedUrl)}" title="${escapeHtml(v.title || "Video")}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>
+            </div>
+            ${v.title ? `<p class="video-caption">${escapeHtml(v.title)}</p>` : ""}
+          </div>
+        `).join("");
+      },
+      (err) => console.error("Videos listener error:", err)
+    );
+}
+
 // A short, human-readable order number (e.g. "HM-260723-4821") shown to both
 // the client (My Requests) and staff (admin Requests) — much easier to say
 // over the phone or WhatsApp than a raw document ID or UUID cartId.
@@ -1375,6 +1404,7 @@ productSearchInput?.addEventListener("input", renderGallery);
 
 loadProducts();
 loadCollections();
+loadVideos();
 
 document.querySelectorAll(".how-step").forEach((step) => {
   step.classList.add("reveal-hidden");

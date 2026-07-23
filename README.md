@@ -107,6 +107,15 @@ You'll get a live URL like `habiba-mousa-couture.web.app` — that's what you li
 | status | string | `active` (shows in the public collection picker) or `archived` |
 | createdAt | timestamp | server-set |
 
+**`videos`**
+| field | type | notes |
+|---|---|---|
+| title | string \| null | optional caption shown under the embedded player |
+| url | string | the original YouTube/Vimeo link staff pasted in |
+| embedUrl | string | `url` converted to its iframe-embeddable form (computed once at save time) |
+| status | string | `active` (shows in the public Videos section) or `archived` |
+| createdAt | timestamp | server-set |
+
 **`requests`**
 | field | type | notes |
 |---|---|---|
@@ -119,13 +128,17 @@ You'll get a live URL like `habiba-mousa-couture.web.app` — that's what you li
 | clientLocationUrl | string \| null | optional Google Maps link (`?q=lat,lng`) from the client's own device via the "Share my location" button — no typing needed |
 | recipientName / recipientPhone / recipientAddress | string \| null | optional — set only when the client checked "Ship this to someone else" for this specific piece; overrides where *this piece* ships to without changing who placed the order (`clientName`/`clientPhone`/`clientAddress` stay the account holder's own info) |
 | material | string | one of the fixed material keys (`silk`, `chiffon`, `satin`, `lace`, `cotton`, `crepe`, `tulle`, `organza`, `velvet`, `brocade`, `unspecified`) chosen from a dropdown — no free typing |
-| productId / productName / productCode | string | which piece they're asking about |
+| productId / productName / productCode | string | which piece they're asking about; `null` when `requestType` is `custom_design` |
+| requestType | string \| undefined | set to `custom_design` when the client described their own design idea instead of picking a catalog piece |
+| designDescription | string \| undefined | the client's own description of the design they want, when `requestType` is `custom_design` |
+| referenceImageUrl | string \| null \| undefined | optional link to a reference photo (Instagram/Pinterest/etc.) the client pasted in, when `requestType` is `custom_design` |
 | orderType | string \| undefined | set to `ready_stock` when this request came from ordering an in-stock item (vs. a custom design request) |
 | selectedSize / selectedColor | string \| null | the variant the client picked, when `orderType` is `ready_stock` |
 | quantity | number | how many they want, when `orderType` is `ready_stock` |
 | preferredDate | string | optional |
 | notes | string | |
 | status | string | `new` → `contacted` → `confirmed` → `in_progress` → `delivered` / `cancelled` |
+| finalAmount | number \| null \| undefined | the actual price staff typed in (in EGP) once the order is delivered — feeds the Dashboard's average-amount-collected stat. For a multi-item order, every sibling doc sharing a `cartId` carries the same value (one combined total for the whole order, not per piece) |
 | clientUid | string \| null | set when submitted while signed in; lets that client read (only) this request back in "My Requests" |
 | createdAt | timestamp | server-set |
 

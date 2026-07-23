@@ -138,6 +138,7 @@ auth.onAuthStateChanged(async (user) => {
     loadProducts();
     loadCategories();
     loadCollections();
+    loadVideos();
     loadSettings();
     if (currentStaff.role === "admin") {
       loadStaff();
@@ -168,10 +169,10 @@ adminNavToggle?.addEventListener("click", () => {
 
 function switchAdminView(view, showBackBtn) {
   document.querySelectorAll(".admin-nav button[data-view]").forEach(b => b.classList.toggle("active", b.dataset.view === view));
-  ["dashboard", "requests", "products", "categories", "collections", "settings", "staff", "activity"].forEach((v) => {
+  ["dashboard", "requests", "products", "categories", "collections", "videos", "settings", "staff", "activity"].forEach((v) => {
     document.getElementById(`view-${v}`).style.display = v === view ? "block" : "none";
   });
-  ["requests", "products", "collections"].forEach((v) => {
+  ["requests", "products", "collections", "videos"].forEach((v) => {
     const btn = document.getElementById(`${v}BackBtn`);
     if (btn) btn.style.display = (showBackBtn && v === view) ? "inline-flex" : "none";
   });
@@ -194,6 +195,7 @@ document.getElementById("productsBackBtn")?.addEventListener("click", () => {
   switchAdminView("dashboard");
 });
 document.getElementById("collectionsBackBtn")?.addEventListener("click", () => switchAdminView("dashboard"));
+document.getElementById("videosBackBtn")?.addEventListener("click", () => switchAdminView("dashboard"));
 
 function showToast(message, type) {
   let container = document.getElementById("toastContainer");
@@ -1694,6 +1696,157 @@ function loadCollections() {
       });
     });
   }, (err) => console.error("Collections listener error:", err));
+}
+
+// ---------- Videos ----------
+
+// Converts a normal YouTube/Vimeo watch link into the iframe-embeddable URL,
+// so staff can just paste the link they already have instead of hunting for
+// an "embed" link. Returns null if the link isn't a recognized pattern.
+function parseVideoEmbedUrl(url) {
+  if (!url) return null;
+  let u;
+  try {
+    u = new URL(url.trim());
+  } catch (e) {
+    return null;
+  }
+  const host = u.hostname.replace(/^www\.|^m\./, "");
+  if (host === "youtube.com") {
+    if (u.pathname === "/watch" && u.searchParams.get("v")) {
+      return `https://www.youtube.com/embed/${u.searchParams.get("v")}`;
+    }
+    const shortsMatch = u.pathname.match(/^\/shorts\/([\w-]+)/);
+    if (shortsMatch) return `https://www.youtube.com/embed/${shortsMatch[1]}`;
+    const embedMatch = u.pathname.match(/^\/embed\/([\w-]+)/);
+    if (embedMatch) return `https://www.youtube.com/embed/${embedMatch[1]}`;
+  }
+  if (host === "youtu.be") {
+    const id = u.pathname.replace(/^\//, "");
+    if (id) return `https://www.youtube.com/embed/${id}`;
+  }
+  if (host === "vimeo.com" || host === "player.vimeo.com") {
+    const match = u.pathname.match(/(\d+)/);
+    if (match) return `https://player.vimeo.com/video/${match[1]}`;
+  }
+  return null;
+}
+
+const newVideoBtn = document.getElementById("newVideoBtn");
+const videoFormBackdrop = document.getElementById("videoFormBackdrop");
+const videoFormClose = document.getElementById("videoFormClose");
+const videoTitleInput = document.getElementById("videoTitle");
+const videoUrlInput = document.getElementById("videoUrl");
+const saveVideoBtn = document.getElementById("saveVideoBtn");
+const cancelVideoBtn = document.getElementById("cancelVideoBtn");
+const videoFormStatus = document.getElementById("videoFormStatus");
+
+let allVideos = [];
+
+function openVideoForm() { videoFormBackdrop.classList.add("open"); }
+function closeVideoForm() { videoFormBackdrop.classList.remove("open"); }
+
+newVideoBtn?.addEventListener("click", () => {
+  videoTitleInput.value = "";
+  videoUrlInput.value = "";
+  videoFormStatus.className = "form-status";
+  videoFormStatus.textContent = "";
+  openVideoForm();
+});
+
+cancelVideoBtn?.addEventListener("click", closeVideoForm);
+videoFormClose?.addEventListener("click", closeVideoForm);
+videoFormBackdrop?.addEventListener("click", (e) => {
+  if (e.target === videoFormBackdrop) closeVideoForm();
+});
+
+saveVideoBtn?.addEventListener("click", async () => {
+  const title = videoTitleInput.value.trim();
+  const url = videoUrlInput.value.trim();
+  const embedUrl = parseVideoEmbedUrl(url);
+  if (!url || !embedUrl) {
+    videoFormStatus.className = "form-status error";
+    videoFormStatus.textContent = t("admin_video_url_invalid");
+    return;
+  }
+
+  saveVideoBtn.disabled = true;
+  try {
+    await db.collection("videos").add({
+      title: title || null,
+      url,
+      embedUrl,
+      status: "active",
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    logActivity("Added video", title || url);
+    closeVideoForm();
+  } catch (err) {
+    console.error("Failed to save video:", err);
+    videoFormStatus.className = "form-status error";
+    videoFormStatus.textContent = "Couldn't save this video. Please try again." + errSuffix(err);
+  } finally {
+    saveVideoBtn.disabled = false;
+  }
+});
+
+function loadVideos() {
+  db.collection("videos").orderBy("createdAt", "desc").onSnapshot((snapshot) => {
+    allVideos = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+    const tbody = document.getElementById("videosTableBody");
+    const empty = document.getElementById("videosEmpty");
+    tbody.innerHTML = "";
+
+    if (allVideos.length === 0) {
+      empty.style.display = "block";
+      return;
+    }
+    empty.style.display = "none";
+
+    allVideos.forEach((v) => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td data-label="Title"><a href="${escapeHtml(v.url)}" target="_blank" rel="noopener">${escapeHtml(v.title || v.url)}</a></td>
+        <td data-label="Status"><span class="status-pill status-${v.status === "active" ? "confirmed" : "delivered"}">${escapeHtml(v.status)}</span></td>
+        <td data-label="">
+          <button class="icon-btn" data-toggle-video="${v.id}" data-next="${v.status === "active" ? "archived" : "active"}">${v.status === "active" ? "Archive" : "Restore"}</button>
+          <button class="icon-btn danger" data-delete-video="${v.id}">Delete</button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    tbody.querySelectorAll("[data-toggle-video]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        try {
+          await db.collection("videos").doc(btn.dataset.toggleVideo).update({ status: btn.dataset.next });
+          logActivity("Changed video status", btn.dataset.next);
+        } catch (err) {
+          console.error("Failed to update video status:", err);
+          alert("Couldn't update this video. Please try again." + errSuffix(err));
+        }
+      });
+    });
+
+    tbody.querySelectorAll("[data-delete-video]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        if (!confirm(t("admin_video_delete_confirm"))) return;
+        const video = allVideos.find(v => v.id === btn.dataset.deleteVideo);
+        try {
+          await db.collection("videos").doc(btn.dataset.deleteVideo).delete();
+          logActivity("Deleted video", video ? (video.title || video.url) : "", {
+            snapshotCollection: "videos",
+            snapshotId: btn.dataset.deleteVideo,
+            snapshotData: video || null
+          });
+        } catch (err) {
+          console.error("Failed to delete video:", err);
+          alert("Couldn't delete this video. Please try again." + errSuffix(err));
+        }
+      });
+    });
+  }, (err) => console.error("Videos listener error:", err));
 }
 
 // ---------- Site Settings ----------

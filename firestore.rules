@@ -30,6 +30,12 @@ service cloud.firestore {
       allow write: if isStaff();
     }
 
+    // Promotional videos (YouTube/Vimeo links) shown in the public gallery — same access shape
+    match /videos/{videoId} {
+      allow read: if true;
+      allow write: if isStaff();
+    }
+
     // Site-wide business settings (contact info, maps, deposit %, hero/about copy)
     match /settings/{docId} {
       allow read: if true;

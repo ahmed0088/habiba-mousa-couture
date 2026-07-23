@@ -58,6 +58,10 @@ const I18N = {
     step4_title: "التسليم",
     step4_desc: "قطعتك جاهزة تستلميها أو تتشحن لك",
 
+    // Videos
+    videos_eyebrow: "فيديوهات",
+    videos_title: "شوفي الكولكشن في حركة",
+
     // Footer
     footer_tagline: "حبيبه موسي — قطع مفصلة خصيصي ليكِ، حسب الطلب.",
     footer_contact_prefix: "عايزة تكلمينا على طول؟",
@@ -504,6 +508,9 @@ const I18N = {
     step3_desc: "Adjustments made to your measurements",
     step4_title: "Delivery",
     step4_desc: "Your piece, ready to collect or ship",
+
+    videos_eyebrow: "Videos",
+    videos_title: "See the collection in motion",
 
     footer_tagline: "Habiba Mousa — bespoke pieces, made to order.",
     footer_contact_prefix: "Prefer to reach us directly?",
