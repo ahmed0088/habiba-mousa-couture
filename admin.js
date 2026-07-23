@@ -166,17 +166,18 @@ adminNavToggle?.addEventListener("click", () => {
   adminNavToggle.setAttribute("aria-expanded", String(open));
 });
 
-document.querySelectorAll(".admin-nav button[data-view]").forEach((btn) => {
-  btn.addEventListener("click", () => {
-    document.querySelectorAll(".admin-nav button[data-view]").forEach(b => b.classList.remove("active"));
-    btn.classList.add("active");
-    ["dashboard", "requests", "products", "categories", "collections", "settings", "staff", "activity"].forEach((v) => {
-      document.getElementById(`view-${v}`).style.display = v === btn.dataset.view ? "block" : "none";
-    });
-    adminSidebar.classList.remove("nav-open");
-    adminNavToggle?.classList.remove("open");
-    adminNavToggle?.setAttribute("aria-expanded", "false");
+function switchAdminView(view) {
+  document.querySelectorAll(".admin-nav button[data-view]").forEach(b => b.classList.toggle("active", b.dataset.view === view));
+  ["dashboard", "requests", "products", "categories", "collections", "settings", "staff", "activity"].forEach((v) => {
+    document.getElementById(`view-${v}`).style.display = v === view ? "block" : "none";
   });
+  adminSidebar.classList.remove("nav-open");
+  adminNavToggle?.classList.remove("open");
+  adminNavToggle?.setAttribute("aria-expanded", "false");
+}
+
+document.querySelectorAll(".admin-nav button[data-view]").forEach((btn) => {
+  btn.addEventListener("click", () => switchAdminView(btn.dataset.view));
 });
 
 function showToast(message, type) {
@@ -564,6 +565,13 @@ requestDetailBackdrop?.addEventListener("click", (e) => {
 let allRequests = [];
 const requestsSearchInput = document.getElementById("requestsSearch");
 const requestsStatusFilter = document.getElementById("requestsStatusFilter");
+let requestsQuickFilter = null; // null | "multi"
+const requestsFilterChip = document.getElementById("requestsFilterChip");
+const requestsFilterChipText = document.getElementById("requestsFilterChipText");
+document.getElementById("requestsFilterChipClear")?.addEventListener("click", () => {
+  requestsQuickFilter = null;
+  renderRequestsTable();
+});
 
 function requestMatchesSearch(r, q) {
   if (!q) return true;
@@ -598,19 +606,65 @@ function updateDashboardStats() {
   }
 }
 
+function jumpToRequestsView(status, quickFilter, toastKey) {
+  switchAdminView("requests");
+  if (requestsStatusFilter) requestsStatusFilter.value = status;
+  requestsQuickFilter = quickFilter;
+  renderRequestsTable();
+  showToast(t(toastKey));
+}
+
+function jumpToProductsView(quickFilter, toastKey) {
+  switchAdminView("products");
+  productsQuickFilter = quickFilter;
+  renderProductsTable();
+  showToast(t(toastKey));
+}
+
+const STAT_TILE_HANDLERS = {
+  statTileNewRequests: () => jumpToRequestsView("new", null, "admin_stat_new_requests_desc"),
+  statTileTotalRequests: () => jumpToRequestsView("all", null, "admin_stat_total_requests_desc"),
+  statTileActiveProducts: () => jumpToProductsView("active", "admin_stat_active_products_desc"),
+  statTileActiveCollections: () => {
+    switchAdminView("collections");
+    showToast(t("admin_stat_active_collections_desc"));
+  },
+  statTileMultiItemOrders: () => jumpToRequestsView("all", "multi", "admin_stat_multi_orders_desc"),
+  statTileLowStock: () => jumpToProductsView("lowstock", "admin_stat_low_stock_desc")
+};
+Object.keys(STAT_TILE_HANDLERS).forEach((tileId) => {
+  const tile = document.getElementById(tileId);
+  tile?.addEventListener("click", STAT_TILE_HANDLERS[tileId]);
+  tile?.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      STAT_TILE_HANDLERS[tileId]();
+    }
+  });
+});
+
 function renderRequestsTable() {
   const feed = document.getElementById("requestsFeed");
   const empty = document.getElementById("requestsEmpty");
   const q = (requestsSearchInput?.value || "").trim().toLowerCase();
   const statusFilter = requestsStatusFilter?.value || "all";
   const filtered = allRequests.filter(([, r]) =>
-    requestMatchesSearch(r, q) && (statusFilter === "all" || r.status === statusFilter)
+    requestMatchesSearch(r, q) && (statusFilter === "all" || r.status === statusFilter) &&
+    (requestsQuickFilter !== "multi" || !!r.cartId)
   );
+  if (requestsFilterChip) {
+    if (requestsQuickFilter === "multi") {
+      requestsFilterChip.style.display = "inline-flex";
+      requestsFilterChipText.textContent = t("admin_filter_multi_orders");
+    } else {
+      requestsFilterChip.style.display = "none";
+    }
+  }
   feed.innerHTML = "";
 
   if (filtered.length === 0) {
     empty.style.display = "block";
-    empty.textContent = (q || statusFilter !== "all") ? "No requests match your search/filter." : "No requests yet.";
+    empty.textContent = (q || statusFilter !== "all" || requestsQuickFilter) ? "No requests match your search/filter." : "No requests yet.";
     return;
   }
   empty.style.display = "none";
@@ -898,6 +952,13 @@ document.getElementById("clearSaleBtn")?.addEventListener("click", () => {
 
 let allProductsAdmin = [];
 const productsSearchInput = document.getElementById("productsSearch");
+let productsQuickFilter = null; // null | "active" | "lowstock"
+const productsFilterChip = document.getElementById("productsFilterChip");
+const productsFilterChipText = document.getElementById("productsFilterChipText");
+document.getElementById("productsFilterChipClear")?.addEventListener("click", () => {
+  productsQuickFilter = null;
+  renderProductsTable();
+});
 
 function productMatchesSearch(p, q) {
   if (!q) return true;
@@ -905,10 +966,32 @@ function productMatchesSearch(p, q) {
   return hay.includes(q);
 }
 
+function productIsLowStock(p) {
+  if (p.availability !== "ready_stock" || p.status !== "active") return false;
+  const totalStock = (p.variants || []).reduce((sum, v) => sum + (v.stock || 0), 0);
+  return totalStock <= 3;
+}
+
 function renderProductsTable() {
   const tbody = document.getElementById("productsTableBody");
   const q = (productsSearchInput?.value || "").trim().toLowerCase();
-  const filtered = allProductsAdmin.filter(([, p]) => productMatchesSearch(p, q));
+  const filtered = allProductsAdmin.filter(([, p]) => {
+    if (!productMatchesSearch(p, q)) return false;
+    if (productsQuickFilter === "active" && p.status !== "active") return false;
+    if (productsQuickFilter === "lowstock" && !productIsLowStock(p)) return false;
+    return true;
+  });
+  if (productsFilterChip) {
+    if (productsQuickFilter === "active") {
+      productsFilterChip.style.display = "inline-flex";
+      productsFilterChipText.textContent = t("admin_filter_active_products");
+    } else if (productsQuickFilter === "lowstock") {
+      productsFilterChip.style.display = "inline-flex";
+      productsFilterChipText.textContent = t("admin_filter_low_stock");
+    } else {
+      productsFilterChip.style.display = "none";
+    }
+  }
   tbody.innerHTML = "";
 
   filtered.forEach(([id, p]) => {

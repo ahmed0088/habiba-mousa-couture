@@ -1277,7 +1277,8 @@ button {
   gap: var(--space-2);
   margin-bottom: var(--space-3);
 }
-.stat-tile { text-align: center; padding: var(--space-3) var(--space-2); }
+.stat-tile { text-align: center; padding: var(--space-3) var(--space-2); cursor: pointer; transition: transform 0.15s ease, box-shadow 0.15s ease; }
+.stat-tile:hover, .stat-tile:focus-visible { transform: translateY(-3px); box-shadow: 0 10px 22px rgba(0,0,0,0.16); outline: none; }
 .stat-number { font-family: var(--font-display); font-size: 40px; margin: 0; color: var(--emerald-text); }
 .stat-tile-multi {
   background: linear-gradient(145deg, rgba(31,110,106,0.14), rgba(201,151,63,0.1));
@@ -1627,6 +1628,30 @@ select.status-select.status-cancelled { background-color: #f6dcdc; color: #a13a3
   cursor: pointer;
 }
 .request-cart-badge:hover { background: var(--gold); color: var(--ivory); }
+
+.active-filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(201, 151, 63, 0.14);
+  border: 1px solid var(--gold);
+  color: var(--heading);
+  border-radius: 999px;
+  font-size: 13px;
+  padding: 6px 8px 6px 14px;
+  margin: 4px 0 14px;
+}
+.active-filter-chip button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: inherit;
+  font-size: 13px;
+  line-height: 1;
+  padding: 4px 6px;
+  border-radius: 50%;
+}
+.active-filter-chip button:hover { background: var(--gold); color: var(--ivory); }
 .request-row-cart-highlight {
   border-color: var(--gold) !important;
   box-shadow: 0 0 0 2px var(--gold);
