@@ -441,6 +441,10 @@ const STATUS_LABELS = {
   new: "New", contacted: "Contacted", confirmed: "Confirmed",
   in_progress: "In Progress", delivered: "Delivered", cancelled: "Cancelled"
 };
+// Lower = shown higher in the list. Delivered/cancelled sink to the bottom
+// as soon as they're marked, so the feed stays focused on what still needs
+// action instead of just chronological order.
+const STATUS_SORT_RANK = { new: 0, contacted: 1, confirmed: 2, in_progress: 3, delivered: 4, cancelled: 5 };
 const MATERIAL_LABELS = {
   silk: "Silk", chiffon: "Chiffon", satin: "Satin", lace: "Lace", cotton: "Cotton",
   crepe: "Crepe", tulle: "Tulle", organza: "Organza", velvet: "Velvet", brocade: "Brocade",
@@ -533,6 +537,16 @@ function openRequestDetail(id) {
       ${detailRow("Received", formatDate(r.createdAt))}
       ${r.orderType === "ready_stock" ? detailRow("Ready-stock order", `${[r.selectedSize, r.selectedColor].filter(Boolean).join(" / ") || "—"} × ${r.quantity || 1}`) : ""}
     </div>
+    ${(r.recipientName || r.recipientAddress) ? `
+      <div class="request-detail-recipient">
+        <p class="request-detail-recipient-label">${escapeHtml(t("recipient_badge"))}</p>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px 20px;">
+          ${detailRow("Recipient", r.recipientName)}
+          ${detailRow("Recipient phone", r.recipientPhone)}
+          ${detailRow("Delivery address", r.recipientAddress)}
+        </div>
+      </div>
+    ` : ""}
     ${r.clientLocationUrl ? `<p style="margin:16px 0 0;"><strong>Location:</strong> <a href="${escapeHtml(r.clientLocationUrl)}" target="_blank" rel="noopener">Open pinned location in Maps</a></p>` : ""}
     ${r.notes ? `<div style="margin-top:16px;">${detailRow("Notes", r.notes)}</div>` : ""}
     ${cartSiblingsHtml(id, r)}
@@ -558,7 +572,11 @@ function openRequestDetail(id) {
       const newStatus = btn.dataset.status;
       try {
         await db.collection("requests").doc(id).update({ status: newStatus });
-        logActivity("Changed request status", `${r.clientName} → ${newStatus}`);
+        if (newStatus === "delivered") {
+          logActivity("Marked request as delivered", `${r.clientName} — ${r.productName || ""}`);
+        } else {
+          logActivity("Changed request status", `${r.clientName} → ${newStatus}`);
+        }
         requestDetailBody.querySelectorAll(".status-pill-btn").forEach((b) => {
           b.classList.toggle("active", b === btn);
         });
@@ -580,6 +598,13 @@ requestDetailBackdrop?.addEventListener("click", (e) => {
 let allRequests = [];
 const requestsSearchInput = document.getElementById("requestsSearch");
 const requestsStatusFilter = document.getElementById("requestsStatusFilter");
+const requestsDateFrom = document.getElementById("requestsDateFrom");
+const requestsDateTo = document.getElementById("requestsDateTo");
+document.getElementById("requestsDateClearBtn")?.addEventListener("click", () => {
+  if (requestsDateFrom) requestsDateFrom.value = "";
+  if (requestsDateTo) requestsDateTo.value = "";
+  renderRequestsTable();
+});
 let requestsQuickFilter = null; // null | "multi"
 const requestsFilterChip = document.getElementById("requestsFilterChip");
 const requestsFilterChipText = document.getElementById("requestsFilterChipText");
@@ -658,14 +683,26 @@ Object.keys(STAT_TILE_HANDLERS).forEach((tileId) => {
   });
 });
 
+function requestMatchesDateRange(r, fromDate, toDate) {
+  if (!fromDate && !toDate) return true;
+  if (!r.createdAt || !r.createdAt.toDate) return false;
+  const created = r.createdAt.toDate();
+  if (fromDate && created < fromDate) return false;
+  if (toDate && created > toDate) return false;
+  return true;
+}
+
 function renderRequestsTable() {
   const feed = document.getElementById("requestsFeed");
   const empty = document.getElementById("requestsEmpty");
   const q = (requestsSearchInput?.value || "").trim().toLowerCase();
   const statusFilter = requestsStatusFilter?.value || "all";
+  const fromDate = requestsDateFrom?.value ? new Date(`${requestsDateFrom.value}T00:00:00`) : null;
+  const toDate = requestsDateTo?.value ? new Date(`${requestsDateTo.value}T23:59:59.999`) : null;
   const filtered = allRequests.filter(([, r]) =>
     requestMatchesSearch(r, q) && (statusFilter === "all" || r.status === statusFilter) &&
-    (requestsQuickFilter !== "multi" || !!r.cartId)
+    (requestsQuickFilter !== "multi" || !!r.cartId) &&
+    requestMatchesDateRange(r, fromDate, toDate)
   );
   if (requestsFilterChip) {
     if (requestsQuickFilter === "multi") {
@@ -679,7 +716,7 @@ function renderRequestsTable() {
 
   if (filtered.length === 0) {
     empty.style.display = "block";
-    empty.textContent = (q || statusFilter !== "all" || requestsQuickFilter) ? "No requests match your search/filter." : "No requests yet.";
+    empty.textContent = (q || statusFilter !== "all" || requestsQuickFilter || fromDate || toDate) ? "No requests match your search/filter." : "No requests yet.";
     return;
   }
   empty.style.display = "none";
@@ -704,6 +741,10 @@ function renderRequestsTable() {
       r.orderType === "ready_stock" ? `📦 ${escapeHtml([r.selectedSize, r.selectedColor].filter(Boolean).join(" / ") || "Ready Stock")} × ${r.quantity || 1}` : ""
     ].filter(Boolean);
 
+    const recipientHtml = (r.recipientName || r.recipientAddress)
+      ? `<div class="request-row-recipient">${escapeHtml(t("recipient_badge"))}: <strong>${escapeHtml(r.recipientName || "—")}</strong>${r.recipientPhone ? ` · ${escapeHtml(r.recipientPhone)}` : ""}${r.recipientAddress ? ` · ${escapeHtml(r.recipientAddress)}` : ""}</div>`
+      : "";
+
     const row = document.createElement("div");
     row.className = "request-row";
     row.innerHTML = `
@@ -714,6 +755,7 @@ function renderRequestsTable() {
           <span class="request-row-name">${escapeHtml(r.clientName)}</span>
           <span class="request-row-piece">${escapeHtml(r.productName || "—")}${r.productCode ? ` <span class="request-row-code">(${escapeHtml(r.productCode)})</span>` : ""}</span>
         </div>
+        ${recipientHtml}
         ${metaParts.length ? `<div class="request-row-meta">${metaParts.map(m => `<span>${m}</span>`).join("")}</div>` : ""}
         ${r.notes ? `<div class="request-row-notes">${escapeHtml(r.notes)}</div>` : ""}
       </div>
@@ -750,7 +792,20 @@ function renderRequestsTable() {
     return groups;
   }
 
-  groupRequestsForDisplay(filtered).forEach((group) => {
+  const groupsToRender = groupRequestsForDisplay(filtered);
+  // A multi-piece order stays sorted by its least-finished piece, so the
+  // whole order only sinks down once every piece is delivered/cancelled —
+  // marking the last piece delivered is what moves it out of the way.
+  groupsToRender.sort((a, b) => {
+    const rankA = Math.min(...a.map(([, r]) => STATUS_SORT_RANK[r.status] ?? 0));
+    const rankB = Math.min(...b.map(([, r]) => STATUS_SORT_RANK[r.status] ?? 0));
+    if (rankA !== rankB) return rankA - rankB;
+    const msA = a[a.length - 1][1].createdAt?.toMillis ? a[a.length - 1][1].createdAt.toMillis() : 0;
+    const msB = b[b.length - 1][1].createdAt?.toMillis ? b[b.length - 1][1].createdAt.toMillis() : 0;
+    return msB - msA;
+  });
+
+  groupsToRender.forEach((group) => {
     if (group.length > 1) {
       const groupEl = document.createElement("div");
       groupEl.className = "request-cart-group";
@@ -780,7 +835,12 @@ function renderRequestsTable() {
     sel.addEventListener("change", async () => {
       try {
         await db.collection("requests").doc(sel.dataset.id).update({ status: sel.value });
-        logActivity("Changed request status", `${requestsById[sel.dataset.id] ? requestsById[sel.dataset.id].clientName : ""} → ${sel.value}`);
+        const rr = requestsById[sel.dataset.id];
+        if (sel.value === "delivered") {
+          logActivity("Marked request as delivered", `${rr ? rr.clientName : ""} — ${rr ? (rr.productName || "") : ""}`);
+        } else {
+          logActivity("Changed request status", `${rr ? rr.clientName : ""} → ${sel.value}`);
+        }
       } catch (err) {
         console.error("Failed to update status:", err);
         alert("Couldn't update status. Please try again." + errSuffix(err));
@@ -791,6 +851,8 @@ function renderRequestsTable() {
 
 requestsSearchInput?.addEventListener("input", renderRequestsTable);
 requestsStatusFilter?.addEventListener("change", renderRequestsTable);
+requestsDateFrom?.addEventListener("change", renderRequestsTable);
+requestsDateTo?.addEventListener("change", renderRequestsTable);
 
 function loadRequests() {
   db.collection("requests").orderBy("createdAt", "desc").onSnapshot((snapshot) => {

@@ -359,13 +359,15 @@ function renderRequestRow(r, suppressCartTag) {
     : `<div class="my-request-thumb-empty"></div>`;
   const tagsHtml = [
     r.orderNumber ? `<span class="my-request-order-number">#${escapeHtmlAccount(r.orderNumber)}</span>` : "",
-    (r.cartId && !suppressCartTag) ? `<span class="my-request-cart-tag">🛍 ${escapeHtmlAccount(t("my_requests_multi_item").replace("{count}", r.cartSize || "?"))}</span>` : ""
+    (r.cartId && !suppressCartTag) ? `<span class="my-request-cart-tag">🛍 ${escapeHtmlAccount(t("my_requests_multi_item").replace("{count}", r.cartSize || "?"))}</span>` : "",
+    (r.recipientName || r.recipientAddress) ? `<span class="my-request-cart-tag">${escapeHtmlAccount(t("recipient_badge"))}</span>` : ""
   ].filter(Boolean).join("");
   row.innerHTML = `
     ${thumbHtml}
     <div class="my-request-piece">
       ${tagsHtml ? `<div class="my-request-tags">${tagsHtml}</div>` : ""}
       <div class="my-request-name">${escapeHtmlAccount(r.productName || "—")}</div>
+      ${(r.recipientName || r.recipientAddress) ? `<div class="my-request-recipient">${escapeHtmlAccount([r.recipientName, r.recipientAddress].filter(Boolean).join(" · "))}</div>` : ""}
     </div>
     <div class="my-request-meta">
       <span class="status-pill status-${escapeHtmlAccount(r.status)}">${escapeHtmlAccount(t(STATUS_KEY_MAP[r.status] || r.status))}</span>

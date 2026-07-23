@@ -110,10 +110,14 @@ You'll get a live URL like `habiba-mousa-couture.web.app` — that's what you li
 **`requests`**
 | field | type | notes |
 |---|---|---|
+| orderNumber | string | short human-readable code (e.g. `HM-260723-4821`), shared by every piece in the same checkout — easier to reference over the phone/WhatsApp than a raw doc ID |
+| cartId | string \| undefined | set when this piece was submitted as part of a multi-item cart checkout; all pieces from that checkout share the same `cartId` (each piece is still its own doc) |
+| cartSize | number \| undefined | how many pieces were in that cart checkout, alongside `cartId` |
 | clientName | string | |
 | clientPhone | string | |
 | clientAddress | string | optional; governorate/city/street in Egypt |
 | clientLocationUrl | string \| null | optional Google Maps link (`?q=lat,lng`) from the client's own device via the "Share my location" button — no typing needed |
+| recipientName / recipientPhone / recipientAddress | string \| null | optional — set only when the client checked "Ship this to someone else" for this specific piece; overrides where *this piece* ships to without changing who placed the order (`clientName`/`clientPhone`/`clientAddress` stay the account holder's own info) |
 | material | string | one of the fixed material keys (`silk`, `chiffon`, `satin`, `lace`, `cotton`, `crepe`, `tulle`, `organza`, `velvet`, `brocade`, `unspecified`) chosen from a dropdown — no free typing |
 | productId / productName / productCode | string | which piece they're asking about |
 | orderType | string \| undefined | set to `ready_stock` when this request came from ordering an in-stock item (vs. a custom design request) |

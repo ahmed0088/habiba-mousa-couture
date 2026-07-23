@@ -304,6 +304,9 @@ const I18N = {
     my_requests_status: "الحالة",
     my_requests_date: "تاريخ الطلب",
     admin_status_filter_all: "كل الحالات",
+    admin_requests_date_from: "من تاريخ",
+    admin_requests_date_to: "إلى تاريخ",
+    admin_requests_date_clear: "مسح التواريخ",
     status_new: "جديد",
     status_contacted: "تم التواصل",
     status_confirmed: "مؤكَّد",
@@ -331,6 +334,11 @@ const I18N = {
 
     // Request form — address & material
     label_address: "العنوان (المحافظة، المدينة، الشارع)",
+    ship_to_other_toggle: "🎁 هل الطلب ده هيتبعت لشخص تاني؟",
+    recipient_name_label: "اسم المستلم",
+    recipient_phone_label: "رقم موبايل المستلم",
+    recipient_address_label: "عنوان التوصيل",
+    recipient_badge: "🎁 يتبعت لشخص تاني",
     share_location_btn: "📍 شاركي موقعك",
     share_location_loading: "بنجيب موقعك...",
     share_location_success: "تم! هنبعت موقعك مع الطلب.",
@@ -697,6 +705,9 @@ const I18N = {
     my_requests_status: "Status",
     my_requests_date: "Requested",
     admin_status_filter_all: "All Statuses",
+    admin_requests_date_from: "From",
+    admin_requests_date_to: "To",
+    admin_requests_date_clear: "Clear dates",
     status_new: "New",
     status_contacted: "Contacted",
     status_confirmed: "Confirmed",
@@ -724,6 +735,11 @@ const I18N = {
 
     // Request form — address & material
     label_address: "Address (Governorate, City, Street)",
+    ship_to_other_toggle: "🎁 Ship this to someone else?",
+    recipient_name_label: "Recipient's name",
+    recipient_phone_label: "Recipient's phone number",
+    recipient_address_label: "Delivery address",
+    recipient_badge: "🎁 Ships to someone else",
     share_location_btn: "📍 Share my location",
     share_location_loading: "Getting your location...",
     share_location_success: "Got it! Your location will be sent with the request.",

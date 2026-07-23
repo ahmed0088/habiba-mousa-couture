@@ -251,6 +251,17 @@ function renderCartList() {
         <p class="cart-item-name">${escapeHtml(product ? product.name : t("piece_category_fallback"))}</p>
         ${variantLabel ? `<p class="cart-item-variant">${escapeHtml(variantLabel)}</p>` : ""}
         ${priceText ? `<p class="cart-item-price">${escapeHtml(priceText)}</p>` : ""}
+        <div class="cart-item-recipient">
+          <label class="cart-item-recipient-toggle">
+            <input type="checkbox" data-recipient-toggle="${index}" ${item.shipToOther ? "checked" : ""} />
+            <span>${escapeHtml(t("ship_to_other_toggle"))}</span>
+          </label>
+          <div class="cart-item-recipient-fields" style="display:${item.shipToOther ? "flex" : "none"};">
+            <input type="text" data-recipient-name="${index}" value="${escapeHtml(item.recipientName || "")}" placeholder="${escapeHtml(t("recipient_name_label"))}" />
+            <input type="tel" data-recipient-phone="${index}" value="${escapeHtml(item.recipientPhone || "")}" placeholder="${escapeHtml(t("recipient_phone_label"))}" />
+            <input type="text" data-recipient-address="${index}" value="${escapeHtml(item.recipientAddress || "")}" placeholder="${escapeHtml(t("recipient_address_label"))}" />
+          </div>
+        </div>
       </div>
       <div class="cart-item-actions">
         <div class="cart-qty-stepper">
@@ -272,6 +283,35 @@ function renderCartList() {
   });
   cartItemsList.querySelectorAll("[data-remove]").forEach((btn) => {
     btn.addEventListener("click", () => removeFromCart(parseInt(btn.dataset.remove, 10)));
+  });
+  cartItemsList.querySelectorAll("[data-recipient-toggle]").forEach((cb) => {
+    cb.addEventListener("change", () => {
+      const idx = parseInt(cb.dataset.recipientToggle, 10);
+      if (cart[idx]) cart[idx].shipToOther = cb.checked;
+      saveCart();
+      renderCartList();
+    });
+  });
+  cartItemsList.querySelectorAll("[data-recipient-name]").forEach((inp) => {
+    inp.addEventListener("input", () => {
+      const idx = parseInt(inp.dataset.recipientName, 10);
+      if (cart[idx]) cart[idx].recipientName = inp.value;
+      saveCart();
+    });
+  });
+  cartItemsList.querySelectorAll("[data-recipient-phone]").forEach((inp) => {
+    inp.addEventListener("input", () => {
+      const idx = parseInt(inp.dataset.recipientPhone, 10);
+      if (cart[idx]) cart[idx].recipientPhone = inp.value;
+      saveCart();
+    });
+  });
+  cartItemsList.querySelectorAll("[data-recipient-address]").forEach((inp) => {
+    inp.addEventListener("input", () => {
+      const idx = parseInt(inp.dataset.recipientAddress, 10);
+      if (cart[idx]) cart[idx].recipientAddress = inp.value;
+      saveCart();
+    });
   });
 }
 
@@ -480,6 +520,10 @@ function showRequestView() {
 }
 
 detailRequestBtn.addEventListener("click", showRequestView);
+
+document.getElementById("shipToOtherToggle")?.addEventListener("change", (e) => {
+  document.getElementById("recipientFieldsWrap").style.display = e.target.checked ? "block" : "none";
+});
 
 document.getElementById("shareLocationBtn")?.addEventListener("click", () => {
   const btn = document.getElementById("shareLocationBtn");
@@ -734,6 +778,7 @@ function openModal(product) {
 
   requestForm.reset();
   productIdField.value = product.id; // reset() clears hidden fields too, so set again
+  document.getElementById("recipientFieldsWrap").style.display = "none";
   setupVariantSelectors(product);
   // "Order This Item" is a separate, independent immediate order (not tied
   // to the cart), so it only cares about genuine sold-out. Add to Cart also
@@ -1124,9 +1169,16 @@ requestForm.addEventListener("submit", async (e) => {
     payload.quantity = parseInt(document.getElementById("orderQuantity").value, 10) || 1;
   }
 
+  if (document.getElementById("shipToOtherToggle").checked) {
+    payload.recipientName = document.getElementById("recipientName").value.trim() || null;
+    payload.recipientPhone = document.getElementById("recipientPhone").value.trim() || null;
+    payload.recipientAddress = document.getElementById("recipientAddress").value.trim() || null;
+  }
+
   try {
     await db.collection("requests").add(payload);
     requestForm.reset();
+    document.getElementById("recipientFieldsWrap").style.display = "none";
     closeModal();
     showSuccessPopup("submit_success_title", "submit_success");
   } catch (err) {
@@ -1216,6 +1268,11 @@ cartCheckoutForm?.addEventListener("submit", async (e) => {
         payload.selectedSize = item.selectedSize || null;
         payload.selectedColor = item.selectedColor || null;
         payload.quantity = item.quantity || 1;
+      }
+      if (item.shipToOther) {
+        payload.recipientName = item.recipientName || null;
+        payload.recipientPhone = item.recipientPhone || null;
+        payload.recipientAddress = item.recipientAddress || null;
       }
       batch.set(ref, payload);
     });
