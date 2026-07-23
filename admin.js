@@ -481,12 +481,22 @@ function copyShippingDetails(r) {
   }
 }
 
+// Copies just one field (phone, address, name...) — for when a courier's
+// form wants each value pasted into its own box rather than one big block.
+function copySingleValue(text) {
+  if (!text || !navigator.clipboard) return;
+  navigator.clipboard.writeText(text).then(() => showToast(t("admin_copy_generic_success"))).catch(() => {});
+}
+
 const requestDetailBackdrop = document.getElementById("requestDetailBackdrop");
 const requestDetailClose = document.getElementById("requestDetailClose");
 const requestDetailBody = document.getElementById("requestDetailBody");
 
-function detailRow(label, value) {
-  return `<div><p style="margin:0; font-size:11px; text-transform:uppercase; letter-spacing:0.06em; color:var(--text-faint);">${escapeHtml(label)}</p><p style="margin:2px 0 0; font-weight:500;">${escapeHtml(value || "—")}</p></div>`;
+function detailRow(label, value, copyable) {
+  const copyBtn = (copyable && value)
+    ? `<button type="button" class="detail-copy-btn" data-copy-value="${escapeHtml(value)}" title="${escapeHtml(t("admin_copy_click_hint"))}">📋</button>`
+    : "";
+  return `<div><p style="margin:0; font-size:11px; text-transform:uppercase; letter-spacing:0.06em; color:var(--text-faint);">${escapeHtml(label)}</p><p style="margin:2px 0 0; font-weight:500; display:flex; align-items:center; gap:6px;">${escapeHtml(value || "—")}${copyBtn}</p></div>`;
 }
 
 function statusPillGroupHtml(id, currentStatus) {
@@ -558,12 +568,12 @@ function openRequestDetail(id) {
       <button type="button" class="icon-btn" id="requestDetailCopyBtn">📋 ${escapeHtml(t("admin_copy_shipping_btn"))}</button>
     </div>
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px 20px; margin-top:18px;">
-      ${detailRow("Order #", r.orderNumber)}
-      ${detailRow("Client", r.clientName)}
-      ${detailRow("Phone", r.clientPhone)}
+      ${detailRow("Order #", r.orderNumber, true)}
+      ${detailRow("Client", r.clientName, true)}
+      ${detailRow("Phone", r.clientPhone, true)}
       ${detailRow("Piece", r.productName + (r.productCode ? ` (${r.productCode})` : ""))}
       ${detailRow("Material", MATERIAL_LABELS[r.material] || r.material)}
-      ${detailRow("Address", r.clientAddress)}
+      ${detailRow("Address", r.clientAddress, true)}
       ${detailRow("Needed by", r.preferredDate)}
       ${detailRow("Received", formatDate(r.createdAt))}
       ${r.orderType === "ready_stock" ? detailRow("Ready-stock order", `${[r.selectedSize, r.selectedColor].filter(Boolean).join(" / ") || "—"} × ${r.quantity || 1}`) : ""}
@@ -572,9 +582,9 @@ function openRequestDetail(id) {
       <div class="request-detail-recipient">
         <p class="request-detail-recipient-label">${escapeHtml(t("recipient_badge"))}</p>
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px 20px;">
-          ${detailRow("Recipient", r.recipientName)}
-          ${detailRow("Recipient phone", r.recipientPhone)}
-          ${detailRow("Delivery address", r.recipientAddress)}
+          ${detailRow("Recipient", r.recipientName, true)}
+          ${detailRow("Recipient phone", r.recipientPhone, true)}
+          ${detailRow("Delivery address", r.recipientAddress, true)}
         </div>
       </div>
     ` : ""}
@@ -584,6 +594,10 @@ function openRequestDetail(id) {
   `;
 
   document.getElementById("requestDetailCopyBtn")?.addEventListener("click", () => copyShippingDetails(r));
+
+  requestDetailBody.querySelectorAll(".detail-copy-btn").forEach((btn) => {
+    btn.addEventListener("click", () => copySingleValue(btn.dataset.copyValue));
+  });
 
   requestDetailBody.querySelectorAll("[data-sibling-delete]").forEach((btn) => {
     btn.addEventListener("click", async (e) => {
@@ -766,16 +780,21 @@ function renderRequestsTable() {
       ? `<img class="request-thumb" src="${escapeHtml(thumbSrc)}" alt="${escapeHtml(r.productName || "")}" style="object-position: center ${escapeHtml(thumbFocus)};" loading="lazy" />`
       : `<div class="request-thumb request-thumb-empty"></div>`;
 
+    const copyHint = escapeHtml(t("admin_copy_click_hint"));
+    const copyableSpan = (value, tag, extraClass) => value
+      ? `<${tag} class="copyable-field${extraClass ? ` ${extraClass}` : ""}" data-copy-value="${escapeHtml(value)}" title="${copyHint}">${escapeHtml(value)}</${tag}>`
+      : "";
+
     const metaParts = [
-      r.clientPhone ? `📞 ${escapeHtml(r.clientPhone)}` : "",
-      r.clientAddress ? `📍 ${escapeHtml(r.clientAddress)}` : "",
-      r.material ? `🧵 ${escapeHtml(MATERIAL_LABELS[r.material] || r.material)}` : "",
-      r.preferredDate ? `📅 ${escapeHtml(r.preferredDate)}` : "",
-      r.orderType === "ready_stock" ? `📦 ${escapeHtml([r.selectedSize, r.selectedColor].filter(Boolean).join(" / ") || "Ready Stock")} × ${r.quantity || 1}` : ""
+      r.clientPhone ? `<span class="copyable-field" data-copy-value="${escapeHtml(r.clientPhone)}" title="${copyHint}">📞 ${escapeHtml(r.clientPhone)}</span>` : "",
+      r.clientAddress ? `<span class="copyable-field" data-copy-value="${escapeHtml(r.clientAddress)}" title="${copyHint}">📍 ${escapeHtml(r.clientAddress)}</span>` : "",
+      r.material ? `<span>🧵 ${escapeHtml(MATERIAL_LABELS[r.material] || r.material)}</span>` : "",
+      r.preferredDate ? `<span>📅 ${escapeHtml(r.preferredDate)}</span>` : "",
+      r.orderType === "ready_stock" ? `<span>📦 ${escapeHtml([r.selectedSize, r.selectedColor].filter(Boolean).join(" / ") || "Ready Stock")} × ${r.quantity || 1}</span>` : ""
     ].filter(Boolean);
 
     const recipientHtml = (r.recipientName || r.recipientAddress)
-      ? `<div class="request-row-recipient">${escapeHtml(t("recipient_badge"))}: <strong>${escapeHtml(r.recipientName || "—")}</strong>${r.recipientPhone ? ` · ${escapeHtml(r.recipientPhone)}` : ""}${r.recipientAddress ? ` · ${escapeHtml(r.recipientAddress)}` : ""}</div>`
+      ? `<div class="request-row-recipient">${escapeHtml(t("recipient_badge"))}: ${copyableSpan(r.recipientName, "strong") || "—"}${r.recipientPhone ? ` · ${copyableSpan(r.recipientPhone, "span")}` : ""}${r.recipientAddress ? ` · ${copyableSpan(r.recipientAddress, "span")}` : ""}</div>`
       : "";
 
     const row = document.createElement("div");
@@ -785,11 +804,11 @@ function renderRequestsTable() {
       <div class="request-row-body">
         <div class="request-row-top">
           ${r.orderNumber ? `<span class="request-order-number">#${escapeHtml(r.orderNumber)}</span>` : ""}
-          <span class="request-row-name">${escapeHtml(r.clientName)}</span>
+          <span class="request-row-name copyable-field" data-copy-value="${escapeHtml(r.clientName)}" title="${copyHint}">${escapeHtml(r.clientName)}</span>
           <span class="request-row-piece">${escapeHtml(r.productName || "—")}${r.productCode ? ` <span class="request-row-code">(${escapeHtml(r.productCode)})</span>` : ""}</span>
         </div>
         ${recipientHtml}
-        ${metaParts.length ? `<div class="request-row-meta">${metaParts.map(m => `<span>${m}</span>`).join("")}</div>` : ""}
+        ${metaParts.length ? `<div class="request-row-meta">${metaParts.join("")}</div>` : ""}
         ${r.notes ? `<div class="request-row-notes">${escapeHtml(r.notes)}</div>` : ""}
       </div>
       <div class="request-row-side">
@@ -857,6 +876,13 @@ function renderRequestsTable() {
 
   feed.querySelectorAll("[data-view-request]").forEach((btn) => {
     btn.addEventListener("click", () => openRequestDetail(btn.dataset.viewRequest));
+  });
+
+  feed.querySelectorAll(".copyable-field").forEach((el) => {
+    el.addEventListener("click", (e) => {
+      e.stopPropagation();
+      copySingleValue(el.dataset.copyValue);
+    });
   });
 
   feed.querySelectorAll("[data-copy-request]").forEach((btn) => {
