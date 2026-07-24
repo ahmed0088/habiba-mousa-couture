@@ -1203,6 +1203,47 @@ button {
 
 /* ---------- Footer ---------- */
 
+.footer-cut-line {
+  position: relative;
+  height: 20px;
+  overflow: hidden;
+  background: var(--surface);
+}
+.footer-cut-line::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  transform: translateY(-50%);
+  background-image: repeating-linear-gradient(to right, var(--border-soft) 0 6px, transparent 6px 14px);
+}
+.footer-scissors {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 15px;
+  line-height: 1;
+  animation: footer-scissors-move 7s linear infinite;
+}
+.footer-scissors span {
+  display: inline-block;
+  animation: footer-scissors-snip 0.45s ease-in-out infinite;
+}
+@keyframes footer-scissors-move {
+  from { left: -20px; }
+  to { left: calc(100% + 20px); }
+}
+@keyframes footer-scissors-snip {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(-18deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .footer-scissors { animation: none; left: 50%; }
+  .footer-scissors span { animation: none; }
+}
+
 .site-footer {
   background: var(--ink);
   color: rgba(247,239,224,0.65);
