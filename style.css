@@ -271,12 +271,15 @@ button {
   flex-shrink: 0;
   width: 30px;
   height: 30px;
-  border: 1px solid var(--theme-swatch, var(--line));
+  border: 1px solid var(--line);
   border-radius: 3px;
   background: transparent;
   font-size: 14px;
   padding: 0;
+  color: var(--charcoal);
+  transition: border-color 0.15s ease;
 }
+.theme-toggle:hover { border-color: var(--theme-swatch, var(--line)); }
 
 .theme-picker-popover {
   position: fixed;
