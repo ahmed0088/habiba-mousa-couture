@@ -807,26 +807,37 @@ button {
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: var(--space-3);
 }
+.video-card {
+  background: var(--surface);
+  border: 1px solid var(--border-soft);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+.video-card:hover { transform: translateY(-4px); box-shadow: 0 18px 40px -20px rgba(28,16,19,0.4); }
 .video-embed-wrap {
   position: relative;
   width: 100%;
   padding-top: 56.25%;
-  border-radius: 12px;
-  overflow: hidden;
   background: var(--ink);
 }
-.video-embed-wrap iframe {
+.video-embed-wrap iframe,
+.video-embed-wrap video {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
   border: 0;
+  background: #000;
 }
 .video-caption {
-  margin-top: 8px;
-  font-size: 13px;
-  color: var(--text-muted);
+  margin: 0;
+  padding: 14px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--charcoal);
 }
 
 .piece-card {
@@ -2201,6 +2212,8 @@ select.status-select.status-cancelled { background-color: #f6dcdc; color: #a13a3
 .my-request-thumb-empty { background: var(--surface-muted); border-style: dashed; }
 .my-request-name { font-family: var(--font-display); font-size: 16px; }
 .my-request-recipient { font-size: 11.5px; color: var(--gold); margin-top: 2px; }
+.my-request-actions { display: flex; gap: 14px; margin-top: 6px; }
+.my-request-actions .btn-link { font-size: 12px; letter-spacing: 0.03em; }
 .my-request-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 3px; }
 .my-request-order-number,
 .my-request-cart-tag {

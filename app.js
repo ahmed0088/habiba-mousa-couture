@@ -18,6 +18,7 @@ const formStatus = document.getElementById("formStatus");
 const submitBtn = document.getElementById("submitBtn");
 const requestViewTitle = document.getElementById("requestViewTitle");
 const requestViewTitleCustom = document.getElementById("requestViewTitleCustom");
+const requestViewTitleEdit = document.getElementById("requestViewTitleEdit");
 const customDesignFieldWrap = document.getElementById("customDesignFieldWrap");
 const customDesignDescriptionField = document.getElementById("customDesignDescription");
 const customDesignImageUrlField = document.getElementById("customDesignImageUrl");
@@ -470,6 +471,10 @@ let readyOnly = false;
 let favOnly = false;
 let loadFailed = false;
 let currentProduct = null;
+// Set only while editing an existing request from "My Requests" — the
+// submit handler branches on this to update that doc instead of creating
+// a new one.
+let editingRequestId = null;
 let currentImageIndex = 0;
 
 function renderCarousel() {
@@ -609,20 +614,72 @@ detailRequestBtn.addEventListener("click", showRequestView);
 // something they can make.
 function openCustomDesignModal() {
   currentProduct = null;
+  editingRequestId = null;
   requestForm.reset();
   productIdField.value = "";
   document.getElementById("recipientFieldsWrap").style.display = "none";
   modalPieceName.style.display = "none";
   requestViewTitle.style.display = "none";
   requestViewTitleCustom.style.display = "";
+  requestViewTitleEdit.style.display = "none";
   backToDetailBtn.style.display = "none";
   customDesignFieldWrap.style.display = "block";
   customDesignDescriptionField.required = true;
 
   showRequestView();
   modalBackdrop.classList.add("open");
+  submitBtn.textContent = t("submit_btn");
 }
 customDesignBtn?.addEventListener("click", openCustomDesignModal);
+
+// Reopens the same request form pre-filled with an existing request's data,
+// from "My Requests" — only ever called while that request is still new or
+// contacted (account.js checks status before showing the Edit button), which
+// matches what firestore.rules also independently enforces server-side.
+function openEditRequestModal(r) {
+  currentProduct = r.productId ? (allProducts.find(p => p.id === r.productId) || null) : null;
+  editingRequestId = r.id;
+  const isCustom = r.requestType === "custom_design";
+
+  requestForm.reset();
+  productIdField.value = r.productId || "";
+  document.getElementById("recipientFieldsWrap").style.display = "none";
+
+  modalPieceName.style.display = isCustom ? "none" : "";
+  requestViewTitle.style.display = "none";
+  requestViewTitleCustom.style.display = "none";
+  requestViewTitleEdit.style.display = "";
+  backToDetailBtn.style.display = "none";
+  customDesignFieldWrap.style.display = isCustom ? "block" : "none";
+  customDesignDescriptionField.required = isCustom;
+
+  showRequestView();
+
+  // showRequestView() just pre-filled name/phone/address from the signed-in
+  // client's saved profile — override with what was actually submitted on
+  // this specific request instead.
+  if (!isCustom && currentProduct) modalPieceName.textContent = currentProduct.name;
+  document.getElementById("clientName").value = r.clientName || "";
+  document.getElementById("clientPhone").value = r.clientPhone || "";
+  document.getElementById("clientAddress").value = r.clientAddress || "";
+  document.getElementById("clientLocationUrl").value = r.clientLocationUrl || "";
+  document.getElementById("clientMaterial").value = r.material || "unspecified";
+  document.getElementById("preferredDate").value = r.preferredDate || "";
+  document.getElementById("clientNotes").value = r.notes || "";
+  if (isCustom) {
+    customDesignDescriptionField.value = r.designDescription || "";
+    customDesignImageUrlField.value = r.referenceImageUrl || "";
+  }
+  const shipToOther = !!(r.recipientName || r.recipientAddress);
+  document.getElementById("shipToOtherToggle").checked = shipToOther;
+  document.getElementById("recipientFieldsWrap").style.display = shipToOther ? "block" : "none";
+  document.getElementById("recipientName").value = r.recipientName || "";
+  document.getElementById("recipientPhone").value = r.recipientPhone || "";
+  document.getElementById("recipientAddress").value = r.recipientAddress || "";
+
+  submitBtn.textContent = t("edit_request_save_btn");
+  modalBackdrop.classList.add("open");
+}
 
 document.getElementById("shipToOtherToggle")?.addEventListener("change", (e) => {
   document.getElementById("recipientFieldsWrap").style.display = e.target.checked ? "block" : "none";
@@ -877,10 +934,12 @@ function setupVariantSelectors(product) {
 function openModal(product) {
   currentProduct = product;
   currentImageIndex = 0;
+  editingRequestId = null;
 
   modalPieceName.style.display = "";
   requestViewTitle.style.display = "";
   requestViewTitleCustom.style.display = "none";
+  requestViewTitleEdit.style.display = "none";
   backToDetailBtn.style.display = "";
   customDesignFieldWrap.style.display = "none";
   customDesignDescriptionField.required = false;
@@ -1278,9 +1337,11 @@ function loadVideos() {
         }
         section.style.display = "block";
         grid.innerHTML = videos.map(v => `
-          <div>
+          <div class="video-card">
             <div class="video-embed-wrap">
-              <iframe src="${escapeHtml(v.embedUrl)}" title="${escapeHtml(v.title || "Video")}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>
+              ${v.embedType === "video"
+                ? `<video src="${escapeHtml(v.embedUrl)}" controls playsinline preload="metadata"></video>`
+                : `<iframe src="${escapeHtml(v.embedUrl)}" title="${escapeHtml(v.title || "Video")}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>`}
             </div>
             ${v.title ? `<p class="video-caption">${escapeHtml(v.title)}</p>` : ""}
           </div>
@@ -1305,6 +1366,51 @@ function generateOrderNumber() {
 requestForm.addEventListener("submit", async (e) => {
   e.preventDefault();
   submitBtn.disabled = true;
+
+  if (editingRequestId) {
+    submitBtn.textContent = t("submit_btn_sending");
+    const isCustom = !currentProduct;
+    const updatePayload = {
+      clientName: document.getElementById("clientName").value.trim(),
+      clientPhone: document.getElementById("clientPhone").value.trim(),
+      clientAddress: document.getElementById("clientAddress").value.trim(),
+      clientLocationUrl: document.getElementById("clientLocationUrl").value || null,
+      material: document.getElementById("clientMaterial").value,
+      preferredDate: document.getElementById("preferredDate").value || null,
+      notes: document.getElementById("clientNotes").value.trim(),
+    };
+    if (isCustom) {
+      updatePayload.designDescription = customDesignDescriptionField.value.trim();
+      updatePayload.referenceImageUrl = customDesignImageUrlField.value.trim() || null;
+    }
+    if (document.getElementById("shipToOtherToggle").checked) {
+      updatePayload.recipientName = document.getElementById("recipientName").value.trim() || null;
+      updatePayload.recipientPhone = document.getElementById("recipientPhone").value.trim() || null;
+      updatePayload.recipientAddress = document.getElementById("recipientAddress").value.trim() || null;
+    } else {
+      updatePayload.recipientName = null;
+      updatePayload.recipientPhone = null;
+      updatePayload.recipientAddress = null;
+    }
+
+    try {
+      await db.collection("requests").doc(editingRequestId).update(updatePayload);
+      editingRequestId = null;
+      requestForm.reset();
+      document.getElementById("recipientFieldsWrap").style.display = "none";
+      closeModal();
+      showSuccessPopup("edit_request_success_title", "edit_request_success_message");
+    } catch (err) {
+      console.error("Failed to update request:", err);
+      formStatus.className = "form-status error";
+      formStatus.textContent = t("edit_request_error");
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = t("edit_request_save_btn");
+    }
+    return;
+  }
+
   submitBtn.textContent = t("submit_btn_sending");
 
   const product = allProducts.find(p => p.id === productIdField.value);

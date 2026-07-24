@@ -1733,23 +1733,30 @@ function parseVideoEmbedUrl(url) {
   } catch (e) {
     return null;
   }
+  if (u.protocol !== "http:" && u.protocol !== "https:") return null;
   const host = u.hostname.replace(/^www\.|^m\./, "");
   if (host === "youtube.com") {
     if (u.pathname === "/watch" && u.searchParams.get("v")) {
-      return `https://www.youtube.com/embed/${u.searchParams.get("v")}`;
+      return { type: "iframe", embedUrl: `https://www.youtube.com/embed/${u.searchParams.get("v")}` };
     }
     const shortsMatch = u.pathname.match(/^\/shorts\/([\w-]+)/);
-    if (shortsMatch) return `https://www.youtube.com/embed/${shortsMatch[1]}`;
+    if (shortsMatch) return { type: "iframe", embedUrl: `https://www.youtube.com/embed/${shortsMatch[1]}` };
     const embedMatch = u.pathname.match(/^\/embed\/([\w-]+)/);
-    if (embedMatch) return `https://www.youtube.com/embed/${embedMatch[1]}`;
+    if (embedMatch) return { type: "iframe", embedUrl: `https://www.youtube.com/embed/${embedMatch[1]}` };
   }
   if (host === "youtu.be") {
     const id = u.pathname.replace(/^\//, "");
-    if (id) return `https://www.youtube.com/embed/${id}`;
+    if (id) return { type: "iframe", embedUrl: `https://www.youtube.com/embed/${id}` };
   }
   if (host === "vimeo.com" || host === "player.vimeo.com") {
     const match = u.pathname.match(/(\d+)/);
-    if (match) return `https://player.vimeo.com/video/${match[1]}`;
+    if (match) return { type: "iframe", embedUrl: `https://player.vimeo.com/video/${match[1]}` };
+  }
+  // Not YouTube/Vimeo — a direct video file link (e.g. hosted via
+  // image2url.com, Firebase Storage, or any CDN) plays fine with a plain
+  // <video> tag instead of an iframe.
+  if (/\.(mp4|webm|ogg|mov)(\?.*)?$/i.test(u.pathname)) {
+    return { type: "video", embedUrl: u.href };
   }
   return null;
 }
@@ -1764,17 +1771,32 @@ const cancelVideoBtn = document.getElementById("cancelVideoBtn");
 const videoFormStatus = document.getElementById("videoFormStatus");
 
 let allVideos = [];
+let editingVideoId = null;
 
 function openVideoForm() { videoFormBackdrop.classList.add("open"); }
 function closeVideoForm() { videoFormBackdrop.classList.remove("open"); }
 
 newVideoBtn?.addEventListener("click", () => {
+  editingVideoId = null;
+  document.getElementById("videoFormTitle").textContent = t("admin_add_video");
+  saveVideoBtn.textContent = t("admin_save_video");
   videoTitleInput.value = "";
   videoUrlInput.value = "";
   videoFormStatus.className = "form-status";
   videoFormStatus.textContent = "";
   openVideoForm();
 });
+
+function openEditVideoForm(v) {
+  editingVideoId = v.id;
+  document.getElementById("videoFormTitle").textContent = t("admin_edit_video");
+  saveVideoBtn.textContent = t("admin_save_video");
+  videoTitleInput.value = v.title || "";
+  videoUrlInput.value = v.url || "";
+  videoFormStatus.className = "form-status";
+  videoFormStatus.textContent = "";
+  openVideoForm();
+}
 
 cancelVideoBtn?.addEventListener("click", closeVideoForm);
 videoFormClose?.addEventListener("click", closeVideoForm);
@@ -1785,8 +1807,8 @@ videoFormBackdrop?.addEventListener("click", (e) => {
 saveVideoBtn?.addEventListener("click", async () => {
   const title = videoTitleInput.value.trim();
   const url = videoUrlInput.value.trim();
-  const embedUrl = parseVideoEmbedUrl(url);
-  if (!url || !embedUrl) {
+  const parsed = parseVideoEmbedUrl(url);
+  if (!url || !parsed) {
     videoFormStatus.className = "form-status error";
     videoFormStatus.textContent = t("admin_video_url_invalid");
     return;
@@ -1794,14 +1816,26 @@ saveVideoBtn?.addEventListener("click", async () => {
 
   saveVideoBtn.disabled = true;
   try {
-    await db.collection("videos").add({
-      title: title || null,
-      url,
-      embedUrl,
-      status: "active",
-      createdAt: firebase.firestore.FieldValue.serverTimestamp()
-    });
-    logActivity("Added video", title || url);
+    if (editingVideoId) {
+      await db.collection("videos").doc(editingVideoId).update({
+        title: title || null,
+        url,
+        embedUrl: parsed.embedUrl,
+        embedType: parsed.type
+      });
+      logActivity("Updated video", title || url);
+    } else {
+      await db.collection("videos").add({
+        title: title || null,
+        url,
+        embedUrl: parsed.embedUrl,
+        embedType: parsed.type,
+        status: "active",
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      logActivity("Added video", title || url);
+    }
+    editingVideoId = null;
     closeVideoForm();
   } catch (err) {
     console.error("Failed to save video:", err);
@@ -1832,11 +1866,19 @@ function loadVideos() {
         <td data-label="Title">${sanitizeUrl(v.url) ? `<a href="${escapeHtml(sanitizeUrl(v.url))}" target="_blank" rel="noopener">${escapeHtml(v.title || v.url)}</a>` : escapeHtml(v.title || v.url)}</td>
         <td data-label="Status"><span class="status-pill status-${v.status === "active" ? "confirmed" : "delivered"}">${escapeHtml(v.status)}</span></td>
         <td data-label="">
+          <button class="icon-btn" data-edit-video="${v.id}">${escapeHtml(t("admin_edit"))}</button>
           <button class="icon-btn" data-toggle-video="${v.id}" data-next="${v.status === "active" ? "archived" : "active"}">${v.status === "active" ? "Archive" : "Restore"}</button>
           <button class="icon-btn danger" data-delete-video="${v.id}">Delete</button>
         </td>
       `;
       tbody.appendChild(tr);
+    });
+
+    tbody.querySelectorAll("[data-edit-video]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const video = allVideos.find(v => v.id === btn.dataset.editVideo);
+        if (video) openEditVideoForm(video);
+      });
     });
 
     tbody.querySelectorAll("[data-toggle-video]").forEach((btn) => {

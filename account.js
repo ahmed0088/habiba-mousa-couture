@@ -348,6 +348,22 @@ db.collection("products").get().then((snap) => {
   snap.docs.forEach((doc) => { productsCacheForRequests[doc.id] = doc.data(); });
 }).catch((err) => console.error("Failed to load product photos for My Requests:", err));
 
+// Matches the cancellation window firestore.rules independently enforces —
+// a client can only self-edit/cancel a request before real work starts.
+function canManageRequest(r) {
+  return r.status === "new" || r.status === "contacted";
+}
+
+function cancelMyRequest(r) {
+  if (!confirm(t("my_requests_cancel_confirm"))) return;
+  db.collection("requests").doc(r.id).update({ status: "cancelled" })
+    .then(() => showToastPublic(t("my_requests_cancel_success")))
+    .catch((err) => {
+      console.error("Failed to cancel request:", err);
+      alert(t("my_requests_cancel_error"));
+    });
+}
+
 function renderRequestRow(r, suppressCartTag) {
   const row = document.createElement("div");
   row.className = "my-request-row";
@@ -362,18 +378,36 @@ function renderRequestRow(r, suppressCartTag) {
     (r.cartId && !suppressCartTag) ? `<span class="my-request-cart-tag">🛍 ${escapeHtmlAccount(t("my_requests_multi_item").replace("{count}", r.cartSize || "?"))}</span>` : "",
     (r.recipientName || r.recipientAddress) ? `<span class="my-request-cart-tag">${escapeHtmlAccount(t("recipient_badge"))}</span>` : ""
   ].filter(Boolean).join("");
+  const canManage = canManageRequest(r);
   row.innerHTML = `
     ${thumbHtml}
     <div class="my-request-piece">
       ${tagsHtml ? `<div class="my-request-tags">${tagsHtml}</div>` : ""}
       <div class="my-request-name">${escapeHtmlAccount(r.requestType === "custom_design" ? t("custom_design_badge") : (r.productName || "—"))}</div>
       ${(r.recipientName || r.recipientAddress) ? `<div class="my-request-recipient">${escapeHtmlAccount([r.recipientName, r.recipientAddress].filter(Boolean).join(" · "))}</div>` : ""}
+      ${canManage ? `
+        <div class="my-request-actions">
+          <button type="button" class="btn-link my-request-edit-btn">${escapeHtmlAccount(t("my_requests_edit_btn"))}</button>
+          <button type="button" class="btn-link my-request-cancel-btn">${escapeHtmlAccount(t("my_requests_cancel_btn"))}</button>
+        </div>
+      ` : ""}
     </div>
     <div class="my-request-meta">
       <span class="status-pill status-${escapeHtmlAccount(r.status)}">${escapeHtmlAccount(t(STATUS_KEY_MAP[r.status] || r.status))}</span>
       <div class="my-request-date">${formatDateAccount(r.createdAt)}</div>
     </div>
   `;
+  if (canManage) {
+    row.querySelector(".my-request-edit-btn").addEventListener("click", (e) => {
+      e.stopPropagation();
+      closeMyRequests();
+      openEditRequestModal(r);
+    });
+    row.querySelector(".my-request-cancel-btn").addEventListener("click", (e) => {
+      e.stopPropagation();
+      cancelMyRequest(r);
+    });
+  }
   return row;
 }
 
@@ -484,7 +518,7 @@ function loadMyRequests(uid) {
     .where("clientUid", "==", uid)
     .orderBy("createdAt", "desc")
     .onSnapshot(
-      (snapshot) => renderMyRequests(snapshot.docs.map((d) => d.data())),
+      (snapshot) => renderMyRequests(snapshot.docs.map((d) => ({ id: d.id, ...d.data() }))),
       (err) => {
         console.error("My requests listener error:", err);
         if (myRequestsList) myRequestsList.innerHTML = "";
